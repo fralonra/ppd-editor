@@ -1,5 +1,5 @@
 use eframe::{
-    egui::{CursorIcon, Id, Painter, Sense, Ui},
+    egui::{CursorIcon, Id, Sense, Ui},
     epaint::{pos2, vec2, Color32, Pos2, Rect, Stroke, Vec2},
 };
 
@@ -155,11 +155,10 @@ impl EditorApp {
 
                 if !is_locked {
                     // paint controls
-                    let control_size = Vec2::splat(6.0);
+                    let control_size = Vec2::splat(8.0);
 
                     control_point(
                         format!("slot_{}_control_tl", slot_id),
-                        &painter,
                         slot_rect.left_top(),
                         control_size,
                         actived_stroke,
@@ -172,7 +171,6 @@ impl EditorApp {
 
                     control_point(
                         format!("slot_{}_control_tr", slot_id),
-                        &painter,
                         slot_rect.right_top(),
                         control_size,
                         actived_stroke,
@@ -186,7 +184,6 @@ impl EditorApp {
 
                     control_point(
                         format!("slot_{}_control_br", slot_id),
-                        &painter,
                         slot_rect.right_bottom(),
                         control_size,
                         actived_stroke,
@@ -199,7 +196,6 @@ impl EditorApp {
 
                     control_point(
                         format!("slot_{}_control_bl", slot_id),
-                        &painter,
                         slot_rect.left_bottom(),
                         control_size,
                         actived_stroke,
@@ -213,7 +209,7 @@ impl EditorApp {
 
                     // paint anchor
                     let anchor_delta = if !slot.constrainted {
-                        let anchor_radius = 3.0;
+                        let anchor_radius = 5.0;
                         let anchor_point =
                             slot_rect.min + vec2(slot.anchor.x, slot.anchor.y) * scale;
                         let anchor_rect =
@@ -266,7 +262,6 @@ impl EditorApp {
 
 fn control_point(
     id: impl Into<Id>,
-    painter: &Painter,
     center_point: Pos2,
     size: Vec2,
     stroke: Stroke,
@@ -274,17 +269,17 @@ fn control_point(
     ui: &mut Ui,
     mut on_drag: impl FnMut(Pos2),
 ) {
-    let control_rect = Rect::from_center_size(center_point, size);
+    let rect = Rect::from_center_size(center_point, size);
 
-    painter.rect_stroke(control_rect, 0.0, stroke);
+    ui.painter_at(rect).rect_stroke(rect, 0.0, stroke);
 
-    let control_resp = ui.interact(control_rect, id.into(), Sense::drag());
+    let resp = ui.interact(rect, id.into(), Sense::drag());
 
-    if control_resp.hovered() {
+    if resp.hovered() {
         ui.ctx().set_cursor_icon(cursor_icon);
     }
 
-    if control_resp.dragged() {
+    if resp.dragged() {
         if let Some(pointer) = ui.ctx().pointer_interact_pos() {
             on_drag(pointer)
         }

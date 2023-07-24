@@ -13,7 +13,7 @@ use crate::{adapter::FragmentFilter, common::TextureData};
 
 use super::{
     actions::Action,
-    widgets::{Card, ImageUpload, Modal, SlotEntry, Tooltip},
+    widgets::{Card, ImageUpload, Modal, PivotSelect, SlotEntry, Tooltip},
     EditorApp,
 };
 
@@ -27,7 +27,7 @@ impl EditorApp {
             self.ui_status_bar(ui);
         });
 
-        SidePanel::left("left").min_width(160.0).show(ctx, |ui| {
+        SidePanel::left("left").min_width(240.0).show(ctx, |ui| {
             ScrollArea::vertical()
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
@@ -35,7 +35,7 @@ impl EditorApp {
                 });
         });
 
-        SidePanel::right("right").min_width(220.0).show(ctx, |ui| {
+        SidePanel::right("right").min_width(300.0).show(ctx, |ui| {
             ScrollArea::vertical()
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
@@ -65,81 +65,76 @@ impl EditorApp {
 
             ui.heading(format!("Doll_{:?}", id));
 
-            Grid::new("doll").num_columns(2).show(ui, |ui| {
-                ui.label("Description:");
-                ui.text_edit_singleline(&mut doll.desc);
+            Grid::new("doll")
+                .num_columns(2)
+                .striped(true)
+                .show(ui, |ui| {
+                    ui.label("Description:");
+                    ui.text_edit_singleline(&mut doll.desc);
 
-                ui.end_row();
+                    ui.end_row();
 
-                ui.horizontal_centered(|ui| {
-                    ui.label("Size:");
-                    ui.add(Tooltip::new("The size of the doll."))
-                });
-                ui.vertical(|ui| {
+                    ui.horizontal_centered(|ui| {
+                        ui.label("Size:");
+                        ui.add(Tooltip::new("The size of the doll."))
+                    });
                     ui.horizontal_wrapped(|ui| {
                         ui.monospace("w");
                         ui.add(DragValue::new(&mut doll.width).speed(1));
-                    });
 
-                    ui.horizontal_wrapped(|ui| {
                         ui.monospace("h");
                         ui.add(DragValue::new(&mut doll.height).speed(1));
                     });
-                });
 
-                ui.end_row();
+                    ui.end_row();
 
-                ui.horizontal_centered(|ui| {
-                    ui.label("Offset:");
-                    ui.add(Tooltip::new(
+                    ui.horizontal_centered(|ui| {
+                        ui.label("Offset:");
+                        ui.add(Tooltip::new(
                         "Offset pixels of the top left position of the background image, if any.",
                     ))
-                });
-                ui.vertical(|ui| {
+                    });
                     ui.horizontal_wrapped(|ui| {
                         ui.monospace("x");
                         ui.add(DragValue::new(&mut doll.offset.x).speed(1));
-                    });
 
-                    ui.horizontal_wrapped(|ui| {
                         ui.monospace("y");
                         ui.add(DragValue::new(&mut doll.offset.y).speed(1));
                     });
+
+                    ui.end_row();
+
+                    ui.horizontal_centered(|ui| {
+                        ui.label("Background:");
+                        ui.add(Tooltip::new("The background of the doll. It's optional."))
+                    });
+
+                    let mut request_edit = false;
+                    let mut request_remove = false;
+
+                    if ui
+                        .add(
+                            ImageUpload::new(self.textures_doll.get(&id))
+                                .on_edit(|| {
+                                    request_edit = true;
+                                })
+                                .on_remove(|| {
+                                    request_remove = true;
+                                }),
+                        )
+                        .clicked()
+                    {
+                        self.actions.push(Action::DollBackgroundUpload(id));
+                    }
+
+                    if request_edit {
+                        self.actions.push(Action::DollBackgroundUpload(id));
+                    }
+
+                    if request_remove {
+                        self.actions.push(Action::DollBackgroundRemove(id));
+                    }
                 });
-
-                ui.end_row();
-
-                ui.horizontal_centered(|ui| {
-                    ui.label("Background:");
-                    ui.add(Tooltip::new("The background of the doll. It's optional."))
-                });
-
-                let mut request_edit = false;
-                let mut request_remove = false;
-
-                if ui
-                    .add(
-                        ImageUpload::new(self.textures_doll.get(&id))
-                            .on_edit(|| {
-                                request_edit = true;
-                            })
-                            .on_remove(|| {
-                                request_remove = true;
-                            }),
-                    )
-                    .clicked()
-                {
-                    self.actions.push(Action::DollBackgroundUpload(id));
-                }
-
-                if request_edit {
-                    self.actions.push(Action::DollBackgroundUpload(id));
-                }
-
-                if request_remove {
-                    self.actions.push(Action::DollBackgroundRemove(id));
-                }
-            });
 
             ui.separator();
 
@@ -370,7 +365,7 @@ impl EditorApp {
                 .show(ctx, |ui| {
                     ui.heading("Doll");
 
-                    Grid::new("doll").num_columns(2).show(ui, |ui| {
+                    Grid::new("doll").num_columns(2).striped(true).show(ui, |ui| {
                         let adapter_doll = self.adapter_doll.as_mut().unwrap();
 
                         ui.label("Description:");
@@ -567,57 +562,56 @@ impl EditorApp {
                 .show(ctx, |ui| {
                     ui.heading("Fragment");
 
-                    Grid::new("fragment").num_columns(2).show(ui, |ui| {
-                        let adapter_fragment = self.adapter_fragment.as_mut().unwrap();
+                    Grid::new("fragment")
+                        .num_columns(2)
+                        .striped(true)
+                        .show(ui, |ui| {
+                            let adapter_fragment = self.adapter_fragment.as_mut().unwrap();
 
-                        ui.label("Description:");
-                        ui.text_edit_singleline(&mut adapter_fragment.desc);
+                            ui.label("Description:");
+                            ui.text_edit_singleline(&mut adapter_fragment.desc);
 
-                        ui.end_row();
+                            ui.end_row();
 
-                        ui.horizontal_centered(|ui| {
-                            ui.label("Pivot:");
-                            ui.add(Tooltip::new(
-                                "The position where connects to the anchor point of a slot.",
-                            ))
-                        });
-                        ui.horizontal_wrapped(|ui| {
-                            ui.monospace("x");
-                            ui.add(DragValue::new(&mut adapter_fragment.pivot.x).speed(1));
+                            ui.horizontal_centered(|ui| {
+                                ui.label("Pivot:");
+                                ui.add(Tooltip::new(
+                                    "The position where connects to the anchor point of a slot.",
+                                ))
+                            });
+                            ui.add(PivotSelect::new(
+                                &mut adapter_fragment.pivot.x,
+                                &mut adapter_fragment.pivot.y,
+                                adapter_fragment.image.width as f32,
+                                adapter_fragment.image.height as f32,
+                            ));
 
-                            ui.monospace("y");
-                            ui.add(DragValue::new(&mut adapter_fragment.pivot.y).speed(1));
-                        });
+                            ui.end_row();
 
-                        ui.end_row();
+                            ui.horizontal_centered(|ui| {
+                                ui.label("Image:");
+                                ui.add(Tooltip::new("It's required."))
+                            });
 
-                        ui.horizontal_centered(|ui| {
-                            ui.label("Image:");
-                            ui.add(Tooltip::new("It's required."))
-                        });
-
-                        let texture =
-                            adapter_fragment
-                                .image
-                                .texture
-                                .as_ref()
-                                .map(|texture| TextureData {
+                            let texture = adapter_fragment.image.texture.as_ref().map(|texture| {
+                                TextureData {
                                     width: adapter_fragment.image.width,
                                     height: adapter_fragment.image.height,
                                     texture: texture.clone(),
-                                });
+                                }
+                            });
 
-                        if ui
-                            .add(ImageUpload::new(texture.as_ref()).removable(false).on_edit(
-                                || {
-                                    self.actions.push(Action::FragmentAdapterBackgroundUpload);
-                                },
-                            ))
-                            .clicked()
-                        {
-                            self.actions.push(Action::FragmentAdapterBackgroundUpload);
-                        }
-                    });
+                            if ui
+                                .add(ImageUpload::new(texture.as_ref()).removable(false).on_edit(
+                                    || {
+                                        self.actions.push(Action::FragmentAdapterBackgroundUpload);
+                                    },
+                                ))
+                                .clicked()
+                            {
+                                self.actions.push(Action::FragmentAdapterBackgroundUpload);
+                            }
+                        });
 
                     ui.horizontal(|ui| {
                         if ui.button("Confirm").clicked() {
@@ -1023,7 +1017,7 @@ fn ui_slot_window_grid(
     anchor: &mut Point,
     ui: &mut Ui,
 ) {
-    Grid::new("slot").num_columns(2).show(ui, |ui| {
+    Grid::new("slot").num_columns(2).striped(true).show(ui, |ui| {
         ui.label("Description:");
         ui.text_edit_singleline(desc);
 
@@ -1077,14 +1071,8 @@ fn ui_slot_window_grid(
             ui.label("Anchor:");
             ui.add(Tooltip::new("If constrained is not set, the position where the pivot of the image placed to."))
         });
-        ui.add_enabled_ui(!*constrainted, |ui| {
-            ui.horizontal_wrapped(|ui| {
-                ui.monospace("x");
-                ui.add(DragValue::new(&mut anchor.x).speed(1));
-
-                ui.monospace("y");
-                ui.add(DragValue::new(&mut anchor.y).speed(1));
-            });
-        });
+        ui.add_enabled(!*constrainted,
+            PivotSelect::new(&mut anchor.x, &mut anchor.y, *width as f32, *height as f32)
+        );
     });
 }
