@@ -1,6 +1,6 @@
 use eframe::{
     egui::{
-        Button, CentralPanel, Context, DragValue, Grid, Key, Layout, ScrollArea, Sense, SidePanel,
+        Button, CentralPanel, Context, DragValue, Grid, Layout, ScrollArea, Sense, SidePanel,
         TextEdit, TopBottomPanel, Ui, Window,
     },
     emath::{Align, Align2},
@@ -259,57 +259,76 @@ impl EditorApp {
                                         .actived_slot
                                         .map_or(false, |actived_slot| actived_slot == id);
 
-                                    let mut request_edit = false;
-                                    let mut request_remove = false;
+                                    ui.horizontal(|ui| {
+                                        let is_visible = self.visible_slots.contains(&id);
+                                        let is_locked = self.locked_slots.contains(&id);
 
-                                    let resp = ui
-                                        .add(
-                                            SlotEntry::new(slot)
-                                                .actived(is_actived)
-                                                .visible(self.visible_slots.contains(&id))
-                                                .on_visiblity_changed(|visible| {
-                                                    if visible {
-                                                        self.visible_slots.insert(id);
-                                                    } else {
-                                                        self.visible_slots.remove(&id);
-                                                    }
+                                        if ui
+                                            .button(
+                                                icon_to_char(if is_visible {
+                                                    Icon::Visibility
+                                                } else {
+                                                    Icon::VisibilityOff
                                                 })
-                                                .on_edit(|_| {
-                                                    request_edit = true;
+                                                .to_string(),
+                                            )
+                                            .on_hover_text(
+                                                "Change visibility of the slot in editor",
+                                            )
+                                            .clicked()
+                                        {
+                                            if is_visible {
+                                                self.visible_slots.remove(&id);
+                                            } else {
+                                                self.visible_slots.insert(id);
+                                            }
+                                        }
+
+                                        if ui
+                                            .button(
+                                                icon_to_char(if is_locked {
+                                                    Icon::Lock
+                                                } else {
+                                                    Icon::LockOpen
                                                 })
-                                                .on_remove(|_| {
-                                                    request_remove = true;
-                                                }),
-                                        )
-                                        .context_menu(|ui| {
-                                            if ui.button("Edit slot").clicked() {
-                                                self.actions.push(Action::SlotEdit(id));
-
-                                                ui.close_menu();
+                                                .to_string(),
+                                            )
+                                            .on_hover_text(
+                                                "Lock the slot to prevent it from being dragged",
+                                            )
+                                            .clicked()
+                                        {
+                                            if is_locked {
+                                                self.locked_slots.remove(&id);
+                                            } else {
+                                                self.locked_slots.insert(id);
                                             }
+                                        }
 
-                                            if ui.button("Delete slot").clicked() {
-                                                self.actions.push(Action::SlotRemove(id));
+                                        let resp = ui
+                                            .add(SlotEntry::new(slot).actived(is_actived))
+                                            .context_menu(|ui| {
+                                                if ui.button("Edit slot").clicked() {
+                                                    self.actions.push(Action::SlotEdit(id));
 
-                                                ui.close_menu();
-                                            }
-                                        });
+                                                    ui.close_menu();
+                                                }
 
-                                    if resp.clicked() {
-                                        self.actived_slot = Some(id);
-                                    }
+                                                if ui.button("Delete slot").clicked() {
+                                                    self.actions.push(Action::SlotRemove(id));
 
-                                    if resp.double_clicked() {
-                                        self.actions.push(Action::SlotEdit(id));
-                                    }
+                                                    ui.close_menu();
+                                                }
+                                            });
 
-                                    if request_edit {
-                                        self.actions.push(Action::SlotEdit(id));
-                                    }
+                                        if resp.clicked() {
+                                            self.actived_slot = Some(id);
+                                        }
 
-                                    if request_remove {
-                                        self.actions.push(Action::SlotRemove(id));
-                                    }
+                                        if resp.double_clicked() {
+                                            self.actions.push(Action::SlotEdit(id));
+                                        }
+                                    });
                                 }
                             }
 

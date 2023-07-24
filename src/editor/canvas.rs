@@ -61,6 +61,9 @@ impl EditorApp {
                 continue;
             }
 
+            let is_visible = self.visible_slots.contains(&slot_id);
+            let is_locked = self.locked_slots.contains(&slot_id);
+
             let slot = slot.unwrap();
 
             let min = doll_rect.min + vec2(slot.position.x, slot.position.y) * scale;
@@ -88,7 +91,7 @@ impl EditorApp {
                 self.actived_slot = Some(slot_id);
             }
 
-            if slot_resp.hovered() {
+            if slot_resp.hovered() && !is_locked {
                 ui.ctx().set_cursor_icon(CursorIcon::Move);
             }
 
@@ -97,7 +100,7 @@ impl EditorApp {
                 .map_or(false, |actived_slot| actived_slot == slot_id);
 
             // paint fragment
-            if self.visible_slots.contains(&slot_id) {
+            if is_visible {
                 let fragment = is_actived_slot
                     .then(|| {
                         self.actived_fragment
@@ -150,105 +153,108 @@ impl EditorApp {
 
                 painter.rect_stroke(slot_rect, 0.0, actived_stroke);
 
-                // paint controls
-                let control_size = Vec2::splat(6.0);
+                if !is_locked {
+                    // paint controls
+                    let control_size = Vec2::splat(6.0);
 
-                control_point(
-                    format!("slot_{}_control_tl", slot_id),
-                    &painter,
-                    slot_rect.left_top(),
-                    control_size,
-                    actived_stroke,
-                    CursorIcon::ResizeNwSe,
-                    ui,
-                    |pos| {
-                        min = pos;
-                    },
-                );
-
-                control_point(
-                    format!("slot_{}_control_tr", slot_id),
-                    &painter,
-                    slot_rect.right_top(),
-                    control_size,
-                    actived_stroke,
-                    CursorIcon::ResizeNeSw,
-                    ui,
-                    |pos| {
-                        min.y = pos.y;
-                        max.x = pos.x;
-                    },
-                );
-
-                control_point(
-                    format!("slot_{}_control_br", slot_id),
-                    &painter,
-                    slot_rect.right_bottom(),
-                    control_size,
-                    actived_stroke,
-                    CursorIcon::ResizeNwSe,
-                    ui,
-                    |pos| {
-                        max = pos;
-                    },
-                );
-
-                control_point(
-                    format!("slot_{}_control_bl", slot_id),
-                    &painter,
-                    slot_rect.left_bottom(),
-                    control_size,
-                    actived_stroke,
-                    CursorIcon::ResizeNeSw,
-                    ui,
-                    |pos| {
-                        min.x = pos.x;
-                        max.y = pos.y;
-                    },
-                );
-
-                // paint anchor
-                let anchor_delta = if !slot.constrainted {
-                    let anchor_radius = 3.0;
-                    let anchor_point = slot_rect.min + vec2(slot.anchor.x, slot.anchor.y) * scale;
-                    let anchor_rect =
-                        Rect::from_center_size(anchor_point, Vec2::splat(anchor_radius));
-
-                    painter.circle_stroke(
-                        anchor_point,
-                        anchor_radius,
-                        Stroke::new(3.0, Color32::from_gray(220)),
+                    control_point(
+                        format!("slot_{}_control_tl", slot_id),
+                        &painter,
+                        slot_rect.left_top(),
+                        control_size,
+                        actived_stroke,
+                        CursorIcon::ResizeNwSe,
+                        ui,
+                        |pos| {
+                            min = pos;
+                        },
                     );
 
-                    let anchor_resp = ui.interact(
-                        anchor_rect,
-                        Id::new(format!("slot_{}_anchor", slot_id)),
-                        Sense::drag(),
+                    control_point(
+                        format!("slot_{}_control_tr", slot_id),
+                        &painter,
+                        slot_rect.right_top(),
+                        control_size,
+                        actived_stroke,
+                        CursorIcon::ResizeNeSw,
+                        ui,
+                        |pos| {
+                            min.y = pos.y;
+                            max.x = pos.x;
+                        },
                     );
 
-                    Some(anchor_resp.drag_delta())
-                } else {
-                    None
-                };
+                    control_point(
+                        format!("slot_{}_control_br", slot_id),
+                        &painter,
+                        slot_rect.right_bottom(),
+                        control_size,
+                        actived_stroke,
+                        CursorIcon::ResizeNwSe,
+                        ui,
+                        |pos| {
+                            max = pos;
+                        },
+                    );
 
-                // update slot
-                if let Some(slot) = self.ppd.get_slot_mut(slot_id) {
-                    let min = min - doll_rect.min;
-                    let max = max - doll_rect.min;
+                    control_point(
+                        format!("slot_{}_control_bl", slot_id),
+                        &painter,
+                        slot_rect.left_bottom(),
+                        control_size,
+                        actived_stroke,
+                        CursorIcon::ResizeNeSw,
+                        ui,
+                        |pos| {
+                            min.x = pos.x;
+                            max.y = pos.y;
+                        },
+                    );
 
-                    slot.position.x = min.x.round();
-                    slot.position.y = min.y.round();
+                    // paint anchor
+                    let anchor_delta = if !slot.constrainted {
+                        let anchor_radius = 3.0;
+                        let anchor_point =
+                            slot_rect.min + vec2(slot.anchor.x, slot.anchor.y) * scale;
+                        let anchor_rect =
+                            Rect::from_center_size(anchor_point, Vec2::splat(anchor_radius));
 
-                    let drag_delta = slot_resp.drag_delta();
-                    slot.position.x += drag_delta.x;
-                    slot.position.y += drag_delta.y;
+                        painter.circle_stroke(
+                            anchor_point,
+                            anchor_radius,
+                            Stroke::new(3.0, Color32::from_gray(220)),
+                        );
 
-                    slot.width = (max.x.round() - min.x.round()) as u32;
-                    slot.height = (max.y.round() - min.y.round()) as u32;
+                        let anchor_resp = ui.interact(
+                            anchor_rect,
+                            Id::new(format!("slot_{}_anchor", slot_id)),
+                            Sense::drag(),
+                        );
 
-                    if let Some(anchor_delta) = anchor_delta {
-                        slot.anchor.x += anchor_delta.x;
-                        slot.anchor.y += anchor_delta.y;
+                        Some(anchor_resp.drag_delta())
+                    } else {
+                        None
+                    };
+
+                    // update slot
+                    if let Some(slot) = self.ppd.get_slot_mut(slot_id) {
+                        let min = min - doll_rect.min;
+                        let max = max - doll_rect.min;
+
+                        slot.position.x = min.x.round();
+                        slot.position.y = min.y.round();
+
+                        let drag_delta = slot_resp.drag_delta();
+                        slot.position.x += drag_delta.x;
+                        slot.position.y += drag_delta.y;
+
+                        slot.width = (max.x.round() - min.x.round()) as u32;
+                        slot.height = (max.y.round() - min.y.round()) as u32;
+
+                        if let Some(anchor_delta) = anchor_delta {
+                            slot.anchor.x += anchor_delta.x;
+                            slot.anchor.y += anchor_delta.y;
+                        }
                     }
                 }
             } else {
