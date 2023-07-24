@@ -547,6 +547,8 @@ impl EditorApp {
             return;
         }
 
+        let adapter_fragment = self.adapter_fragment.as_mut().unwrap();
+
         let id = self.actived_fragment;
 
         let title = id.map_or("Create New Fragment".to_owned(), |id| {
@@ -560,56 +562,90 @@ impl EditorApp {
                 .resizable(false)
                 .open(&mut self.window_fragment_visible)
                 .show(ctx, |ui| {
+                    let is_create_mode = id.is_none();
+
                     ui.heading("Fragment");
 
                     Grid::new("fragment")
                         .num_columns(2)
                         .striped(true)
                         .show(ui, |ui| {
-                            let adapter_fragment = self.adapter_fragment.as_mut().unwrap();
+                            if is_create_mode {
+                                ui_fragment_window_grid(
+                                    &mut adapter_fragment.desc,
+                                    adapter_fragment.image.width,
+                                    adapter_fragment.image.height,
+                                    &mut adapter_fragment.pivot,
+                                    ui,
+                                );
+                            } else {
+                                let fragment = id.map(|id| self.ppd.get_fragment_mut(id)).flatten();
 
-                            ui.label("Description:");
-                            ui.text_edit_singleline(&mut adapter_fragment.desc);
-
-                            ui.end_row();
-
-                            ui.horizontal_centered(|ui| {
-                                ui.label("Pivot:");
-                                ui.add(Tooltip::new(
-                                    "The position where connects to the anchor point of a slot.",
-                                ))
-                            });
-                            ui.add(PivotSelect::new(
-                                &mut adapter_fragment.pivot.x,
-                                &mut adapter_fragment.pivot.y,
-                                adapter_fragment.image.width as f32,
-                                adapter_fragment.image.height as f32,
-                            ));
-
-                            ui.end_row();
+                                if let Some(fragment) = fragment {
+                                    ui_fragment_window_grid(
+                                        &mut fragment.desc,
+                                        fragment.image.width,
+                                        fragment.image.height,
+                                        &mut fragment.pivot,
+                                        ui,
+                                    );
+                                }
+                            }
 
                             ui.horizontal_centered(|ui| {
                                 ui.label("Image:");
                                 ui.add(Tooltip::new("It's required."))
                             });
 
-                            let texture = adapter_fragment.image.texture.as_ref().map(|texture| {
-                                TextureData {
-                                    width: adapter_fragment.image.width,
-                                    height: adapter_fragment.image.height,
-                                    texture: texture.clone(),
-                                }
-                            });
+                            let texture = if is_create_mode {
+                                adapter_fragment
+                                    .image
+                                    .texture
+                                    .as_ref()
+                                    .map(|texture| TextureData {
+                                        width: adapter_fragment.image.width,
+                                        height: adapter_fragment.image.height,
+                                        texture: texture.clone(),
+                                    })
+                            } else {
+                                let fragment = id.map(|id| self.ppd.get_fragment_mut(id)).flatten();
+
+                                fragment
+                                    .map(|fragment| {
+                                        self.textures_fragment.get(&fragment.id()).map(|texture| {
+                                            TextureData {
+                                                width: fragment.image.width,
+                                                height: fragment.image.height,
+                                                texture: texture.texture.clone(),
+                                            }
+                                        })
+                                    })
+                                    .flatten()
+                            };
 
                             if ui
                                 .add(ImageUpload::new(texture.as_ref()).removable(false).on_edit(
                                     || {
-                                        self.actions.push(Action::FragmentAdapterBackgroundUpload);
+                                        if is_create_mode {
+                                            self.actions
+                                                .push(Action::FragmentAdapterBackgroundUpload);
+                                        } else {
+                                            if let Some(id) = id {
+                                                self.actions
+                                                    .push(Action::FragmentBackgroundUpload(id));
+                                            }
+                                        }
                                     },
                                 ))
                                 .clicked()
                             {
-                                self.actions.push(Action::FragmentAdapterBackgroundUpload);
+                                if is_create_mode {
+                                    self.actions.push(Action::FragmentAdapterBackgroundUpload);
+                                } else {
+                                    if let Some(id) = id {
+                                        self.actions.push(Action::FragmentBackgroundUpload(id));
+                                    }
+                                }
                             }
                         });
 
@@ -621,6 +657,10 @@ impl EditorApp {
                         }
 
                         if ui.button("Cancel").clicked() {
+                            if let Some(id) = id {
+                                self.actions.push(Action::FragmentEditCancel(id));
+                            }
+
                             self.actions.push(Action::WindowFragmentVisible(false));
                         }
                     });
@@ -1005,6 +1045,34 @@ impl EditorApp {
     }
 
     fn ui_status_bar(&mut self, ui: &mut Ui) {}
+}
+
+fn ui_fragment_window_grid(
+    desc: &mut String,
+    width: u32,
+    height: u32,
+    pivot: &mut Point,
+    ui: &mut Ui,
+) {
+    ui.label("Description:");
+    ui.text_edit_singleline(desc);
+
+    ui.end_row();
+
+    ui.horizontal_centered(|ui| {
+        ui.label("Pivot:");
+        ui.add(Tooltip::new(
+            "The position where connects to the anchor point of a slot.",
+        ))
+    });
+    ui.add(PivotSelect::new(
+        &mut pivot.x,
+        &mut pivot.y,
+        width as f32,
+        height as f32,
+    ));
+
+    ui.end_row();
 }
 
 fn ui_slot_window_grid(

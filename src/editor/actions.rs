@@ -36,8 +36,10 @@ pub enum Action {
     FileSave,
     FileSaveAs,
     FragmentAdapterBackgroundUpload,
+    FragmentBackgroundUpload(u32),
     FragmentCreate,
     FragmentEdit(u32),
+    FragmentEditCancel(u32),
     FragmentEditConfirm(Option<u32>),
     FragmentRemove(u32),
     PpdLoad(PaperdollFactory),
@@ -123,15 +125,15 @@ impl EditorApp {
 
                     self.adapter_doll = Some(DollAdapter::default());
 
-                    self.window_doll_visible = true;
+                    self.actions.push(Action::WindowDollVisible(true));
                 }
                 Action::DollEdit(id) => {
                     if let Some(doll) = self.ppd.get_doll(id) {
                         self.actived_doll = Some(id);
 
                         self.adapter_doll = Some(doll.into());
-                        if let Some(adapter) = self.adapter_doll.as_mut() {
-                            adapter.image.texture = self
+                        if let Some(adapter_doll) = self.adapter_doll.as_mut() {
+                            adapter_doll.image.texture = self
                                 .textures_doll
                                 .get(&id)
                                 .map(|texture| texture.texture.clone());
@@ -243,63 +245,119 @@ impl EditorApp {
                         }
                     }
                 }
+                Action::FragmentBackgroundUpload(id) => {
+                    if self.ppd.get_fragment(id).is_none() {
+                        continue;
+                    }
+
+                    if let Some((path, texture, pixels)) = self.upload_texture("fragment", ctx) {
+                        if let Some(fragment) = self.ppd.get_fragment_mut(id) {
+                            fragment.path = path.to_string_lossy().to_string();
+
+                            self.textures_fragment.insert(
+                                id,
+                                TextureData {
+                                    width: texture.width,
+                                    height: texture.height,
+                                    texture: texture.texture,
+                                },
+                            );
+
+                            fragment.image.width = texture.width;
+                            fragment.image.height = texture.height;
+                            fragment.image.color_type = ColorType::Rgba;
+                            fragment.image.pixels = pixels;
+                        }
+                    }
+                }
                 Action::FragmentCreate => {
                     self.actived_fragment = None;
 
                     self.adapter_fragment = Some(FragmentAdapter::default());
 
-                    self.window_fragment_visible = true;
+                    self.actions.push(Action::WindowFragmentVisible(true));
                 }
                 Action::FragmentEdit(id) => {
                     if let Some(fragment) = self.ppd.get_fragment(id) {
                         self.actived_fragment = Some(id);
 
                         self.adapter_fragment = Some(fragment.into());
-                        if let Some(adapter) = self.adapter_fragment.as_mut() {
-                            adapter.image.texture = self
+                        if let Some(adapter_fragment) = self.adapter_fragment.as_mut() {
+                            adapter_fragment.image.texture = self
                                 .textures_fragment
                                 .get(&id)
                                 .map(|texture| texture.texture.clone());
                         }
 
-                        self.window_fragment_visible = true;
+                        self.actions.push(Action::WindowFragmentVisible(true));
+                    }
+                }
+                Action::FragmentEditCancel(id) => {
+                    if self.actived_fragment.is_none() {
+                        continue;
+                    }
+
+                    if let Some(fragment) = self.ppd.get_fragment_mut(id) {
+                        if let Some(adapter_fragment) = self.adapter_fragment.take() {
+                            fragment.desc = adapter_fragment.desc;
+                            fragment.pivot = adapter_fragment.pivot;
+                            fragment.path = adapter_fragment.path;
+
+                            fragment.image.width = adapter_fragment.image.width;
+                            fragment.image.height = adapter_fragment.image.height;
+                            fragment.image.color_type = ColorType::Rgba;
+                            fragment.image.pixels = adapter_fragment.image.pixels;
+
+                            if let Some(texture) = adapter_fragment.image.texture {
+                                self.textures_fragment.insert(
+                                    id,
+                                    TextureData {
+                                        width: adapter_fragment.image.width,
+                                        height: adapter_fragment.image.height,
+                                        texture: texture.clone(),
+                                    },
+                                );
+                            }
+                        }
                     }
                 }
                 Action::FragmentEditConfirm(id) => {
-                    if id.is_none() {
+                    let is_create_mode = id.is_none();
+
+                    let id = id.or_else(|| self.ppd.add_fragment().ok());
+
+                    self.actived_fragment = id;
+
+                    if is_create_mode {
                         if let Some(adapter_fragment) = &self.adapter_fragment {
                             if adapter_fragment.path.is_empty() {
                                 // TODO:
                                 continue;
                             }
                         }
-                    }
 
-                    let id = id.or_else(|| self.ppd.add_fragment().ok());
+                        if let Some(id) = id {
+                            if let Some(fragment) = self.ppd.get_fragment_mut(id) {
+                                if let Some(adapter_fragment) = self.adapter_fragment.take() {
+                                    fragment.desc = adapter_fragment.desc;
+                                    fragment.pivot = adapter_fragment.pivot;
+                                    fragment.path = adapter_fragment.path;
 
-                    self.actived_fragment = id;
+                                    if let Some(texture) = adapter_fragment.image.texture {
+                                        self.textures_fragment.insert(
+                                            id,
+                                            TextureData {
+                                                width: adapter_fragment.image.width,
+                                                height: adapter_fragment.image.height,
+                                                texture,
+                                            },
+                                        );
 
-                    if let Some(id) = id {
-                        if let Some(fragment) = self.ppd.get_fragment_mut(id) {
-                            if let Some(adapter_fragment) = self.adapter_fragment.take() {
-                                fragment.desc = adapter_fragment.desc;
-                                fragment.pivot = adapter_fragment.pivot;
-                                fragment.path = adapter_fragment.path;
-
-                                if let Some(texture) = adapter_fragment.image.texture {
-                                    self.textures_fragment.insert(
-                                        id,
-                                        TextureData {
-                                            width: adapter_fragment.image.width,
-                                            height: adapter_fragment.image.height,
-                                            texture,
-                                        },
-                                    );
-
-                                    fragment.image.width = adapter_fragment.image.width;
-                                    fragment.image.height = adapter_fragment.image.height;
-                                    fragment.image.color_type = ColorType::Rgba;
-                                    fragment.image.pixels = adapter_fragment.image.pixels;
+                                        fragment.image.width = adapter_fragment.image.width;
+                                        fragment.image.height = adapter_fragment.image.height;
+                                        fragment.image.color_type = ColorType::Rgba;
+                                        fragment.image.pixels = adapter_fragment.image.pixels;
+                                    }
                                 }
                             }
                         }
@@ -328,14 +386,14 @@ impl EditorApp {
                     self.actived_fragment = None;
                     self.adapter_slot = None;
 
-                    self.window_doll_visible = false;
-                    self.window_fragment_visible = false;
-                    self.window_slot_visible = false;
-
                     let (textures_doll, textures_fragment) = upload_ppd_textures(ppd, ctx);
 
                     self.textures_doll = textures_doll;
                     self.textures_fragment = textures_fragment;
+
+                    self.actions.push(Action::WindowDollVisible(false));
+                    self.actions.push(Action::WindowFragmentVisible(false));
+                    self.actions.push(Action::WindowSlotVisible(false));
                 }
                 // Action::PpdPreview => {
                 //     let manifest = self.ppd.to_manifest();
@@ -363,7 +421,7 @@ impl EditorApp {
 
                     self.filter_slot_fragment();
 
-                    self.window_slot_visible = true;
+                    self.actions.push(Action::WindowSlotVisible(true));
                 }
                 Action::SlotEdit(id) => {
                     if let Some(slot) = self.ppd.get_slot(id) {
@@ -373,7 +431,7 @@ impl EditorApp {
 
                         self.filter_slot_fragment();
 
-                        self.window_slot_visible = true;
+                        self.actions.push(Action::WindowSlotVisible(true));
                     }
                 }
                 Action::SlotEditCancel(id) => {
@@ -382,15 +440,15 @@ impl EditorApp {
                     }
 
                     if let Some(slot) = self.ppd.get_slot_mut(id) {
-                        if let Some(adapter_slot) = &self.adapter_slot {
-                            slot.desc = adapter_slot.desc.clone();
+                        if let Some(adapter_slot) = self.adapter_slot.take() {
+                            slot.desc = adapter_slot.desc;
                             slot.required = adapter_slot.required;
                             slot.constrainted = adapter_slot.constrainted;
                             slot.position = adapter_slot.position;
                             slot.width = adapter_slot.width;
                             slot.height = adapter_slot.height;
                             slot.anchor = adapter_slot.anchor;
-                            slot.candidates = adapter_slot.candidates.clone();
+                            slot.candidates = adapter_slot.candidates;
                         }
                     }
                 }
@@ -404,9 +462,7 @@ impl EditorApp {
                     if is_create_mode {
                         if let Some(id) = id {
                             if let Some(slot) = self.ppd.get_slot_mut(id) {
-                                println!("slot: {:?}", slot);
                                 if let Some(adapter_slot) = self.adapter_slot.take() {
-                                    println!("adapter: {:?}", adapter_slot.desc);
                                     slot.desc = adapter_slot.desc;
                                     slot.required = adapter_slot.required;
                                     slot.constrainted = adapter_slot.constrainted;
