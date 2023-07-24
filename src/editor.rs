@@ -10,7 +10,10 @@ use std::collections::HashMap;
 
 use eframe::{
     egui::Context,
-    epaint::ahash::{HashSet, HashSetExt},
+    epaint::{
+        ahash::{HashSet, HashSetExt},
+        Pos2,
+    },
     App, CreationContext, Frame,
 };
 use paperdoll_tar::paperdoll::factory::PaperdollFactory;
@@ -26,27 +29,35 @@ pub const APP_TITLE: &'static str = "Paperdoll Editor";
 
 #[derive(Default)]
 struct EditorApp {
+    // editor core
     actions: Vec<Action>,
     config: Config,
     shortcut: Shortcut,
 
+    // project core
     ppd: PaperdollFactory,
 
+    // textures
     textures_doll: HashMap<u32, TextureData>,
     textures_fragment: HashMap<u32, TextureData>,
 
+    // editor helpers
     fragments_filter_keyword: String,
+    cursor_position: Option<Pos2>,
     locked_slots: HashSet<u32>,
     visible_slots: HashSet<u32>,
 
+    // adapters
     adapter_doll: Option<DollAdapter>,
     adapter_fragment: Option<FragmentAdapter>,
     adapter_slot: Option<SlotAdapter>,
 
+    // selected ids
     actived_doll: Option<u32>,
     actived_fragment: Option<u32>,
     actived_slot: Option<u32>,
 
+    // window visible
     window_doll_visible: bool,
     window_fragment_visible: bool,
     window_slot_visible: bool,
@@ -79,6 +90,7 @@ impl EditorApp {
             textures_fragment: HashMap::new(),
 
             fragments_filter_keyword: String::default(),
+            cursor_position: None,
             locked_slots: HashSet::new(),
             visible_slots: HashSet::new(),
 

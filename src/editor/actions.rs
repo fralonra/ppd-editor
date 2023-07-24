@@ -1,7 +1,7 @@
 use std::{path::PathBuf, thread};
 
 use anyhow::{anyhow, Result};
-use eframe::{egui::Context, Frame};
+use eframe::{egui::Context, epaint::Pos2, Frame};
 use paperdoll_tar::{
     paperdoll::{
         factory::PaperdollFactory,
@@ -22,6 +22,7 @@ use super::{EditorApp, APP_TITLE};
 pub enum Action {
     AppQuit,
     AppTitleChanged(Option<String>),
+    CursorMoved(Option<Pos2>),
     DollCreate,
     DollAdapterBackgroundRemove,
     DollAdapterBackgroundUpload,
@@ -70,6 +71,9 @@ impl EditorApp {
                         format!("{} - {}", APP_TITLE, title.unwrap_or("Untitled".to_owned()));
 
                     frame.set_window_title(&title)
+                }
+                Action::CursorMoved(position) => {
+                    self.cursor_position = position;
                 }
                 Action::DollAdapterBackgroundRemove => {
                     if let Some(adapter_doll) = self.adapter_doll.as_mut() {

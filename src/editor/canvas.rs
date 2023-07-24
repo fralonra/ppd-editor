@@ -19,16 +19,27 @@ impl EditorApp {
 
         let (resp, painter) = ui.allocate_painter(ui.available_size(), Sense::click());
 
+        let canvas_rect = resp.rect;
+
+        let doll_rect = determine_doll_rect(doll, &canvas_rect);
+
         if resp.clicked() {
             if !self.window_slot_visible {
                 self.actived_slot = None;
             }
         }
 
-        let canvas_rect = resp.rect;
+        if resp.hovered() {
+            if let Some(pointer) = ui.ctx().pointer_interact_pos() {
+                self.actions.push(Action::CursorMoved(Some(
+                    pointer - vec2(doll_rect.min.x, doll_rect.min.y),
+                )));
+            }
+        } else {
+            self.actions.push(Action::CursorMoved(None));
+        }
 
         // paint doll
-        let doll_rect = determine_doll_rect(doll, &canvas_rect);
 
         let scale = doll_rect.width() / (doll.width as f32);
 

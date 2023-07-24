@@ -1044,7 +1044,13 @@ impl EditorApp {
         });
     }
 
-    fn ui_status_bar(&mut self, ui: &mut Ui) {}
+    fn ui_status_bar(&mut self, ui: &mut Ui) {
+        ui.add_visible_ui(self.cursor_position.is_some(), |ui| {
+            if let Some(position) = self.cursor_position {
+                ui.label(format!("{:.1},{:.1}", position.x, position.y));
+            }
+        });
+    }
 }
 
 fn ui_fragment_window_grid(
