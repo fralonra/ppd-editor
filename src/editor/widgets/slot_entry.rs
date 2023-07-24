@@ -1,4 +1,7 @@
-use eframe::egui::{Response, Sense, Ui, Widget, WidgetText};
+use eframe::{
+    egui::{Response, Sense, Ui, Widget, WidgetText},
+    epaint::vec2,
+};
 use paperdoll_tar::paperdoll::slot::Slot;
 
 use crate::common::layout_text_widget;
@@ -20,7 +23,10 @@ impl<'a> Widget for SlotEntry<'a> {
 
         let (text, desired_size) = layout_text_widget(ui, text, padding);
 
-        let (rect, response) = ui.allocate_at_least(desired_size, Sense::click());
+        let (rect, response) = ui.allocate_at_least(
+            vec2(ui.available_width().max(desired_size.x), desired_size.y),
+            Sense::click(),
+        );
 
         let visuals = ui.style().interact_selectable(&response, self.actived);
 
@@ -31,12 +37,7 @@ impl<'a> Widget for SlotEntry<'a> {
                 .rect(rect, 0.0, visuals.weak_bg_fill, visuals.bg_stroke);
         }
 
-        let text_pos = ui
-            .layout()
-            .align_size_within_rect(text.size(), rect.shrink2(padding))
-            .min;
-
-        text.paint_with_visuals(ui.painter(), text_pos, &visuals);
+        text.paint_with_visuals(&ui.painter_at(rect), rect.min + padding, &visuals);
 
         response
     }

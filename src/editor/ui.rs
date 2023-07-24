@@ -246,7 +246,7 @@ impl EditorApp {
             let slots = doll.slots.clone();
 
             ui.group(|ui| {
-                ScrollArea::vertical()
+                ScrollArea::both()
                     .auto_shrink([false, false])
                     .show(ui, |ui| {
                         ui.with_layout(Layout::top_down_justified(Align::LEFT), |ui| {
