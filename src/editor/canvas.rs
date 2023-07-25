@@ -19,17 +19,17 @@ impl EditorApp {
 
         let (resp, painter) = ui.allocate_painter(ui.available_size(), Sense::click());
 
-        let canvas_rect = resp.rect;
-
-        let doll_rect = determine_doll_rect(doll, &canvas_rect);
-
         if resp.clicked() {
             if !self.window_slot_visible {
                 self.actived_slot = None;
             }
         }
 
-        if resp.hovered() {
+        let canvas_rect = resp.rect;
+
+        let doll_rect = determine_doll_rect(doll, &canvas_rect);
+
+        if ui.ui_contains_pointer() {
             if let Some(pointer) = ui.ctx().pointer_interact_pos() {
                 self.actions.push(Action::CursorMoved(Some(
                     pointer - vec2(doll_rect.min.x, doll_rect.min.y),
