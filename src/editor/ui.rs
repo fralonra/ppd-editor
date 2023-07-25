@@ -1,3 +1,5 @@
+use std::ops::RangeInclusive;
+
 use eframe::{
     egui::{
         Button, CentralPanel, Context, DragValue, Grid, Layout, ScrollArea, Sense, SidePanel,
@@ -125,10 +127,18 @@ impl EditorApp {
                     });
                     ui.horizontal_wrapped(|ui| {
                         ui.monospace("w");
-                        ui.add(DragValue::new(&mut doll.width).speed(1));
+                        ui.add(
+                            DragValue::new(&mut doll.width)
+                                .clamp_range(RangeInclusive::new(1, u32::MAX))
+                                .speed(1),
+                        );
 
                         ui.monospace("h");
-                        ui.add(DragValue::new(&mut doll.height).speed(1));
+                        ui.add(
+                            DragValue::new(&mut doll.height)
+                                .clamp_range(RangeInclusive::new(1, u32::MAX))
+                                .speed(1),
+                        );
                     });
 
                     ui.end_row();
@@ -421,10 +431,18 @@ impl EditorApp {
                         });
                         ui.horizontal_wrapped(|ui| {
                             ui.monospace("w");
-                            ui.add(DragValue::new(&mut adapter_doll.width).speed(1));
+                            ui.add(
+                                DragValue::new(&mut adapter_doll.width)
+                                    .clamp_range(RangeInclusive::new(1, u32::MAX))
+                                    .speed(1)
+                            );
 
                             ui.monospace("h");
-                            ui.add(DragValue::new(&mut adapter_doll.height).speed(1));
+                            ui.add(
+                                DragValue::new(&mut adapter_doll.height)
+                                    .clamp_range(RangeInclusive::new(1, u32::MAX))
+                                    .speed(1)
+                            );
                         });
 
                         ui.end_row();
@@ -1179,10 +1197,18 @@ fn ui_slot_window_grid(
         });
         ui.horizontal_wrapped(|ui| {
             ui.monospace("w");
-            ui.add(DragValue::new(width).speed(1));
+            ui.add(
+                DragValue::new(width)
+                    .clamp_range(RangeInclusive::new(1, u32::MAX))
+                    .speed(1)
+            );
 
             ui.monospace("h");
-            ui.add(DragValue::new(height).speed(1));
+            ui.add(
+                DragValue::new(height)
+                    .clamp_range(RangeInclusive::new(1, u32::MAX))
+                    .speed(1)
+            );
         });
 
         ui.end_row();
