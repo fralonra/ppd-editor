@@ -15,14 +15,14 @@ pub enum Action {
 
 impl ViewerApp {
     pub(super) fn handle_actions(&mut self, ctx: &Context, frame: &mut Frame) -> Result<()> {
-        while let Some(action) = self.actions.pop() {
+        while let Some(action) = self.actions.pop_front() {
             match action {
                 Action::AppQuit => frame.close(),
                 Action::FileOpen => {
                     if let Some(path) = select_file() {
                         let ppd = paperdoll_tar::load(&path)?;
 
-                        self.actions.push(Action::PpdChanged(Some(ppd)));
+                        self.actions.push_back(Action::PpdChanged(Some(ppd)));
                     }
                 }
                 Action::PpdChanged(ppd) => {

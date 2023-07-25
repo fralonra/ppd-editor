@@ -31,12 +31,12 @@ impl EditorApp {
 
         if ui.ui_contains_pointer() {
             if let Some(pointer) = ui.ctx().pointer_interact_pos() {
-                self.actions.push(Action::CursorMoved(Some(
+                self.actions.push_back(Action::CursorMoved(Some(
                     pointer - vec2(doll_rect.min.x, doll_rect.min.y),
                 )));
             }
         } else {
-            self.actions.push(Action::CursorMoved(None));
+            self.actions.push_back(Action::CursorMoved(None));
         }
 
         // paint doll
@@ -86,13 +86,13 @@ impl EditorApp {
                 .allocate_rect(slot_rect, Sense::drag())
                 .context_menu(|ui| {
                     if ui.button("Edit slot").clicked() {
-                        self.actions.push(Action::SlotEdit(slot_id));
+                        self.actions.push_back(Action::SlotEdit(slot_id));
 
                         ui.close_menu();
                     }
 
                     if ui.button("Delete slot").clicked() {
-                        self.actions.push(Action::SlotRemoveRequest(slot_id));
+                        self.actions.push_back(Action::SlotRemoveRequest(slot_id));
 
                         ui.close_menu();
                     }

@@ -6,7 +6,7 @@ mod shortcut;
 mod ui;
 mod widgets;
 
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 
 use eframe::{
     egui::Context,
@@ -99,7 +99,7 @@ impl DialogOption {
 #[derive(Default)]
 struct EditorApp {
     // editor core
-    actions: Vec<Action>,
+    actions: VecDeque<Action>,
     config: Config,
     shortcut: Shortcut,
 
@@ -158,7 +158,7 @@ impl EditorApp {
 
     pub fn from_ppd(_cc: &CreationContext<'_>, ppd: PaperdollFactory) -> Self {
         Self {
-            actions: vec![Action::PpdChanged, Action::AppTitleChanged(None)],
+            actions: VecDeque::from([Action::PpdChanged, Action::AppTitleChanged(None)]),
             config: Config::default(),
             shortcut: Shortcut::default(),
 

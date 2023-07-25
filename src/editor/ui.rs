@@ -84,17 +84,17 @@ impl EditorApp {
                 match resp {
                     DialogResponse::Primary => {
                         if let Some(action) = self.dialog_option.primary_action.take() {
-                            self.actions.push(action);
+                            self.actions.push_back(action);
                         }
                     }
                     DialogResponse::Secondary => {
                         if let Some(action) = self.dialog_option.secondary_action.take() {
-                            self.actions.push(action);
+                            self.actions.push_back(action);
                         }
                     }
                     DialogResponse::Tertiary => {
                         if let Some(action) = self.dialog_option.tertiary_action.take() {
-                            self.actions.push(action);
+                            self.actions.push_back(action);
                         }
                     }
                     _ => {}
@@ -179,15 +179,15 @@ impl EditorApp {
                         )
                         .clicked()
                     {
-                        self.actions.push(Action::DollBackgroundUpload(id));
+                        self.actions.push_back(Action::DollBackgroundUpload(id));
                     }
 
                     if request_edit {
-                        self.actions.push(Action::DollBackgroundUpload(id));
+                        self.actions.push_back(Action::DollBackgroundUpload(id));
                     }
 
                     if request_remove {
-                        self.actions.push(Action::DollBackgroundRemove(id));
+                        self.actions.push_back(Action::DollBackgroundRemove(id));
                     }
                 });
 
@@ -201,7 +201,7 @@ impl EditorApp {
                     .on_hover_text("New slot")
                     .clicked()
                 {
-                    self.actions.push(Action::SlotCreate);
+                    self.actions.push_back(Action::SlotCreate);
                 }
 
                 ui.add_enabled_ui(self.actived_slot.is_some(), |ui| {
@@ -211,7 +211,7 @@ impl EditorApp {
                         .clicked()
                     {
                         if let Some(slot_id) = self.actived_slot {
-                            self.actions.push(Action::SlotEdit(slot_id));
+                            self.actions.push_back(Action::SlotEdit(slot_id));
                         }
                     }
 
@@ -221,7 +221,7 @@ impl EditorApp {
                         .clicked()
                     {
                         if let Some(slot_id) = self.actived_slot {
-                            self.actions.push(Action::SlotRemoveRequest(slot_id));
+                            self.actions.push_back(Action::SlotRemoveRequest(slot_id));
                         }
                     }
 
@@ -250,7 +250,7 @@ impl EditorApp {
                     {
                         if let Some(slot_id) = self.actived_slot {
                             self.actions
-                                .push(if ui.input(|input| input.modifiers.shift) {
+                                .push_back(if ui.input(|input| input.modifiers.shift) {
                                     Action::SlotRaiseTop(id, slot_id)
                                 } else {
                                     Action::SlotRaise(id, slot_id)
@@ -283,7 +283,7 @@ impl EditorApp {
                     {
                         if let Some(slot_id) = self.actived_slot {
                             self.actions
-                                .push(if ui.input(|input| input.modifiers.shift) {
+                                .push_back(if ui.input(|input| input.modifiers.shift) {
                                     Action::SlotLowerBottom(id, slot_id)
                                 } else {
                                     Action::SlotLower(id, slot_id)
@@ -359,14 +359,14 @@ impl EditorApp {
                                             .add(SlotEntry::new(slot).actived(is_actived))
                                             .context_menu(|ui| {
                                                 if ui.button("Edit slot").clicked() {
-                                                    self.actions.push(Action::SlotEdit(id));
+                                                    self.actions.push_back(Action::SlotEdit(id));
 
                                                     ui.close_menu();
                                                 }
 
                                                 if ui.button("Delete slot").clicked() {
                                                     self.actions
-                                                        .push(Action::SlotRemoveRequest(id));
+                                                        .push_back(Action::SlotRemoveRequest(id));
 
                                                     ui.close_menu();
                                                 }
@@ -377,7 +377,7 @@ impl EditorApp {
                                         }
 
                                         if resp.double_clicked() {
-                                            self.actions.push(Action::SlotEdit(id));
+                                            self.actions.push_back(Action::SlotEdit(id));
                                         }
                                     });
                                 }
@@ -492,27 +492,27 @@ impl EditorApp {
                             )
                             .clicked()
                         {
-                            self.actions.push(Action::DollAdapterBackgroundUpload);
+                            self.actions.push_back(Action::DollAdapterBackgroundUpload);
                         }
 
                         if request_edit {
-                            self.actions.push(Action::DollAdapterBackgroundUpload);
+                            self.actions.push_back(Action::DollAdapterBackgroundUpload);
                         }
 
                         if request_remove {
-                            self.actions.push(Action::DollAdapterBackgroundRemove);
+                            self.actions.push_back(Action::DollAdapterBackgroundRemove);
                         }
                     });
 
                     ui.horizontal(|ui| {
                         if ui.button("Confirm").clicked() {
-                            self.actions.push(Action::DollEditConfirm(id));
+                            self.actions.push_back(Action::DollEditConfirm(id));
 
-                            self.actions.push(Action::WindowDollVisible(false));
+                            self.actions.push_back(Action::WindowDollVisible(false));
                         }
 
                         if ui.button("Cancel").clicked() {
-                            self.actions.push(Action::WindowDollVisible(false));
+                            self.actions.push_back(Action::WindowDollVisible(false));
                         }
                     });
                 })
@@ -531,7 +531,7 @@ impl EditorApp {
                     .on_hover_text("New doll")
                     .clicked()
                 {
-                    self.actions.push(Action::DollCreate);
+                    self.actions.push_back(Action::DollCreate);
                 }
 
                 if ui
@@ -543,7 +543,7 @@ impl EditorApp {
                     .clicked()
                 {
                     if let Some(id) = self.actived_doll {
-                        self.actions.push(Action::DollRemoveRequest(id));
+                        self.actions.push_back(Action::DollRemoveRequest(id));
                     }
                 }
             });
@@ -572,7 +572,7 @@ impl EditorApp {
                                             )
                                             .clicked()
                                         {
-                                            self.actions.push(Action::DollRemoveRequest(*id));
+                                            self.actions.push_back(Action::DollRemoveRequest(*id));
 
                                             ui.close_menu();
                                         }
@@ -584,7 +584,8 @@ impl EditorApp {
                                             )
                                             .clicked()
                                         {
-                                            self.actions.push(Action::DollResizeToBackground(*id));
+                                            self.actions
+                                                .push_back(Action::DollResizeToBackground(*id));
 
                                             ui.close_menu();
                                         }
@@ -595,7 +596,7 @@ impl EditorApp {
                                 }
 
                                 if resp.double_clicked() {
-                                    self.actions.push(Action::DollEdit(*id));
+                                    self.actions.push_back(Action::DollEdit(*id));
                                 }
                             }
                         });
@@ -694,11 +695,12 @@ impl EditorApp {
                                     || {
                                         if is_create_mode {
                                             self.actions
-                                                .push(Action::FragmentAdapterBackgroundUpload);
+                                                .push_back(Action::FragmentAdapterBackgroundUpload);
                                         } else {
                                             if let Some(id) = id {
-                                                self.actions
-                                                    .push(Action::FragmentBackgroundUpload(id));
+                                                self.actions.push_back(
+                                                    Action::FragmentBackgroundUpload(id),
+                                                );
                                             }
                                         }
                                     },
@@ -706,10 +708,12 @@ impl EditorApp {
                                 .clicked()
                             {
                                 if is_create_mode {
-                                    self.actions.push(Action::FragmentAdapterBackgroundUpload);
+                                    self.actions
+                                        .push_back(Action::FragmentAdapterBackgroundUpload);
                                 } else {
                                     if let Some(id) = id {
-                                        self.actions.push(Action::FragmentBackgroundUpload(id));
+                                        self.actions
+                                            .push_back(Action::FragmentBackgroundUpload(id));
                                     }
                                 }
                             }
@@ -717,17 +721,15 @@ impl EditorApp {
 
                     ui.horizontal(|ui| {
                         if ui.button("Confirm").clicked() {
-                            self.actions.push(Action::FragmentEditConfirm(id));
+                            self.actions.push_back(Action::FragmentEditConfirm(id));
 
-                            self.actions.push(Action::WindowFragmentVisible(false));
+                            self.actions.push_back(Action::WindowFragmentVisible(false));
                         }
 
                         if ui.button("Cancel").clicked() {
-                            if let Some(id) = id {
-                                self.actions.push(Action::FragmentEditCancel(id));
-                            }
+                            self.actions.push_back(Action::FragmentEditCancel(id));
 
-                            self.actions.push(Action::WindowFragmentVisible(false));
+                            self.actions.push_back(Action::WindowFragmentVisible(false));
                         }
                     });
                 })
@@ -759,7 +761,7 @@ impl EditorApp {
                     .on_hover_text("New fragment")
                     .clicked()
                 {
-                    self.actions.push(Action::FragmentCreate);
+                    self.actions.push_back(Action::FragmentCreate);
                 }
 
                 if ui
@@ -771,7 +773,7 @@ impl EditorApp {
                     .clicked()
                 {
                     if let Some(id) = self.actived_fragment {
-                        self.actions.push(Action::FragmentEdit(id));
+                        self.actions.push_back(Action::FragmentEdit(id));
                     }
                 }
 
@@ -784,7 +786,7 @@ impl EditorApp {
                     .clicked()
                 {
                     if let Some(id) = self.actived_fragment {
-                        self.actions.push(Action::FragmentRemoveRequest(id));
+                        self.actions.push_back(Action::FragmentRemoveRequest(id));
                     }
                 }
             });
@@ -836,13 +838,14 @@ impl EditorApp {
                                     )
                                     .context_menu(|ui| {
                                         if ui.button("Edit fragment").clicked() {
-                                            self.actions.push(Action::FragmentEdit(*id));
+                                            self.actions.push_back(Action::FragmentEdit(*id));
 
                                             ui.close_menu();
                                         }
 
                                         if ui.button("Delete fragment").clicked() {
-                                            self.actions.push(Action::FragmentRemoveRequest(*id));
+                                            self.actions
+                                                .push_back(Action::FragmentRemoveRequest(*id));
 
                                             ui.close_menu();
                                         }
@@ -857,7 +860,7 @@ impl EditorApp {
                                 }
 
                                 if resp.double_clicked() {
-                                    self.actions.push(Action::FragmentEdit(*id));
+                                    self.actions.push_back(Action::FragmentEdit(*id));
                                 }
 
                                 if let Some(candidates) = actived_slot_candidates {
@@ -958,7 +961,7 @@ impl EditorApp {
                                 )
                                 .changed()
                             {
-                                self.actions.push(Action::SlotAdapterFragmentFilter);
+                                self.actions.push_back(Action::SlotAdapterFragmentFilter);
                             }
 
                             if ui
@@ -969,7 +972,7 @@ impl EditorApp {
                                 )
                                 .changed()
                             {
-                                self.actions.push(Action::SlotAdapterFragmentFilter);
+                                self.actions.push_back(Action::SlotAdapterFragmentFilter);
                             }
 
                             if ui
@@ -980,7 +983,7 @@ impl EditorApp {
                                 )
                                 .changed()
                             {
-                                self.actions.push(Action::SlotAdapterFragmentFilter);
+                                self.actions.push_back(Action::SlotAdapterFragmentFilter);
                             }
                         });
 
@@ -994,13 +997,13 @@ impl EditorApp {
                                 )
                                 .changed()
                             {
-                                self.actions.push(Action::SlotAdapterFragmentFilter);
+                                self.actions.push_back(Action::SlotAdapterFragmentFilter);
                             }
 
                             if ui.button(icon_to_char(Icon::Clear).to_string()).clicked() {
                                 adapter_slot.fragments_filter_keyword.clear();
 
-                                self.actions.push(Action::SlotAdapterFragmentFilter);
+                                self.actions.push_back(Action::SlotAdapterFragmentFilter);
                             }
                         });
                     });
@@ -1091,17 +1094,15 @@ impl EditorApp {
 
                     ui.horizontal(|ui| {
                         if ui.button("Confirm").clicked() {
-                            self.actions.push(Action::SlotEditConfirm(id));
+                            self.actions.push_back(Action::SlotEditConfirm(id));
 
-                            self.actions.push(Action::WindowSlotVisible(false));
+                            self.actions.push_back(Action::WindowSlotVisible(false));
                         }
 
                         if ui.button("Cancel").clicked() {
-                            if let Some(id) = id {
-                                self.actions.push(Action::SlotEditCancel(id));
-                            }
+                            self.actions.push_back(Action::SlotEditCancel(id));
 
-                            self.actions.push(Action::WindowSlotVisible(false));
+                            self.actions.push_back(Action::WindowSlotVisible(false));
                         }
                     });
                 })

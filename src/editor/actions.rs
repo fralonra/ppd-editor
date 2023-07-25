@@ -66,7 +66,7 @@ pub enum Action {
 
 impl EditorApp {
     pub(super) fn handle_actions(&mut self, ctx: &Context, frame: &mut Frame) -> Result<()> {
-        while let Some(action) = self.actions.pop() {
+        while let Some(action) = self.actions.pop_front() {
             match action {
                 Action::AppQuit => frame.close(),
                 Action::AppTitleChanged(title) => {
@@ -132,7 +132,7 @@ impl EditorApp {
 
                     self.adapter_doll = Some(DollAdapter::default());
 
-                    self.actions.push(Action::WindowDollVisible(true));
+                    self.actions.push_back(Action::WindowDollVisible(true));
                 }
                 Action::DollEdit(id) => {
                     if let Some(doll) = self.ppd.get_doll(id) {
@@ -201,18 +201,18 @@ impl EditorApp {
                 }
                 Action::FileNew => {
                     self.actions
-                        .push(Action::PpdLoad(PaperdollFactory::default()));
+                        .push_back(Action::PpdLoad(PaperdollFactory::default()));
 
-                    self.actions.push(Action::AppTitleChanged(None));
+                    self.actions.push_back(Action::AppTitleChanged(None));
 
                     self.config.file_path = None;
                 }
                 Action::FileOpen => {
                     if let Some(path) = select_file() {
                         self.actions
-                            .push(Action::PpdLoad(paperdoll_tar::load(&path)?));
+                            .push_back(Action::PpdLoad(paperdoll_tar::load(&path)?));
 
-                        self.actions.push(Action::AppTitleChanged(Some(
+                        self.actions.push_back(Action::AppTitleChanged(Some(
                             path.to_string_lossy().to_string(),
                         )));
 
@@ -291,7 +291,7 @@ impl EditorApp {
 
                     self.adapter_fragment = Some(FragmentAdapter::default());
 
-                    self.actions.push(Action::WindowFragmentVisible(true));
+                    self.actions.push_back(Action::WindowFragmentVisible(true));
                 }
                 Action::FragmentEdit(id) => {
                     if let Some(fragment) = self.ppd.get_fragment(id) {
@@ -305,7 +305,7 @@ impl EditorApp {
                                 .map(|texture| texture.texture.clone());
                         }
 
-                        self.actions.push(Action::WindowFragmentVisible(true));
+                        self.actions.push_back(Action::WindowFragmentVisible(true));
                     }
                 }
                 Action::FragmentEditCancel(id) => {
@@ -394,7 +394,7 @@ impl EditorApp {
                 Action::PpdLoad(ppd) => {
                     self.ppd = ppd;
 
-                    self.actions.push(Action::PpdChanged);
+                    self.actions.push_back(Action::PpdChanged);
                 }
                 Action::PpdChanged => {
                     let ppd = &self.ppd;
@@ -414,9 +414,9 @@ impl EditorApp {
                     self.textures_doll = textures_doll;
                     self.textures_fragment = textures_fragment;
 
-                    self.actions.push(Action::WindowDollVisible(false));
-                    self.actions.push(Action::WindowFragmentVisible(false));
-                    self.actions.push(Action::WindowSlotVisible(false));
+                    self.actions.push_back(Action::WindowDollVisible(false));
+                    self.actions.push_back(Action::WindowFragmentVisible(false));
+                    self.actions.push_back(Action::WindowSlotVisible(false));
                 }
                 // Action::PpdPreview => {
                 //     let manifest = self.ppd.to_manifest();
@@ -444,7 +444,7 @@ impl EditorApp {
 
                     self.filter_slot_fragment();
 
-                    self.actions.push(Action::WindowSlotVisible(true));
+                    self.actions.push_back(Action::WindowSlotVisible(true));
                 }
                 Action::SlotEdit(id) => {
                     if let Some(slot) = self.ppd.get_slot(id) {
@@ -454,7 +454,7 @@ impl EditorApp {
 
                         self.filter_slot_fragment();
 
-                        self.actions.push(Action::WindowSlotVisible(true));
+                        self.actions.push_back(Action::WindowSlotVisible(true));
                     }
                 }
                 Action::SlotEditCancel(id) => {
@@ -595,7 +595,7 @@ impl EditorApp {
             paperdoll_tar::save(&self.ppd.to_manifest(), path)?;
         }
 
-        self.actions.push(Action::AppTitleChanged(
+        self.actions.push_back(Action::AppTitleChanged(
             path.as_ref()
                 .and_then(|path| Some(path.to_string_lossy().to_string())),
         ));

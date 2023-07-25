@@ -51,11 +51,11 @@ impl ViewerApp {
         let ctx = ui.ctx();
 
         if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.app_quit)) {
-            self.actions.push(Action::AppQuit);
+            self.actions.push_back(Action::AppQuit);
         }
 
         if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.file_open)) {
-            self.actions.push(Action::FileOpen);
+            self.actions.push_back(Action::FileOpen);
         }
 
         ui.spacing_mut().item_spacing.y = 10.0;
@@ -66,7 +66,7 @@ impl ViewerApp {
                 .on_hover_text("Open paperdoll file")
                 .clicked()
             {
-                self.actions.push(Action::FileOpen);
+                self.actions.push_back(Action::FileOpen);
 
                 ui.close_menu();
             }
@@ -159,8 +159,10 @@ impl ViewerApp {
                                         }
                                     }
 
-                                    self.actions
-                                        .push(Action::SlotFragmentChanged(*id, *current_index));
+                                    self.actions.push_back(Action::SlotFragmentChanged(
+                                        *id,
+                                        *current_index,
+                                    ));
                                 }
                             }
 
@@ -221,8 +223,10 @@ impl ViewerApp {
                                         *current_index = if slot.required { 0 } else { -1 };
                                     }
 
-                                    self.actions
-                                        .push(Action::SlotFragmentChanged(*id, *current_index));
+                                    self.actions.push_back(Action::SlotFragmentChanged(
+                                        *id,
+                                        *current_index,
+                                    ));
                                 }
                             }
                         });
@@ -257,7 +261,7 @@ impl ViewerApp {
                         .button(RichText::new("Open From File").heading())
                         .clicked()
                     {
-                        self.actions.push(Action::FileOpen);
+                        self.actions.push_back(Action::FileOpen);
                     }
                 });
             },

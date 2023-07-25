@@ -2,7 +2,7 @@ mod actions;
 mod shortcut;
 mod ui;
 
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 
 use eframe::{egui::Context, App, CreationContext, Frame};
 use paperdoll_tar::paperdoll::factory::PaperdollFactory;
@@ -14,7 +14,7 @@ use self::{actions::Action, shortcut::Shortcut};
 pub const APP_TITLE: &'static str = "Paperdoll Viewer";
 
 struct ViewerApp {
-    actions: Vec<Action>,
+    actions: VecDeque<Action>,
     shortcut: Shortcut,
 
     ppd: Option<PaperdollFactory>,
@@ -38,7 +38,7 @@ impl App for ViewerApp {
 impl ViewerApp {
     pub fn new(_cc: &CreationContext<'_>, ppd: Option<PaperdollFactory>) -> Self {
         Self {
-            actions: vec![Action::PpdChanged(ppd)],
+            actions: VecDeque::from([Action::PpdChanged(ppd)]),
             shortcut: Shortcut::default(),
 
             ppd: None,

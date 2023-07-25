@@ -7,23 +7,23 @@ impl EditorApp {
         let ctx = ui.ctx();
 
         if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.app_quit)) {
-            self.actions.push(Action::AppQuit)
+            self.actions.push_back(Action::AppQuit)
         }
 
         if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.file_new)) {
-            self.actions.push(Action::FileNew);
+            self.actions.push_back(Action::FileNew);
         }
 
         if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.file_open)) {
-            self.actions.push(Action::FileOpen);
+            self.actions.push_back(Action::FileOpen);
         }
 
         if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.file_save)) {
-            self.actions.push(Action::FileSave);
+            self.actions.push_back(Action::FileSave);
         }
 
         if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.file_save_as)) {
-            self.actions.push(Action::FileSaveAs);
+            self.actions.push_back(Action::FileSaveAs);
         }
 
         menu::bar(ui, |ui| {
@@ -35,7 +35,7 @@ impl EditorApp {
                     )
                     .clicked()
                 {
-                    self.actions.push(Action::FileNew);
+                    self.actions.push_back(Action::FileNew);
 
                     ui.close_menu();
                 }
@@ -47,7 +47,7 @@ impl EditorApp {
                     )
                     .clicked()
                 {
-                    self.actions.push(Action::FileOpen);
+                    self.actions.push_back(Action::FileOpen);
 
                     ui.close_menu();
                 }
@@ -61,7 +61,7 @@ impl EditorApp {
                     )
                     .clicked()
                 {
-                    self.actions.push(Action::FileSave);
+                    self.actions.push_back(Action::FileSave);
 
                     ui.close_menu();
                 }
@@ -73,7 +73,7 @@ impl EditorApp {
                     )
                     .clicked()
                 {
-                    self.actions.push(Action::FileSaveAs);
+                    self.actions.push_back(Action::FileSaveAs);
 
                     ui.close_menu();
                 }
@@ -87,7 +87,7 @@ impl EditorApp {
                     )
                     .clicked()
                 {
-                    self.actions.push(Action::AppQuit);
+                    self.actions.push_back(Action::AppQuit);
 
                     ui.close_menu();
                 }
@@ -99,7 +99,7 @@ impl EditorApp {
                 let doll = self.actived_doll.map(|id| self.ppd.get_doll(id)).flatten();
 
                 if ui.button("New Doll").clicked() {
-                    self.actions.push(Action::DollCreate);
+                    self.actions.push_back(Action::DollCreate);
 
                     ui.close_menu();
                 }
@@ -110,7 +110,7 @@ impl EditorApp {
                         .clicked()
                     {
                         self.actions
-                            .push(Action::DollRemoveRequest(doll.unwrap().id()));
+                            .push_back(Action::DollRemoveRequest(doll.unwrap().id()));
 
                         ui.close_menu();
                     }
@@ -127,7 +127,7 @@ impl EditorApp {
                         .clicked()
                     {
                         self.actions
-                            .push(Action::DollResizeToBackground(doll.unwrap().id()));
+                            .push_back(Action::DollResizeToBackground(doll.unwrap().id()));
 
                         ui.close_menu();
                     }
@@ -138,21 +138,21 @@ impl EditorApp {
                 let slot = self.actived_slot.map(|id| self.ppd.get_slot(id)).flatten();
 
                 if ui.button("New Slot").clicked() {
-                    self.actions.push(Action::SlotCreate);
+                    self.actions.push_back(Action::SlotCreate);
 
                     ui.close_menu();
                 }
 
                 ui.add_enabled_ui(slot.is_some(), |ui| {
                     if ui.button("Edit Slot").clicked() {
-                        self.actions.push(Action::SlotEdit(slot.unwrap().id()));
+                        self.actions.push_back(Action::SlotEdit(slot.unwrap().id()));
 
                         ui.close_menu();
                     }
 
                     if ui.button("Delete Slot").clicked() {
                         self.actions
-                            .push(Action::SlotRemoveRequest(slot.unwrap().id()));
+                            .push_back(Action::SlotRemoveRequest(slot.unwrap().id()));
 
                         ui.close_menu();
                     }
@@ -166,7 +166,7 @@ impl EditorApp {
                     .flatten();
 
                 if ui.button("New Fragment").clicked() {
-                    self.actions.push(Action::FragmentCreate);
+                    self.actions.push_back(Action::FragmentCreate);
 
                     ui.close_menu();
                 }
@@ -174,14 +174,14 @@ impl EditorApp {
                 ui.add_enabled_ui(fragment.is_some(), |ui| {
                     if ui.button("Edit Fragment").clicked() {
                         self.actions
-                            .push(Action::FragmentEdit(fragment.unwrap().id()));
+                            .push_back(Action::FragmentEdit(fragment.unwrap().id()));
 
                         ui.close_menu();
                     }
 
                     if ui.button("Delete Fragment").clicked() {
                         self.actions
-                            .push(Action::FragmentRemoveRequest(fragment.unwrap().id()));
+                            .push_back(Action::FragmentRemoveRequest(fragment.unwrap().id()));
 
                         ui.close_menu();
                     }
@@ -196,7 +196,7 @@ impl EditorApp {
             //         )
             //         .clicked()
             //     {
-            //         self.actions.push(Action::PpdPreview);
+            //         self.actions.push_back(Action::PpdPreview);
 
             //         ui.close_menu();
             //     }
