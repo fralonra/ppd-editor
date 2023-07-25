@@ -504,6 +504,16 @@ impl EditorApp {
                         }
                     });
 
+                    ui.add_visible_ui(self.window_doll_error.is_some(), |ui| {
+                        ui.colored_label(
+                            Color32::LIGHT_RED,
+                            self.window_doll_error
+                                .as_ref()
+                                .map(|err| err.as_str())
+                                .unwrap_or_default(),
+                        );
+                    });
+
                     ui.horizontal(|ui| {
                         if ui.button("Confirm").clicked() {
                             self.actions.push_back(Action::DollEditConfirm(id));
@@ -718,6 +728,16 @@ impl EditorApp {
                                 }
                             }
                         });
+
+                    ui.add_visible_ui(self.window_fragment_error.is_some(), |ui| {
+                        ui.colored_label(
+                            Color32::LIGHT_RED,
+                            self.window_fragment_error
+                                .as_ref()
+                                .map(|err| err.as_str())
+                                .unwrap_or_default(),
+                        );
+                    });
 
                     ui.horizontal(|ui| {
                         if ui.button("Confirm").clicked() {
@@ -1090,6 +1110,16 @@ impl EditorApp {
                                     }
                                 });
                             });
+                    });
+
+                    ui.add_visible_ui(self.window_slot_error.is_some(), |ui| {
+                        ui.colored_label(
+                            Color32::LIGHT_RED,
+                            self.window_slot_error
+                                .as_ref()
+                                .map(|err| err.as_str())
+                                .unwrap_or_default(),
+                        );
                     });
 
                     ui.horizontal(|ui| {

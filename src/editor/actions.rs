@@ -41,7 +41,7 @@ pub enum Action {
     FragmentBackgroundUpload(u32),
     FragmentCreate,
     FragmentEdit(u32),
-    FragmentEditCancel(u32),
+    FragmentEditCancel(Option<u32>),
     FragmentEditConfirm(Option<u32>),
     FragmentRemoveConfirm(u32),
     FragmentRemoveRequest(u32),
@@ -51,7 +51,7 @@ pub enum Action {
     SlotAdapterFragmentFilter,
     SlotCreate,
     SlotEdit(u32),
-    SlotEditCancel(u32),
+    SlotEditCancel(Option<u32>),
     SlotEditConfirm(Option<u32>),
     SlotLower(u32, u32),
     SlotLowerBottom(u32, u32),
@@ -178,6 +178,8 @@ impl EditorApp {
                             }
                         }
                     }
+
+                    self.window_doll_error = None;
                 }
                 Action::DollRemoveConfirm(id) => {
                     self.actived_doll = None;
@@ -309,30 +311,34 @@ impl EditorApp {
                     }
                 }
                 Action::FragmentEditCancel(id) => {
-                    if self.actived_fragment.is_none() {
+                    self.window_fragment_error = None;
+
+                    if id.is_none() || self.actived_fragment.is_none() {
                         continue;
                     }
 
-                    if let Some(fragment) = self.ppd.get_fragment_mut(id) {
-                        if let Some(adapter_fragment) = self.adapter_fragment.take() {
-                            fragment.desc = adapter_fragment.desc;
-                            fragment.pivot = adapter_fragment.pivot;
-                            fragment.path = adapter_fragment.path;
+                    if let Some(id) = id {
+                        if let Some(fragment) = self.ppd.get_fragment_mut(id) {
+                            if let Some(adapter_fragment) = self.adapter_fragment.take() {
+                                fragment.desc = adapter_fragment.desc;
+                                fragment.pivot = adapter_fragment.pivot;
+                                fragment.path = adapter_fragment.path;
 
-                            fragment.image.width = adapter_fragment.image.width;
-                            fragment.image.height = adapter_fragment.image.height;
-                            fragment.image.color_type = ColorType::Rgba;
-                            fragment.image.pixels = adapter_fragment.image.pixels;
+                                fragment.image.width = adapter_fragment.image.width;
+                                fragment.image.height = adapter_fragment.image.height;
+                                fragment.image.color_type = ColorType::Rgba;
+                                fragment.image.pixels = adapter_fragment.image.pixels;
 
-                            if let Some(texture) = adapter_fragment.image.texture {
-                                self.textures_fragment.insert(
-                                    id,
-                                    TextureData {
-                                        width: adapter_fragment.image.width,
-                                        height: adapter_fragment.image.height,
-                                        texture: texture.clone(),
-                                    },
-                                );
+                                if let Some(texture) = adapter_fragment.image.texture {
+                                    self.textures_fragment.insert(
+                                        id,
+                                        TextureData {
+                                            width: adapter_fragment.image.width,
+                                            height: adapter_fragment.image.height,
+                                            texture: texture.clone(),
+                                        },
+                                    );
+                                }
                             }
                         }
                     }
@@ -340,18 +346,21 @@ impl EditorApp {
                 Action::FragmentEditConfirm(id) => {
                     let is_create_mode = id.is_none();
 
+                    if is_create_mode {
+                        if let Some(adapter_fragment) = &self.adapter_fragment {
+                            if adapter_fragment.path.is_empty() {
+                                self.window_fragment_error = Some("Image is required".to_owned());
+
+                                bail!("Fragment requires an image.");
+                            }
+                        }
+                    }
+
                     let id = id.or_else(|| self.ppd.add_fragment().ok());
 
                     self.actived_fragment = id;
 
                     if is_create_mode {
-                        if let Some(adapter_fragment) = &self.adapter_fragment {
-                            if adapter_fragment.path.is_empty() {
-                                // TODO:
-                                continue;
-                            }
-                        }
-
                         if let Some(id) = id {
                             if let Some(fragment) = self.ppd.get_fragment_mut(id) {
                                 if let Some(adapter_fragment) = self.adapter_fragment.take() {
@@ -378,6 +387,8 @@ impl EditorApp {
                             }
                         }
                     }
+
+                    self.window_fragment_error = None;
                 }
                 Action::FragmentRemoveConfirm(id) => {
                     self.actived_fragment = None;
@@ -458,20 +469,24 @@ impl EditorApp {
                     }
                 }
                 Action::SlotEditCancel(id) => {
-                    if self.adapter_slot.is_none() {
+                    self.window_slot_error = None;
+
+                    if id.is_none() || self.adapter_slot.is_none() {
                         continue;
                     }
 
-                    if let Some(slot) = self.ppd.get_slot_mut(id) {
-                        if let Some(adapter_slot) = self.adapter_slot.take() {
-                            slot.desc = adapter_slot.desc;
-                            slot.required = adapter_slot.required;
-                            slot.constrainted = adapter_slot.constrainted;
-                            slot.position = adapter_slot.position;
-                            slot.width = adapter_slot.width;
-                            slot.height = adapter_slot.height;
-                            slot.anchor = adapter_slot.anchor;
-                            slot.candidates = adapter_slot.candidates;
+                    if let Some(id) = id {
+                        if let Some(slot) = self.ppd.get_slot_mut(id) {
+                            if let Some(adapter_slot) = self.adapter_slot.take() {
+                                slot.desc = adapter_slot.desc;
+                                slot.required = adapter_slot.required;
+                                slot.constrainted = adapter_slot.constrainted;
+                                slot.position = adapter_slot.position;
+                                slot.width = adapter_slot.width;
+                                slot.height = adapter_slot.height;
+                                slot.anchor = adapter_slot.anchor;
+                                slot.candidates = adapter_slot.candidates;
+                            }
                         }
                     }
                 }
@@ -506,6 +521,8 @@ impl EditorApp {
                             self.visible_slots.insert(id);
                         }
                     }
+
+                    self.window_slot_error = None;
                 }
                 Action::SlotLower(doll_id, slot_id) => {
                     if let Some(doll) = self.ppd.get_doll_mut(doll_id) {
@@ -576,13 +593,37 @@ impl EditorApp {
                             .primary_action(Action::SlotRemoveConfirm(id));
                 }
                 Action::WindowDollVisible(visible) => {
+                    if !visible && self.window_doll_error.is_some() {
+                        continue;
+                    }
+
                     self.window_doll_visible = visible;
+
+                    if visible {
+                        self.window_doll_error = None;
+                    }
                 }
                 Action::WindowFragmentVisible(visible) => {
+                    if !visible && self.window_fragment_error.is_some() {
+                        continue;
+                    }
+
                     self.window_fragment_visible = visible;
+
+                    if visible {
+                        self.window_fragment_error = None;
+                    }
                 }
                 Action::WindowSlotVisible(visible) => {
+                    if !visible && self.window_slot_error.is_some() {
+                        continue;
+                    }
+
                     self.window_slot_visible = visible;
+
+                    if visible {
+                        self.window_slot_error = None;
+                    }
                 }
             }
         }

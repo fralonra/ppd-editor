@@ -134,6 +134,11 @@ struct EditorApp {
     window_doll_visible: bool,
     window_fragment_visible: bool,
     window_slot_visible: bool,
+
+    // window status
+    window_doll_error: Option<String>,
+    window_fragment_error: Option<String>,
+    window_slot_error: Option<String>,
 }
 
 impl App for EditorApp {
@@ -186,6 +191,10 @@ impl EditorApp {
             window_doll_visible: false,
             window_fragment_visible: false,
             window_slot_visible: false,
+
+            window_doll_error: None,
+            window_fragment_error: None,
+            window_slot_error: None,
         }
     }
 }
