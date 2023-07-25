@@ -13,7 +13,7 @@ use crate::{adapter::FragmentFilter, common::TextureData};
 
 use super::{
     actions::Action,
-    widgets::{Card, ImageUpload, Modal, PivotSelect, SlotEntry, Tooltip},
+    widgets::{Card, Dialog, DialogResponse, ImageUpload, Modal, PivotSelect, SlotEntry, Tooltip},
     EditorApp,
 };
 
@@ -52,6 +52,53 @@ impl EditorApp {
         self.ui_slot_window(ctx);
 
         self.ui_fragment_window(ctx);
+
+        self.ui_dialog(ctx);
+    }
+
+    fn ui_dialog(&mut self, ctx: &Context) {
+        if !self.dialog_visible {
+            return;
+        }
+
+        let inner_resp = Modal::new("doll_window").show(ctx, |ctx| {
+            let mut dialog = Dialog::new("dialog", &self.dialog_option.text)
+                .open(&mut self.dialog_visible)
+                .primary_text(&self.dialog_option.primary_text);
+
+            if let Some(text) = &self.dialog_option.secondary_text {
+                dialog = dialog.secondary_text(text);
+            }
+
+            if let Some(text) = &self.dialog_option.tertiary_text {
+                dialog = dialog.tertiary_text(text);
+            }
+
+            dialog.show(ctx)
+        });
+
+        if let Some(inner_resp) = inner_resp {
+            if let Some(resp) = inner_resp.inner {
+                match resp {
+                    DialogResponse::Primary => {
+                        if let Some(action) = self.dialog_option.primary_action.take() {
+                            self.actions.push(action);
+                        }
+                    }
+                    DialogResponse::Secondary => {
+                        if let Some(action) = self.dialog_option.secondary_action.take() {
+                            self.actions.push(action);
+                        }
+                    }
+                    DialogResponse::Tertiary => {
+                        if let Some(action) = self.dialog_option.tertiary_action.take() {
+                            self.actions.push(action);
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
     }
 
     fn ui_doll(&mut self, ui: &mut Ui) {
@@ -62,8 +109,6 @@ impl EditorApp {
 
         if let Some(doll) = doll {
             let id = doll.id();
-
-            ui.heading(format!("Doll_{:?}", id));
 
             Grid::new("doll")
                 .num_columns(2)
@@ -166,7 +211,7 @@ impl EditorApp {
                         .clicked()
                     {
                         if let Some(slot_id) = self.actived_slot {
-                            self.actions.push(Action::SlotRemove(slot_id));
+                            self.actions.push(Action::SlotRemoveRequest(slot_id));
                         }
                     }
 
@@ -310,7 +355,8 @@ impl EditorApp {
                                                 }
 
                                                 if ui.button("Delete slot").clicked() {
-                                                    self.actions.push(Action::SlotRemove(id));
+                                                    self.actions
+                                                        .push(Action::SlotRemoveRequest(id));
 
                                                     ui.close_menu();
                                                 }
@@ -336,12 +382,8 @@ impl EditorApp {
                         });
                     });
             });
-        } else {
-            self.ui_doll_empty(ui);
         }
     }
-
-    fn ui_doll_empty(&mut self, ui: &mut Ui) {}
 
     fn ui_doll_window(&mut self, ctx: &Context) {
         if !self.window_doll_visible {
@@ -483,7 +525,7 @@ impl EditorApp {
                     .clicked()
                 {
                     if let Some(id) = self.actived_doll {
-                        self.actions.push(Action::DollRemove(id));
+                        self.actions.push(Action::DollRemoveRequest(id));
                     }
                 }
             });
@@ -505,12 +547,6 @@ impl EditorApp {
                                             .highlighted(is_actived_doll),
                                     )
                                     .context_menu(|ui| {
-                                        if ui.button("Edit doll").clicked() {
-                                            self.actions.push(Action::DollEdit(*id));
-
-                                            ui.close_menu();
-                                        }
-
                                         if ui
                                             .add_enabled(
                                                 self.ppd.dolls().len() > 1,
@@ -518,7 +554,19 @@ impl EditorApp {
                                             )
                                             .clicked()
                                         {
-                                            self.actions.push(Action::DollRemove(*id));
+                                            self.actions.push(Action::DollRemoveRequest(*id));
+
+                                            ui.close_menu();
+                                        }
+
+                                        if ui
+                                            .add_enabled(
+                                                !doll.image.is_empty(),
+                                                Button::new("Resize to Background Size"),
+                                            )
+                                            .clicked()
+                                        {
+                                            self.actions.push(Action::DollResizeToBackground(*id));
 
                                             ui.close_menu();
                                         }
@@ -669,7 +717,7 @@ impl EditorApp {
     }
 
     fn ui_left_panel(&mut self, ui: &mut Ui) {
-        ui.heading("Meta Info");
+        ui.heading("Project Info");
 
         Grid::new("meta").num_columns(2).show(ui, |ui| {
             ui.label("Name:");
@@ -679,8 +727,6 @@ impl EditorApp {
         ui.separator();
 
         self.ui_dolls(ui);
-
-        ui.separator();
 
         self.ui_doll(ui);
     }
@@ -720,7 +766,7 @@ impl EditorApp {
                     .clicked()
                 {
                     if let Some(id) = self.actived_fragment {
-                        self.actions.push(Action::FragmentRemove(id));
+                        self.actions.push(Action::FragmentRemoveRequest(id));
                     }
                 }
             });
@@ -778,7 +824,7 @@ impl EditorApp {
                                         }
 
                                         if ui.button("Delete fragment").clicked() {
-                                            self.actions.push(Action::FragmentRemove(*id));
+                                            self.actions.push(Action::FragmentRemoveRequest(*id));
 
                                             ui.close_menu();
                                         }

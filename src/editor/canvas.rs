@@ -92,7 +92,7 @@ impl EditorApp {
                     }
 
                     if ui.button("Delete slot").clicked() {
-                        self.actions.push(Action::SlotRemove(slot_id));
+                        self.actions.push(Action::SlotRemoveRequest(slot_id));
 
                         ui.close_menu();
                     }

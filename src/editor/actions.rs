@@ -17,7 +17,7 @@ use crate::{
     viewer,
 };
 
-use super::{EditorApp, APP_TITLE};
+use super::{DialogOption, EditorApp, APP_TITLE};
 
 pub enum Action {
     AppQuit,
@@ -30,7 +30,8 @@ pub enum Action {
     DollBackgroundUpload(u32),
     DollEdit(u32),
     DollEditConfirm(Option<u32>),
-    DollRemove(u32),
+    DollRemoveConfirm(u32),
+    DollRemoveRequest(u32),
     DollResizeToBackground(u32),
     FileNew,
     FileOpen,
@@ -42,7 +43,8 @@ pub enum Action {
     FragmentEdit(u32),
     FragmentEditCancel(u32),
     FragmentEditConfirm(Option<u32>),
-    FragmentRemove(u32),
+    FragmentRemoveConfirm(u32),
+    FragmentRemoveRequest(u32),
     PpdLoad(PaperdollFactory),
     PpdChanged,
     // PpdPreview,
@@ -55,7 +57,8 @@ pub enum Action {
     SlotLowerBottom(u32, u32),
     SlotRaise(u32, u32),
     SlotRaiseTop(u32, u32),
-    SlotRemove(u32),
+    SlotRemoveConfirm(u32),
+    SlotRemoveRequest(u32),
     WindowDollVisible(bool),
     WindowFragmentVisible(bool),
     WindowSlotVisible(bool),
@@ -174,10 +177,17 @@ impl EditorApp {
                         }
                     }
                 }
-                Action::DollRemove(id) => {
+                Action::DollRemoveConfirm(id) => {
                     self.actived_doll = None;
 
                     self.ppd.remove_doll(id);
+                }
+                Action::DollRemoveRequest(id) => {
+                    self.dialog_visible = true;
+
+                    self.dialog_option =
+                        DialogOption::confirm(&format!("Really delete doll {}?", id))
+                            .primary_action(Action::DollRemoveConfirm(id));
                 }
                 Action::DollResizeToBackground(id) => {
                     if let Some(doll) = self.ppd.get_doll_mut(id) {
@@ -367,10 +377,17 @@ impl EditorApp {
                         }
                     }
                 }
-                Action::FragmentRemove(id) => {
+                Action::FragmentRemoveConfirm(id) => {
                     self.actived_fragment = None;
 
                     self.ppd.remove_fragment(id);
+                }
+                Action::FragmentRemoveRequest(id) => {
+                    self.dialog_visible = true;
+
+                    self.dialog_option =
+                        DialogOption::confirm(&format!("Really delete fragment {}?", id))
+                            .primary_action(Action::FragmentRemoveConfirm(id));
                 }
                 Action::PpdLoad(ppd) => {
                     self.ppd = ppd;
@@ -542,12 +559,19 @@ impl EditorApp {
                         }
                     }
                 }
-                Action::SlotRemove(id) => {
+                Action::SlotRemoveConfirm(id) => {
                     self.actived_slot = None;
 
                     self.ppd.remove_slot(id);
 
                     self.visible_slots.remove(&id);
+                }
+                Action::SlotRemoveRequest(id) => {
+                    self.dialog_visible = true;
+
+                    self.dialog_option =
+                        DialogOption::confirm(&format!("Really delete slot {}?", id))
+                            .primary_action(Action::SlotRemoveConfirm(id));
                 }
                 Action::WindowDollVisible(visible) => {
                     self.window_doll_visible = visible;

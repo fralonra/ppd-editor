@@ -1,5 +1,5 @@
 use eframe::{
-    egui::{Area, Context, Id, InnerResponse, Order, Sense, Ui},
+    egui::{Area, Context, Id, InnerResponse, Order, Sense},
     epaint::{Color32, Pos2, Rect},
 };
 

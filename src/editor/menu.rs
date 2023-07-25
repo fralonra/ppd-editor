@@ -109,7 +109,8 @@ impl EditorApp {
                         .add_enabled(self.ppd.dolls().len() > 1, Button::new("Delete Doll"))
                         .clicked()
                     {
-                        self.actions.push(Action::DollRemove(doll.unwrap().id()));
+                        self.actions
+                            .push(Action::DollRemoveRequest(doll.unwrap().id()));
 
                         ui.close_menu();
                     }
@@ -150,7 +151,8 @@ impl EditorApp {
                     }
 
                     if ui.button("Delete Slot").clicked() {
-                        self.actions.push(Action::SlotRemove(slot.unwrap().id()));
+                        self.actions
+                            .push(Action::SlotRemoveRequest(slot.unwrap().id()));
 
                         ui.close_menu();
                     }
@@ -179,7 +181,7 @@ impl EditorApp {
 
                     if ui.button("Delete Fragment").clicked() {
                         self.actions
-                            .push(Action::FragmentRemove(fragment.unwrap().id()));
+                            .push(Action::FragmentRemoveRequest(fragment.unwrap().id()));
 
                         ui.close_menu();
                     }
