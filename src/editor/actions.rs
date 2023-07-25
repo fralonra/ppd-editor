@@ -413,7 +413,15 @@ impl EditorApp {
                 Action::PpdChanged => {
                     let ppd = &self.ppd;
 
+                    let (textures_doll, textures_fragment) = upload_ppd_textures(ppd, ctx);
+
+                    self.textures_doll = textures_doll;
+                    self.textures_fragment = textures_fragment;
+
+                    self.fragments_filter_keyword = String::default();
+                    self.locked_slots.clear();
                     self.visible_slots = ppd.slots().map(|(id, _)| *id).collect();
+                    self.slot_copy = None;
 
                     self.adapter_doll = None;
                     self.adapter_fragment = None;
@@ -423,10 +431,12 @@ impl EditorApp {
                     self.actived_fragment = None;
                     self.adapter_slot = None;
 
-                    let (textures_doll, textures_fragment) = upload_ppd_textures(ppd, ctx);
+                    self.dialog_visible = false;
+                    self.dialog_option = DialogOption::default();
 
-                    self.textures_doll = textures_doll;
-                    self.textures_fragment = textures_fragment;
+                    self.window_doll_error = None;
+                    self.window_fragment_error = None;
+                    self.window_slot_error = None;
 
                     self.actions.push_back(Action::WindowDollVisible(false));
                     self.actions.push_back(Action::WindowFragmentVisible(false));
