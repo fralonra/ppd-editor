@@ -49,12 +49,15 @@ pub enum Action {
     PpdChanged,
     // PpdPreview,
     SlotAdapterFragmentFilter,
+    SlotCopy(u32),
     SlotCreate,
+    SlotDuplicate(u32, u32),
     SlotEdit(u32),
     SlotEditCancel(Option<u32>),
     SlotEditConfirm(Option<u32>),
     SlotLower(u32, u32),
     SlotLowerBottom(u32, u32),
+    SlotPaste(u32),
     SlotRaise(u32, u32),
     SlotRaiseTop(u32, u32),
     SlotRemoveConfirm(u32),
@@ -448,6 +451,9 @@ impl EditorApp {
                 Action::SlotAdapterFragmentFilter => {
                     self.filter_slot_fragment();
                 }
+                Action::SlotCopy(id) => {
+                    self.slot_copy = Some(id);
+                }
                 Action::SlotCreate => {
                     self.actived_slot = None;
 
@@ -456,6 +462,11 @@ impl EditorApp {
                     self.filter_slot_fragment();
 
                     self.actions.push_back(Action::WindowSlotVisible(true));
+                }
+                Action::SlotDuplicate(doll_id, slot_id) => {
+                    self.actions.push_back(Action::SlotCopy(slot_id));
+
+                    self.actions.push_back(Action::SlotPaste(doll_id));
                 }
                 Action::SlotEdit(id) => {
                     if let Some(slot) = self.ppd.get_slot(id) {
@@ -550,6 +561,52 @@ impl EditorApp {
 
                             doll.slots.push(id);
                         }
+                    }
+                }
+                Action::SlotPaste(doll_id) => {
+                    if self.slot_copy.is_none() {
+                        continue;
+                    }
+
+                    let slot_copy = self.slot_copy.unwrap();
+
+                    if self.ppd.get_doll(doll_id).is_none()
+                        || self.ppd.get_slot(slot_copy).is_none()
+                    {
+                        continue;
+                    }
+
+                    let id = self.ppd.add_slot()?;
+
+                    self.actived_slot = Some(id);
+
+                    let slot_copy = self.ppd.get_slot(slot_copy).unwrap();
+                    let desc = slot_copy.desc.clone();
+                    let required = slot_copy.required;
+                    let constrainted = slot_copy.constrainted;
+                    let position = slot_copy.position;
+                    let width = slot_copy.width;
+                    let height = slot_copy.height;
+                    let anchor = slot_copy.anchor;
+                    let candidates = slot_copy.candidates.clone();
+
+                    if let Some(slot) = self.ppd.get_slot_mut(id) {
+                        slot.desc = desc.clone();
+                        slot.required = required;
+                        slot.constrainted = constrainted;
+                        slot.position = position;
+                        slot.width = width;
+                        slot.height = height;
+                        slot.anchor = anchor;
+                        slot.candidates = candidates;
+
+                        if let Some(doll) = self.ppd.get_doll_mut(doll_id) {
+                            doll.slots.push(id);
+                        }
+
+                        self.visible_slots.insert(id);
+
+                        self.slot_copy = None;
                     }
                 }
                 Action::SlotRaise(doll_id, slot_id) => {

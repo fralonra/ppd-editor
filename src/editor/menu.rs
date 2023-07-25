@@ -6,10 +6,6 @@ impl EditorApp {
     pub(super) fn ui_menu_bar(&mut self, ui: &mut Ui) {
         let ctx = ui.ctx();
 
-        if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.app_quit)) {
-            self.actions.push_back(Action::AppQuit)
-        }
-
         if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.file_new)) {
             self.actions.push_back(Action::FileNew);
         }
@@ -24,6 +20,28 @@ impl EditorApp {
 
         if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.file_save_as)) {
             self.actions.push_back(Action::FileSaveAs);
+        }
+
+        if let Some(slot_id) = self.actived_slot {
+            if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.slot_copy)) {
+                self.actions.push_back(Action::SlotCopy(slot_id));
+            }
+        }
+
+        if self.actived_doll.is_some() && self.slot_copy.is_some() {
+            if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.slot_paste)) {
+                self.actions
+                    .push_back(Action::SlotPaste(self.actived_doll.unwrap()));
+            }
+        }
+
+        if self.actived_doll.is_some() && self.actived_slot.is_some() {
+            if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.slot_duplicate)) {
+                self.actions.push_back(Action::SlotDuplicate(
+                    self.actived_doll.unwrap(),
+                    self.actived_slot.unwrap(),
+                ));
+            }
         }
 
         menu::bar(ui, |ui| {
@@ -153,6 +171,49 @@ impl EditorApp {
                     if ui.button("Delete Slot").clicked() {
                         self.actions
                             .push_back(Action::SlotRemoveRequest(slot.unwrap().id()));
+
+                        ui.close_menu();
+                    }
+
+                    if ui
+                        .add(
+                            Button::new("Copy Slot")
+                                .shortcut_text(ui.ctx().format_shortcut(&self.shortcut.slot_copy)),
+                        )
+                        .clicked()
+                    {
+                        self.actions.push_back(Action::SlotCopy(slot.unwrap().id()));
+
+                        ui.close_menu();
+                    }
+
+                    if ui
+                        .add_enabled(
+                            self.actived_doll.is_some() && self.slot_copy.is_some(),
+                            Button::new("Paste Slot")
+                                .shortcut_text(ui.ctx().format_shortcut(&self.shortcut.slot_paste)),
+                        )
+                        .clicked()
+                    {
+                        self.actions
+                            .push_back(Action::SlotPaste(self.actived_doll.unwrap()));
+
+                        ui.close_menu();
+                    }
+
+                    if ui
+                        .add_enabled(
+                            self.actived_doll.is_some() && slot.is_some(),
+                            Button::new("Duplicate Slot").shortcut_text(
+                                ui.ctx().format_shortcut(&self.shortcut.slot_duplicate),
+                            ),
+                        )
+                        .clicked()
+                    {
+                        self.actions.push_back(Action::SlotDuplicate(
+                            self.actived_doll.unwrap(),
+                            slot.unwrap().id(),
+                        ));
 
                         ui.close_menu();
                     }

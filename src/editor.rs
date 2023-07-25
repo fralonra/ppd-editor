@@ -115,6 +115,7 @@ struct EditorApp {
     cursor_position: Option<Pos2>,
     locked_slots: HashSet<u32>,
     visible_slots: HashSet<u32>,
+    slot_copy: Option<u32>,
 
     // adapters
     adapter_doll: Option<DollAdapter>,
@@ -178,6 +179,7 @@ impl EditorApp {
             cursor_position: None,
             locked_slots: HashSet::new(),
             visible_slots: HashSet::new(),
+            slot_copy: None,
 
             adapter_doll: None,
             adapter_fragment: None,

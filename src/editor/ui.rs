@@ -110,7 +110,7 @@ impl EditorApp {
             .flatten();
 
         if let Some(doll) = doll {
-            let id = doll.id();
+            let doll_id = doll.id();
 
             Grid::new("doll")
                 .num_columns(2)
@@ -169,7 +169,7 @@ impl EditorApp {
 
                     if ui
                         .add(
-                            ImageUpload::new(self.textures_doll.get(&id))
+                            ImageUpload::new(self.textures_doll.get(&doll_id))
                                 .on_edit(|| {
                                     request_edit = true;
                                 })
@@ -179,15 +179,18 @@ impl EditorApp {
                         )
                         .clicked()
                     {
-                        self.actions.push_back(Action::DollBackgroundUpload(id));
+                        self.actions
+                            .push_back(Action::DollBackgroundUpload(doll_id));
                     }
 
                     if request_edit {
-                        self.actions.push_back(Action::DollBackgroundUpload(id));
+                        self.actions
+                            .push_back(Action::DollBackgroundUpload(doll_id));
                     }
 
                     if request_remove {
-                        self.actions.push_back(Action::DollBackgroundRemove(id));
+                        self.actions
+                            .push_back(Action::DollBackgroundRemove(doll_id));
                     }
                 });
 
@@ -251,9 +254,9 @@ impl EditorApp {
                         if let Some(slot_id) = self.actived_slot {
                             self.actions
                                 .push_back(if ui.input(|input| input.modifiers.shift) {
-                                    Action::SlotRaiseTop(id, slot_id)
+                                    Action::SlotRaiseTop(doll_id, slot_id)
                                 } else {
-                                    Action::SlotRaise(id, slot_id)
+                                    Action::SlotRaise(doll_id, slot_id)
                                 });
                         }
                     }
@@ -284,9 +287,9 @@ impl EditorApp {
                         if let Some(slot_id) = self.actived_slot {
                             self.actions
                                 .push_back(if ui.input(|input| input.modifiers.shift) {
-                                    Action::SlotLowerBottom(id, slot_id)
+                                    Action::SlotLowerBottom(doll_id, slot_id)
                                 } else {
-                                    Action::SlotLower(id, slot_id)
+                                    Action::SlotLower(doll_id, slot_id)
                                 });
                         }
                     }
@@ -303,15 +306,15 @@ impl EditorApp {
                             ui.spacing_mut().item_spacing.y = 0.0;
                             ui.spacing_mut().button_padding.y = 4.0;
 
-                            for id in slots {
-                                if let Some(slot) = self.ppd.get_slot(id) {
+                            for slot_id in slots {
+                                if let Some(slot) = self.ppd.get_slot(slot_id) {
                                     let is_actived = self
                                         .actived_slot
-                                        .map_or(false, |actived_slot| actived_slot == id);
+                                        .map_or(false, |actived_slot| actived_slot == slot_id);
 
                                     ui.horizontal(|ui| {
-                                        let is_visible = self.visible_slots.contains(&id);
-                                        let is_locked = self.locked_slots.contains(&id);
+                                        let is_visible = self.visible_slots.contains(&slot_id);
+                                        let is_locked = self.locked_slots.contains(&slot_id);
 
                                         if ui
                                             .button(
@@ -328,9 +331,9 @@ impl EditorApp {
                                             .clicked()
                                         {
                                             if is_visible {
-                                                self.visible_slots.remove(&id);
+                                                self.visible_slots.remove(&slot_id);
                                             } else {
-                                                self.visible_slots.insert(id);
+                                                self.visible_slots.insert(slot_id);
                                             }
                                         }
 
@@ -349,9 +352,9 @@ impl EditorApp {
                                             .clicked()
                                         {
                                             if is_locked {
-                                                self.locked_slots.remove(&id);
+                                                self.locked_slots.remove(&slot_id);
                                             } else {
-                                                self.locked_slots.insert(id);
+                                                self.locked_slots.insert(slot_id);
                                             }
                                         }
 
@@ -359,25 +362,76 @@ impl EditorApp {
                                             .add(SlotEntry::new(slot).actived(is_actived))
                                             .context_menu(|ui| {
                                                 if ui.button("Edit slot").clicked() {
-                                                    self.actions.push_back(Action::SlotEdit(id));
+                                                    self.actions
+                                                        .push_back(Action::SlotEdit(slot_id));
 
                                                     ui.close_menu();
                                                 }
 
                                                 if ui.button("Delete slot").clicked() {
+                                                    self.actions.push_back(
+                                                        Action::SlotRemoveRequest(slot_id),
+                                                    );
+
+                                                    ui.close_menu();
+                                                }
+
+                                                if ui
+                                                    .add(Button::new("Copy Slot").shortcut_text(
+                                                        ui.ctx().format_shortcut(
+                                                            &self.shortcut.slot_copy,
+                                                        ),
+                                                    ))
+                                                    .clicked()
+                                                {
                                                     self.actions
-                                                        .push_back(Action::SlotRemoveRequest(id));
+                                                        .push_back(Action::SlotCopy(slot_id));
+
+                                                    ui.close_menu();
+                                                }
+
+                                                if ui
+                                                    .add_enabled(
+                                                        self.slot_copy.is_some(),
+                                                        Button::new("Paste Slot").shortcut_text(
+                                                            ui.ctx().format_shortcut(
+                                                                &self.shortcut.slot_paste,
+                                                            ),
+                                                        ),
+                                                    )
+                                                    .clicked()
+                                                {
+                                                    self.actions
+                                                        .push_back(Action::SlotPaste(doll_id));
+
+                                                    ui.close_menu();
+                                                }
+
+                                                if ui
+                                                    .add(
+                                                        Button::new("Duplicate Slot")
+                                                            .shortcut_text(
+                                                                ui.ctx().format_shortcut(
+                                                                    &self.shortcut.slot_duplicate,
+                                                                ),
+                                                            ),
+                                                    )
+                                                    .clicked()
+                                                {
+                                                    self.actions.push_back(Action::SlotDuplicate(
+                                                        doll_id, slot_id,
+                                                    ));
 
                                                     ui.close_menu();
                                                 }
                                             });
 
                                         if resp.clicked() {
-                                            self.actived_slot = Some(id);
+                                            self.actived_slot = Some(slot_id);
                                         }
 
                                         if resp.double_clicked() {
-                                            self.actions.push_back(Action::SlotEdit(id));
+                                            self.actions.push_back(Action::SlotEdit(slot_id));
                                         }
                                     });
                                 }
