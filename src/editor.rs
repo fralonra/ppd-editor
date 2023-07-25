@@ -145,7 +145,9 @@ impl App for EditorApp {
     fn update(&mut self, ctx: &Context, frame: &mut Frame) {
         self.ui(ctx);
 
-        self.handle_actions(ctx, frame);
+        if let Err(err) = self.handle_actions(ctx, frame) {
+            log::error!("{}", err);
+        }
     }
 }
 
