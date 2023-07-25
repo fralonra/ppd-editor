@@ -1072,14 +1072,12 @@ impl EditorApp {
 
                                                     if let Some(slot) = slot {
                                                         if is_candidate {
-                                                            if let Some(index) = adapter_slot
+                                                            if let Some(index) = slot
                                                                 .candidates
                                                                 .iter()
                                                                 .position(|v| v == fragment_id)
                                                             {
-                                                                adapter_slot
-                                                                    .candidates
-                                                                    .remove(index);
+                                                                slot.candidates.remove(index);
                                                             }
                                                         } else {
                                                             slot.candidates.push(*fragment_id);
