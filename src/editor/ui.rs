@@ -358,73 +358,7 @@ impl EditorApp {
                                             }
                                         }
 
-                                        let resp = ui
-                                            .add(SlotEntry::new(slot).actived(is_actived))
-                                            .context_menu(|ui| {
-                                                if ui.button("Edit slot").clicked() {
-                                                    self.actions
-                                                        .push_back(Action::SlotEdit(slot_id));
-
-                                                    ui.close_menu();
-                                                }
-
-                                                if ui.button("Delete slot").clicked() {
-                                                    self.actions.push_back(
-                                                        Action::SlotRemoveRequest(slot_id),
-                                                    );
-
-                                                    ui.close_menu();
-                                                }
-
-                                                if ui
-                                                    .add(Button::new("Copy Slot").shortcut_text(
-                                                        ui.ctx().format_shortcut(
-                                                            &self.shortcut.slot_copy,
-                                                        ),
-                                                    ))
-                                                    .clicked()
-                                                {
-                                                    self.actions
-                                                        .push_back(Action::SlotCopy(slot_id));
-
-                                                    ui.close_menu();
-                                                }
-
-                                                if ui
-                                                    .add_enabled(
-                                                        self.slot_copy.is_some(),
-                                                        Button::new("Paste Slot").shortcut_text(
-                                                            ui.ctx().format_shortcut(
-                                                                &self.shortcut.slot_paste,
-                                                            ),
-                                                        ),
-                                                    )
-                                                    .clicked()
-                                                {
-                                                    self.actions
-                                                        .push_back(Action::SlotPaste(doll_id));
-
-                                                    ui.close_menu();
-                                                }
-
-                                                if ui
-                                                    .add(
-                                                        Button::new("Duplicate Slot")
-                                                            .shortcut_text(
-                                                                ui.ctx().format_shortcut(
-                                                                    &self.shortcut.slot_duplicate,
-                                                                ),
-                                                            ),
-                                                    )
-                                                    .clicked()
-                                                {
-                                                    self.actions.push_back(Action::SlotDuplicate(
-                                                        doll_id, slot_id,
-                                                    ));
-
-                                                    ui.close_menu();
-                                                }
-                                            });
+                                        let resp = ui.add(SlotEntry::new(slot).actived(is_actived));
 
                                         if resp.clicked() {
                                             self.actived_slot = Some(slot_id);
@@ -433,12 +367,19 @@ impl EditorApp {
                                         if resp.double_clicked() {
                                             self.actions.push_back(Action::SlotEdit(slot_id));
                                         }
+
+                                        resp
+                                    })
+                                    .inner
+                                    .context_menu(|ui| {
+                                        self.menu_slot(ui, Some(slot_id));
                                     });
                                 }
                             }
 
                             if ui
                                 .allocate_response(ui.available_size(), Sense::click())
+                                .context_menu(|ui| self.menu_slot(ui, self.actived_slot))
                                 .clicked()
                             {
                                 self.actived_slot = None;
@@ -617,53 +558,42 @@ impl EditorApp {
                     .auto_shrink([false, false])
                     .show(ui, |ui| {
                         ui.horizontal_wrapped(|ui| {
-                            for (id, doll) in self.ppd.dolls() {
-                                let is_actived_doll = self
-                                    .actived_doll
-                                    .map_or(false, |actived_doll| actived_doll == *id);
+                            let dolls: Vec<u32> = self.ppd.dolls().map(|(id, _)| *id).collect();
 
-                                let resp = ui
-                                    .add(
-                                        Card::new(self.textures_doll.get(&id))
-                                            .desc(&doll.desc)
-                                            .highlighted(is_actived_doll),
-                                    )
+                            for id in dolls {
+                                if let Some(doll) = self.ppd.get_doll(id) {
+                                    let is_actived_doll = self
+                                        .actived_doll
+                                        .map_or(false, |actived_doll| actived_doll == id);
+
+                                    ui.add(|ui: &mut Ui| {
+                                        let resp = ui.add(
+                                            Card::new(self.textures_doll.get(&id))
+                                                .desc(&doll.desc)
+                                                .highlighted(is_actived_doll),
+                                        );
+
+                                        if resp.clicked() {
+                                            self.actived_doll = Some(id);
+                                        }
+
+                                        if resp.double_clicked() {
+                                            self.actions.push_back(Action::DollEdit(id));
+                                        }
+
+                                        resp
+                                    })
                                     .context_menu(|ui| {
-                                        if ui
-                                            .add_enabled(
-                                                self.ppd.dolls().len() > 1,
-                                                Button::new("Delete doll"),
-                                            )
-                                            .clicked()
-                                        {
-                                            self.actions.push_back(Action::DollRemoveRequest(*id));
-
-                                            ui.close_menu();
-                                        }
-
-                                        if ui
-                                            .add_enabled(
-                                                !doll.image.is_empty(),
-                                                Button::new("Resize to Background Size"),
-                                            )
-                                            .clicked()
-                                        {
-                                            self.actions
-                                                .push_back(Action::DollResizeToBackground(*id));
-
-                                            ui.close_menu();
-                                        }
+                                        self.menu_doll(ui, Some(id));
                                     });
-
-                                if resp.clicked() {
-                                    self.actived_doll = Some(*id);
-                                }
-
-                                if resp.double_clicked() {
-                                    self.actions.push_back(Action::DollEdit(*id));
                                 }
                             }
                         });
+
+                        ui.allocate_response(ui.available_size(), Sense::click())
+                            .context_menu(|ui| {
+                                self.menu_doll(ui, self.actived_doll);
+                            });
                     });
             });
         });
@@ -888,63 +818,57 @@ impl EditorApp {
                                 .actived_slot
                                 .map(|id| self.ppd.get_slot(id))
                                 .flatten()
-                                .map(|slot| &slot.candidates);
+                                .map(|slot| slot.candidates.clone())
+                                .unwrap_or_default();
+
+                            let fragments: Vec<u32> =
+                                self.ppd.fragments().map(|(id, _)| *id).collect();
 
                             let rounding = 5.0;
 
-                            for (id, fragment) in self.ppd.fragments() {
-                                if !self.fragments_filter_keyword.is_empty()
-                                    && !fragment.desc.contains(&self.fragments_filter_keyword)
-                                {
-                                    continue;
-                                }
-
-                                let is_actived_fragment = self
-                                    .actived_fragment
-                                    .map_or(false, |actived_fragment| actived_fragment == *id);
-
-                                let resp = ui
-                                    .add(
-                                        Card::new(self.textures_fragment.get(&id))
-                                            .desc(&fragment.desc)
-                                            .rounding(rounding)
-                                            .highlighted(is_actived_fragment),
-                                    )
-                                    .context_menu(|ui| {
-                                        if ui.button("Edit fragment").clicked() {
-                                            self.actions.push_back(Action::FragmentEdit(*id));
-
-                                            ui.close_menu();
-                                        }
-
-                                        if ui.button("Delete fragment").clicked() {
-                                            self.actions
-                                                .push_back(Action::FragmentRemoveRequest(*id));
-
-                                            ui.close_menu();
-                                        }
-
-                                        ui.separator();
-
-                                        if ui.button("Add to slot").clicked() {}
-                                    });
-
-                                if resp.clicked() {
-                                    self.actived_fragment = Some(*id);
-                                }
-
-                                if resp.double_clicked() {
-                                    self.actions.push_back(Action::FragmentEdit(*id));
-                                }
-
-                                if let Some(candidates) = actived_slot_candidates {
-                                    if !candidates.contains(id) {
-                                        ui.painter().rect_filled(
-                                            resp.rect,
-                                            rounding,
-                                            Color32::from_black_alpha(200),
-                                        );
+                            for id in fragments {
+                                if let Some(fragment) = self.ppd.get_fragment(id) {
+                                    if !self.fragments_filter_keyword.is_empty()
+                                        && !fragment.desc.contains(&self.fragments_filter_keyword)
+                                    {
+                                        continue;
                                     }
+
+                                    ui.add(|ui: &mut Ui| {
+                                        let is_actived_fragment = self
+                                            .actived_fragment
+                                            .map_or(false, |actived_fragment| {
+                                                actived_fragment == id
+                                            });
+
+                                        let resp = ui.add(
+                                            Card::new(self.textures_fragment.get(&id))
+                                                .desc(&fragment.desc)
+                                                .rounding(rounding)
+                                                .highlighted(is_actived_fragment),
+                                        );
+
+                                        if !actived_slot_candidates.contains(&id) {
+                                            ui.painter().rect_filled(
+                                                resp.rect,
+                                                rounding,
+                                                Color32::from_black_alpha(200),
+                                            );
+                                        }
+
+                                        if resp.clicked() {
+                                            self.actived_fragment = Some(id);
+                                        }
+
+                                        if resp.double_clicked() {
+                                            self.actions.push_back(Action::FragmentEdit(id));
+                                        }
+
+                                        resp
+                                    })
+                                    .context_menu(|ui| {
+                                        self.menu_fragment(ui, Some(id));
+                                    });
                                 }
                             }
 
@@ -958,6 +882,9 @@ impl EditorApp {
 
                         if ui
                             .allocate_response(ui.available_size(), Sense::click())
+                            .context_menu(|ui| {
+                                self.menu_fragment(ui, self.actived_fragment);
+                            })
                             .clicked()
                         {
                             self.actived_fragment = None;

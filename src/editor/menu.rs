@@ -3,6 +3,140 @@ use eframe::egui::{menu, Button, Ui};
 use super::{actions::Action, EditorApp};
 
 impl EditorApp {
+    pub(super) fn menu_doll(&mut self, ui: &mut Ui, id: Option<u32>) {
+        let doll = id.map(|id| self.ppd.get_doll(id)).flatten();
+
+        if ui.button("New Doll").clicked() {
+            self.actions.push_back(Action::DollCreate);
+
+            ui.close_menu();
+        }
+
+        ui.add_enabled_ui(doll.is_some(), |ui| {
+            if ui
+                .add_enabled(self.ppd.dolls().len() > 1, Button::new("Delete Doll"))
+                .clicked()
+            {
+                self.actions
+                    .push_back(Action::DollRemoveRequest(doll.unwrap().id()));
+
+                ui.close_menu();
+            }
+
+            ui.separator();
+
+            if ui
+                .add_enabled(
+                    !doll.unwrap().image.is_empty(),
+                    Button::new("Resize to Background Size"),
+                )
+                .clicked()
+            {
+                self.actions
+                    .push_back(Action::DollResizeToBackground(doll.unwrap().id()));
+
+                ui.close_menu();
+            }
+        });
+    }
+
+    pub(super) fn menu_fragment(&mut self, ui: &mut Ui, id: Option<u32>) {
+        let fragment = id.map(|id| self.ppd.get_fragment(id)).flatten();
+
+        if ui.button("New Fragment").clicked() {
+            self.actions.push_back(Action::FragmentCreate);
+
+            ui.close_menu();
+        }
+
+        ui.add_enabled_ui(fragment.is_some(), |ui| {
+            if ui.button("Edit Fragment").clicked() {
+                self.actions
+                    .push_back(Action::FragmentEdit(fragment.unwrap().id()));
+
+                ui.close_menu();
+            }
+
+            if ui.button("Delete Fragment").clicked() {
+                self.actions
+                    .push_back(Action::FragmentRemoveRequest(fragment.unwrap().id()));
+
+                ui.close_menu();
+            }
+        });
+    }
+
+    pub(super) fn menu_slot(&mut self, ui: &mut Ui, id: Option<u32>) {
+        let slot = id.map(|id| self.ppd.get_slot(id)).flatten();
+
+        if ui.button("New Slot").clicked() {
+            self.actions.push_back(Action::SlotCreate);
+
+            ui.close_menu();
+        }
+
+        ui.add_enabled_ui(slot.is_some(), |ui| {
+            if ui.button("Edit Slot").clicked() {
+                self.actions.push_back(Action::SlotEdit(slot.unwrap().id()));
+
+                ui.close_menu();
+            }
+
+            if ui.button("Delete Slot").clicked() {
+                self.actions
+                    .push_back(Action::SlotRemoveRequest(slot.unwrap().id()));
+
+                ui.close_menu();
+            }
+
+            ui.separator();
+
+            if ui
+                .add(
+                    Button::new("Copy Slot")
+                        .shortcut_text(ui.ctx().format_shortcut(&self.shortcut.slot_copy)),
+                )
+                .clicked()
+            {
+                self.actions.push_back(Action::SlotCopy(slot.unwrap().id()));
+
+                ui.close_menu();
+            }
+        });
+
+        if ui
+            .add_enabled(
+                self.actived_doll.is_some() && self.slot_copy.is_some(),
+                Button::new("Paste Slot")
+                    .shortcut_text(ui.ctx().format_shortcut(&self.shortcut.slot_paste)),
+            )
+            .clicked()
+        {
+            self.actions
+                .push_back(Action::SlotPaste(self.actived_doll.unwrap()));
+
+            ui.close_menu();
+        }
+
+        ui.add_enabled_ui(slot.is_some(), |ui| {
+            if ui
+                .add_enabled(
+                    self.actived_doll.is_some() && slot.is_some(),
+                    Button::new("Duplicate Slot")
+                        .shortcut_text(ui.ctx().format_shortcut(&self.shortcut.slot_duplicate)),
+                )
+                .clicked()
+            {
+                self.actions.push_back(Action::SlotDuplicate(
+                    self.actived_doll.unwrap(),
+                    slot.unwrap().id(),
+                ));
+
+                ui.close_menu();
+            }
+        });
+    }
+
     pub(super) fn ui_menu_bar(&mut self, ui: &mut Ui) {
         let ctx = ui.ctx();
 
@@ -114,139 +248,15 @@ impl EditorApp {
             ui.menu_button("Edit", |ui| {});
 
             ui.menu_button("Doll", |ui| {
-                let doll = self.actived_doll.map(|id| self.ppd.get_doll(id)).flatten();
-
-                if ui.button("New Doll").clicked() {
-                    self.actions.push_back(Action::DollCreate);
-
-                    ui.close_menu();
-                }
-
-                ui.add_enabled_ui(doll.is_some(), |ui| {
-                    if ui
-                        .add_enabled(self.ppd.dolls().len() > 1, Button::new("Delete Doll"))
-                        .clicked()
-                    {
-                        self.actions
-                            .push_back(Action::DollRemoveRequest(doll.unwrap().id()));
-
-                        ui.close_menu();
-                    }
-                });
-
-                ui.separator();
-
-                ui.add_enabled_ui(doll.is_some(), |ui| {
-                    if ui
-                        .add_enabled(
-                            !doll.unwrap().image.is_empty(),
-                            Button::new("Resize to Background Size"),
-                        )
-                        .clicked()
-                    {
-                        self.actions
-                            .push_back(Action::DollResizeToBackground(doll.unwrap().id()));
-
-                        ui.close_menu();
-                    }
-                });
+                self.menu_doll(ui, self.actived_doll);
             });
 
             ui.menu_button("Slot", |ui| {
-                let slot = self.actived_slot.map(|id| self.ppd.get_slot(id)).flatten();
-
-                if ui.button("New Slot").clicked() {
-                    self.actions.push_back(Action::SlotCreate);
-
-                    ui.close_menu();
-                }
-
-                ui.add_enabled_ui(slot.is_some(), |ui| {
-                    if ui.button("Edit Slot").clicked() {
-                        self.actions.push_back(Action::SlotEdit(slot.unwrap().id()));
-
-                        ui.close_menu();
-                    }
-
-                    if ui.button("Delete Slot").clicked() {
-                        self.actions
-                            .push_back(Action::SlotRemoveRequest(slot.unwrap().id()));
-
-                        ui.close_menu();
-                    }
-
-                    if ui
-                        .add(
-                            Button::new("Copy Slot")
-                                .shortcut_text(ui.ctx().format_shortcut(&self.shortcut.slot_copy)),
-                        )
-                        .clicked()
-                    {
-                        self.actions.push_back(Action::SlotCopy(slot.unwrap().id()));
-
-                        ui.close_menu();
-                    }
-
-                    if ui
-                        .add_enabled(
-                            self.actived_doll.is_some() && self.slot_copy.is_some(),
-                            Button::new("Paste Slot")
-                                .shortcut_text(ui.ctx().format_shortcut(&self.shortcut.slot_paste)),
-                        )
-                        .clicked()
-                    {
-                        self.actions
-                            .push_back(Action::SlotPaste(self.actived_doll.unwrap()));
-
-                        ui.close_menu();
-                    }
-
-                    if ui
-                        .add_enabled(
-                            self.actived_doll.is_some() && slot.is_some(),
-                            Button::new("Duplicate Slot").shortcut_text(
-                                ui.ctx().format_shortcut(&self.shortcut.slot_duplicate),
-                            ),
-                        )
-                        .clicked()
-                    {
-                        self.actions.push_back(Action::SlotDuplicate(
-                            self.actived_doll.unwrap(),
-                            slot.unwrap().id(),
-                        ));
-
-                        ui.close_menu();
-                    }
-                });
+                self.menu_slot(ui, self.actived_slot);
             });
 
             ui.menu_button("Fragment", |ui| {
-                let fragment = self
-                    .actived_fragment
-                    .map(|id| self.ppd.get_fragment(id))
-                    .flatten();
-
-                if ui.button("New Fragment").clicked() {
-                    self.actions.push_back(Action::FragmentCreate);
-
-                    ui.close_menu();
-                }
-
-                ui.add_enabled_ui(fragment.is_some(), |ui| {
-                    if ui.button("Edit Fragment").clicked() {
-                        self.actions
-                            .push_back(Action::FragmentEdit(fragment.unwrap().id()));
-
-                        ui.close_menu();
-                    }
-
-                    if ui.button("Delete Fragment").clicked() {
-                        self.actions
-                            .push_back(Action::FragmentRemoveRequest(fragment.unwrap().id()));
-
-                        ui.close_menu();
-                    }
-                });
+                self.menu_fragment(ui, self.actived_fragment);
             });
 
             // ui.menu_button("Preview", |ui| {
