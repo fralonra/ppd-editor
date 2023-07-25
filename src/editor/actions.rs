@@ -157,6 +157,8 @@ impl EditorApp {
                             if let Some(adapter_doll) = self.adapter_doll.take() {
                                 doll.desc = adapter_doll.desc;
                                 doll.path = adapter_doll.path;
+                                doll.width = adapter_doll.width;
+                                doll.height = adapter_doll.height;
 
                                 if let Some(texture) = adapter_doll.image.texture {
                                     self.textures_doll.insert(
