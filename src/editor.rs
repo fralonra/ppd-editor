@@ -146,7 +146,12 @@ impl App for EditorApp {
 
 impl EditorApp {
     pub fn new(cc: &CreationContext<'_>) -> Self {
-        let ppd = PaperdollFactory::default();
+        let mut ppd = PaperdollFactory::default();
+
+        if let Some(doll) = ppd.get_doll_mut(0) {
+            doll.width = 400;
+            doll.height = 400;
+        }
 
         Self::from_ppd(cc, ppd)
     }
