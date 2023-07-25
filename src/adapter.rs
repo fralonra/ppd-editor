@@ -11,7 +11,6 @@ pub enum FragmentFilter {
     IsNotCandidate,
 }
 
-#[derive(Default)]
 pub struct DollAdapter {
     pub desc: String,
     pub width: u32,
@@ -19,6 +18,19 @@ pub struct DollAdapter {
     pub offset: Point,
     pub path: String,
     pub image: ImageAdapter,
+}
+
+impl Default for DollAdapter {
+    fn default() -> Self {
+        Self {
+            desc: String::default(),
+            width: 400,
+            height: 400,
+            offset: Point::default(),
+            path: String::default(),
+            image: ImageAdapter::default(),
+        }
+    }
 }
 
 impl From<&Doll> for DollAdapter {
@@ -73,7 +85,6 @@ impl From<&ImageData> for ImageAdapter {
     }
 }
 
-#[derive(Default)]
 pub struct SlotAdapter {
     pub desc: String,
     pub required: bool,
@@ -90,6 +101,24 @@ pub struct SlotAdapter {
     pub actived_fragments: Vec<u32>,
     pub fragments_filter: FragmentFilter,
     pub fragments_filter_keyword: String,
+}
+
+impl Default for SlotAdapter {
+    fn default() -> Self {
+        Self {
+            desc: String::default(),
+            required: false,
+            constrainted: false,
+            position: Point::default(),
+            width: 50,
+            height: 50,
+            anchor: Point::default(),
+            candidates: vec![],
+            actived_fragments: vec![],
+            fragments_filter: FragmentFilter::default(),
+            fragments_filter_keyword: String::default(),
+        }
+    }
 }
 
 impl From<&Slot> for SlotAdapter {
