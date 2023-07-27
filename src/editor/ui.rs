@@ -207,7 +207,7 @@ impl EditorApp {
 
                     ui.horizontal_centered(|ui| {
                         ui.label("Size:");
-                        ui.add(Tooltip::new("The size of the doll."))
+                        ui.add(Tooltip::new("The size of the doll."));
                     });
                     ui.horizontal_wrapped(|ui| {
                         ui.monospace("w");
@@ -231,7 +231,7 @@ impl EditorApp {
                         ui.label("Offset:");
                         ui.add(Tooltip::new(
                         "Offset pixels of the top left position of the background image, if any.",
-                    ))
+                    ));
                     });
                     ui.horizontal_wrapped(|ui| {
                         ui.monospace("x");
@@ -245,7 +245,7 @@ impl EditorApp {
 
                     ui.horizontal_centered(|ui| {
                         ui.label("Background:");
-                        ui.add(Tooltip::new("The background of the doll. It's optional."))
+                        ui.add(Tooltip::new("The background of the doll. It's optional."));
                     });
 
                     let mut request_edit = false;
@@ -280,7 +280,12 @@ impl EditorApp {
 
             ui.separator();
 
-            ui.label("Slots");
+            ui.horizontal(|ui| {
+                ui.label("Slots");
+                ui.add(Tooltip::new(
+                    "Areas where you can place fragments on top of them.",
+                ));
+            });
 
             ui.horizontal_wrapped(|ui| {
                 if ui
@@ -506,7 +511,7 @@ impl EditorApp {
 
                         ui.horizontal_centered(|ui| {
                             ui.label("Size:");
-                            ui.add(Tooltip::new("The size of the doll."))
+                            ui.add(Tooltip::new("The size of the doll."));
                         });
                         ui.horizontal_wrapped(|ui| {
                             ui.monospace("w");
@@ -528,7 +533,7 @@ impl EditorApp {
 
                         ui.horizontal_centered(|ui| {
                             ui.label("Offset:");
-                            ui.add(Tooltip::new("Offset pixels of the top left position of the background image, if any."))
+                            ui.add(Tooltip::new("Offset pixels of the top left position of the background image, if any."));
                         });
                         ui.horizontal_wrapped(|ui| {
                             ui.monospace("x");
@@ -542,7 +547,7 @@ impl EditorApp {
 
                         ui.horizontal_centered(|ui| {
                             ui.label("Background:");
-                            ui.add(Tooltip::new("The background of the doll. It's optional."))
+                            ui.add(Tooltip::new("The background of the doll. It's optional."));
                         });
 
                         let texture =
@@ -739,7 +744,7 @@ impl EditorApp {
 
                             ui.horizontal_centered(|ui| {
                                 ui.label("Image:");
-                                ui.add(Tooltip::new("It's required."))
+                                ui.add(Tooltip::new("It's required."));
                             });
 
                             let texture = if is_create_mode {
@@ -841,7 +846,10 @@ impl EditorApp {
 
     fn ui_right_panel(&mut self, ui: &mut Ui) {
         ui.vertical(|ui| {
-            ui.heading("Fragments");
+            ui.horizontal(|ui| {
+                ui.heading("Fragments");
+                ui.add(Tooltip::new("Image assets which can be placed into slots."));
+            });
 
             ui.horizontal_wrapped(|ui| {
                 if ui
@@ -1044,7 +1052,10 @@ impl EditorApp {
                         ui.vertical(|ui| {
                             ui.set_height(left_resp.rect.height());
 
-                            ui.label("Candidates");
+                            ui.horizontal(|ui| {
+                                ui.label("Candidates");
+                                ui.add(Tooltip::new("Fragments those can be used in this slot."));
+                            });
 
                             ui.horizontal_centered(|ui| {
                                 let frame_width = 166.0;
@@ -1389,7 +1400,7 @@ fn ui_fragment_window_grid(
         ui.label("Pivot:");
         ui.add(Tooltip::new(
             "The position where connects to the anchor point of a slot.",
-        ))
+        ));
     });
     ui.add(PivotSelect::new(
         &mut pivot.x,
@@ -1419,7 +1430,7 @@ fn ui_slot_window_grid(
 
         ui.horizontal_centered(|ui| {
             ui.label("Required:");
-            ui.add(Tooltip::new("This slot always displays an image."))
+            ui.add(Tooltip::new("This slot always displays an image."));
         });
         ui.checkbox(required, "");
 
@@ -1427,7 +1438,7 @@ fn ui_slot_window_grid(
 
         ui.horizontal_centered(|ui| {
             ui.label("Constrained:");
-            ui.add(Tooltip::new("Resize image to fit the size of the slot, no matter what the original size of the image is."))
+            ui.add(Tooltip::new("Resize image to fit the size of the slot, no matter what the original size of the image is."));
         });
         ui.checkbox(constrainted, "");
 
@@ -1435,7 +1446,7 @@ fn ui_slot_window_grid(
 
         ui.horizontal_centered(|ui| {
             ui.label("Position:");
-            ui.add(Tooltip::new("The top left position of the slot."))
+            ui.add(Tooltip::new("The top left position of the slot."));
         });
         ui.horizontal_wrapped(|ui| {
             ui.monospace("x");
@@ -1449,7 +1460,7 @@ fn ui_slot_window_grid(
 
         ui.horizontal_centered(|ui| {
             ui.label("Size:");
-            ui.add(Tooltip::new("The size of the slot. The displayed image will resize to this size if constrained is set."))
+            ui.add(Tooltip::new("The size of the slot. The displayed image will resize to this size if constrained is set."));
         });
         ui.horizontal_wrapped(|ui| {
             ui.monospace("w");
@@ -1471,7 +1482,7 @@ fn ui_slot_window_grid(
 
         ui.horizontal_centered(|ui| {
             ui.label("Anchor:");
-            ui.add(Tooltip::new("If constrained is not set, the position where the pivot of the image placed to."))
+            ui.add(Tooltip::new("If constrained is not set, the position where the pivot of the image placed to."));
         });
         ui.add_enabled(!*constrainted,
             PivotSelect::new(&mut anchor.x, &mut anchor.y, *width as f32, *height as f32)
