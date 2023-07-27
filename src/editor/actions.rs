@@ -70,6 +70,7 @@ pub enum Action {
     SlotRaise(u32, u32),
     SlotRaiseTop(u32, u32),
     SlotRemoveCandidate(Option<u32>, u32),
+    SlotRemoveCandidates(Option<u32>, Vec<u32>),
     SlotRemoveConfirm(u32),
     SlotRemoveRequest(u32),
     WindowAssociatedSlotsVisible(bool),
@@ -597,7 +598,13 @@ impl EditorApp {
                         });
 
                     if let Some(candidates) = candidates {
-                        candidates.extend(fragments);
+                        for fragment_id in fragments {
+                            if candidates.contains(&fragment_id) {
+                                continue;
+                            }
+
+                            candidates.push(fragment_id);
+                        }
                     }
                 }
                 Action::SlotCopy(id) => {
@@ -764,6 +771,27 @@ impl EditorApp {
                     if let Some(candidates) = candidates {
                         if let Some(position) = candidates.iter().position(|v| *v == fragment_id) {
                             candidates.remove(position);
+                        }
+                    }
+                }
+                Action::SlotRemoveCandidates(slot_id, fragments) => {
+                    let candidates = slot_id
+                        .map(|id| self.ppd.get_slot_mut(id))
+                        .flatten()
+                        .map(|slot| &mut slot.candidates)
+                        .or_else(|| {
+                            self.adapter_slot
+                                .as_mut()
+                                .map(|adapter| &mut adapter.candidates)
+                        });
+
+                    if let Some(candidates) = candidates {
+                        for fragment_id in fragments {
+                            if let Some(position) =
+                                candidates.iter().position(|v| *v == fragment_id)
+                            {
+                                candidates.remove(position);
+                            }
                         }
                     }
                 }

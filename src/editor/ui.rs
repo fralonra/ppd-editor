@@ -1222,7 +1222,23 @@ impl EditorApp {
                                 });
 
                                 ui.vertical(|ui| {
-                                    ui.allocate_space(vec2(1.0, left_resp.rect.size().y * 0.4));
+                                    ui.allocate_space(vec2(1.0, 60.0));
+
+                                    if ui
+                                        .add_enabled(
+                                            adapter_slot.filtered_fragments.len() > 0,
+                                            Button::new(icon_to_char(Icon::FirstPage).to_string()),
+                                        )
+                                        .on_hover_text(
+                                            "Add all fragments in the right to candidates",
+                                        )
+                                        .clicked()
+                                    {
+                                        self.actions.push_back(Action::SlotAddCandidates(
+                                            id,
+                                            adapter_slot.filtered_fragments.clone(),
+                                        ));
+                                    }
 
                                     if ui
                                         .add_enabled(
@@ -1231,6 +1247,7 @@ impl EditorApp {
                                                 icon_to_char(Icon::ChevronLeft).to_string(),
                                             ),
                                         )
+                                        .on_hover_text("Add selected fragments to candidates")
                                         .clicked()
                                     {
                                         self.actions.push_back(Action::SlotAddCandidates(
@@ -1250,11 +1267,26 @@ impl EditorApp {
                                                 icon_to_char(Icon::ChevronRight).to_string(),
                                             ),
                                         )
+                                        .on_hover_text("Remove selected fragment from candidates")
                                         .clicked()
                                     {
                                         self.actions.push_back(Action::SlotRemoveCandidate(
                                             id,
                                             adapter_slot.actived_candidate.unwrap(),
+                                        ))
+                                    }
+
+                                    if ui
+                                        .add_enabled(
+                                            candidates.len() > 0,
+                                            Button::new(icon_to_char(Icon::LastPage).to_string()),
+                                        )
+                                        .on_hover_text("Remove all fragments from candidates")
+                                        .clicked()
+                                    {
+                                        self.actions.push_back(Action::SlotRemoveCandidates(
+                                            id,
+                                            candidates.to_vec(),
                                         ))
                                     }
                                 });
