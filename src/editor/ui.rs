@@ -6,16 +6,19 @@ use eframe::{
         TextEdit, TopBottomPanel, Ui, Window,
     },
     emath::{Align, Align2},
-    epaint::Color32,
+    epaint::{vec2, Color32},
 };
 use material_icons::{icon_to_char, Icon};
 use paperdoll_tar::paperdoll::common::Point;
 
-use crate::{adapter::FragmentFilter, common::TextureData};
+use crate::common::TextureData;
 
 use super::{
     actions::Action,
-    widgets::{Card, Dialog, DialogResponse, ImageUpload, Modal, PivotSelect, SlotEntry, Tooltip},
+    widgets::{
+        Card, Dialog, DialogResponse, FragmentEntry, ImageUpload, Modal, PivotSelect, SlotEntry,
+        Tooltip,
+    },
     EditorApp,
 };
 
@@ -314,7 +317,7 @@ impl EditorApp {
                             self.actived_slot.map_or(false, |slot_id| {
                                 doll.slots
                                     .iter()
-                                    .position(|v| *v == slot_id)
+                                    .position(|id| *id == slot_id)
                                     .map_or(false, |i| i > 0)
                             }),
                             Button::new(icon_to_char(Icon::ExpandLess).to_string()),
@@ -347,7 +350,7 @@ impl EditorApp {
                             self.actived_slot.map_or(false, |slot_id| {
                                 doll.slots
                                     .iter()
-                                    .position(|v| *v == slot_id)
+                                    .position(|id| *id == slot_id)
                                     .map_or(false, |i| i < doll.slots.len() - 1)
                             }),
                             Button::new(icon_to_char(Icon::ExpandMore).to_string()),
@@ -1001,175 +1004,337 @@ impl EditorApp {
 
                     ui.heading("Slot");
 
-                    if is_create_mode {
-                        ui_slot_window_grid(
-                            &mut adapter_slot.desc,
-                            &mut adapter_slot.required,
-                            &mut adapter_slot.constrainted,
-                            &mut adapter_slot.position,
-                            &mut adapter_slot.width,
-                            &mut adapter_slot.height,
-                            &mut adapter_slot.anchor,
-                            ui,
-                        );
-                    } else {
-                        let slot = id.map(|id| self.ppd.get_slot_mut(id)).flatten();
+                    ui.horizontal(|ui| {
+                        let left_resp = ui
+                            .vertical(|ui| {
+                                ui.set_max_width(240.0);
 
-                        if let Some(slot) = slot {
-                            ui_slot_window_grid(
-                                &mut slot.desc,
-                                &mut slot.required,
-                                &mut slot.constrainted,
-                                &mut slot.position,
-                                &mut slot.width,
-                                &mut slot.height,
-                                &mut slot.anchor,
-                                ui,
-                            );
-                        }
-                    }
+                                if is_create_mode {
+                                    ui_slot_window_grid(
+                                        &mut adapter_slot.desc,
+                                        &mut adapter_slot.required,
+                                        &mut adapter_slot.constrainted,
+                                        &mut adapter_slot.position,
+                                        &mut adapter_slot.width,
+                                        &mut adapter_slot.height,
+                                        &mut adapter_slot.anchor,
+                                        ui,
+                                    );
+                                } else {
+                                    let slot = id.map(|id| self.ppd.get_slot_mut(id)).flatten();
 
-                    ui.separator();
-
-                    ui.label("Candidates");
-
-                    ui.collapsing("Filter", |ui| {
-                        ui.horizontal_wrapped(|ui| {
-                            if ui
-                                .radio_value(
-                                    &mut adapter_slot.fragments_filter,
-                                    FragmentFilter::All,
-                                    "All",
-                                )
-                                .changed()
-                            {
-                                self.actions.push_back(Action::SlotAdapterFragmentFilter);
-                            }
-
-                            if ui
-                                .radio_value(
-                                    &mut adapter_slot.fragments_filter,
-                                    FragmentFilter::IsCandidate,
-                                    "Is candidate",
-                                )
-                                .changed()
-                            {
-                                self.actions.push_back(Action::SlotAdapterFragmentFilter);
-                            }
-
-                            if ui
-                                .radio_value(
-                                    &mut adapter_slot.fragments_filter,
-                                    FragmentFilter::IsNotCandidate,
-                                    "Is not candidate",
-                                )
-                                .changed()
-                            {
-                                self.actions.push_back(Action::SlotAdapterFragmentFilter);
-                            }
-                        });
-
-                        ui.horizontal_wrapped(|ui| {
-                            if ui
-                                .add(
-                                    TextEdit::singleline(
-                                        &mut adapter_slot.fragments_filter_keyword,
-                                    )
-                                    .hint_text("description"),
-                                )
-                                .changed()
-                            {
-                                self.actions.push_back(Action::SlotAdapterFragmentFilter);
-                            }
-
-                            if ui.button(icon_to_char(Icon::Clear).to_string()).clicked() {
-                                adapter_slot.fragments_filter_keyword.clear();
-
-                                self.actions.push_back(Action::SlotAdapterFragmentFilter);
-                            }
-                        });
-                    });
-
-                    ui.group(|ui| {
-                        ScrollArea::vertical()
-                            .auto_shrink([false, false])
-                            .max_height(300.0)
-                            .show(ui, |ui| {
-                                ui.horizontal_wrapped(|ui| {
-                                    if self.ppd.fragments().len() == 0
-                                        || adapter_slot.actived_fragments.is_empty()
-                                    {
-                                        ui.horizontal_centered(|ui| {
-                                            ui.vertical_centered(|ui| {
-                                                if self.ppd.fragments().len() == 0 {
-                                                    ui.label(
-                                                        "The project doesn't have any fragments.",
-                                                    );
-                                                    ui.label("Please add a fragment first.");
-                                                } else if adapter_slot.actived_fragments.is_empty()
-                                                {
-                                                    ui.label("No fragments found.");
-                                                }
-                                            });
-                                        });
+                                    if let Some(slot) = slot {
+                                        ui_slot_window_grid(
+                                            &mut slot.desc,
+                                            &mut slot.required,
+                                            &mut slot.constrainted,
+                                            &mut slot.position,
+                                            &mut slot.width,
+                                            &mut slot.height,
+                                            &mut slot.anchor,
+                                            ui,
+                                        );
                                     }
+                                }
+                            })
+                            .response;
 
-                                    for fragment_id in &adapter_slot.actived_fragments {
-                                        if let Some(fragment) = self.ppd.get_fragment(*fragment_id)
-                                        {
-                                            let is_candidate = if is_create_mode {
-                                                adapter_slot.candidates.contains(fragment_id)
-                                            } else {
-                                                id.map_or(false, |id| {
-                                                    self.ppd.get_slot(id).map_or(false, |slot| {
-                                                        slot.candidates.contains(fragment_id)
-                                                    })
+                        ui.separator();
+
+                        ui.vertical(|ui| {
+                            ui.set_height(left_resp.rect.height());
+
+                            ui.label("Candidates");
+
+                            ui.horizontal_centered(|ui| {
+                                let frame_width = 166.0;
+
+                                let candidates = id
+                                    .map(|id| self.ppd.get_slot(id))
+                                    .flatten()
+                                    .map(|slot| &slot.candidates)
+                                    .unwrap_or_else(|| &adapter_slot.candidates);
+
+                                let can_raise =
+                                    adapter_slot.actived_candidate.map_or(false, |fragment_id| {
+                                        candidates
+                                            .iter()
+                                            .position(|id| *id == fragment_id)
+                                            .map_or(false, |i| i > 0)
+                                    });
+
+                                let can_lower =
+                                    adapter_slot.actived_candidate.map_or(false, |fragment_id| {
+                                        candidates
+                                            .iter()
+                                            .position(|id| *id == fragment_id)
+                                            .map_or(false, |i| i < candidates.len() - 1)
+                                    });
+
+                                ui.vertical(|ui| {
+                                    let actived_candidate = adapter_slot.actived_candidate;
+
+                                    ui.horizontal(|ui| {
+                                        ui.add_enabled_ui(actived_candidate.is_some(), |ui| {
+                                            if ui
+                                                .add_enabled(
+                                                    can_raise,
+                                                    Button::new(
+                                                        icon_to_char(Icon::ExpandLess).to_string(),
+                                                    ),
+                                                )
+                                                .on_hover_ui(|ui| {
+                                                    ui.vertical(|ui| {
+                                                        ui.label("Raise candidate");
+
+                                                        ui.horizontal(|ui| {
+                                                            ui.strong("Shift");
+
+                                                            ui.label("Raise to the top");
+                                                        });
+                                                    });
                                                 })
-                                            };
-
-                                            let resp = ui.add(
-                                                Card::new(self.textures_fragment.get(fragment_id))
-                                                    .desc(&fragment.desc)
-                                                    .highlighted(is_candidate),
-                                            );
-
-                                            if resp.clicked() {
-                                                if is_create_mode {
-                                                    if is_candidate {
-                                                        if let Some(index) = adapter_slot
-                                                            .candidates
-                                                            .iter()
-                                                            .position(|v| v == fragment_id)
-                                                        {
-                                                            adapter_slot.candidates.remove(index);
-                                                        }
-                                                    } else {
-                                                        adapter_slot.candidates.push(*fragment_id);
-                                                    }
-                                                } else {
-                                                    let slot = id
-                                                        .map(|id| self.ppd.get_slot_mut(id))
-                                                        .flatten();
-
-                                                    if let Some(slot) = slot {
-                                                        if is_candidate {
-                                                            if let Some(index) = slot
-                                                                .candidates
-                                                                .iter()
-                                                                .position(|v| v == fragment_id)
-                                                            {
-                                                                slot.candidates.remove(index);
-                                                            }
+                                                .clicked()
+                                            {
+                                                if let Some(fragment_id) = actived_candidate {
+                                                    self.actions.push_back(
+                                                        if ui.input(|input| input.modifiers.shift) {
+                                                            Action::CandidateRaiseTop(
+                                                                id,
+                                                                fragment_id,
+                                                            )
                                                         } else {
-                                                            slot.candidates.push(*fragment_id);
-                                                        }
-                                                    }
+                                                            Action::CandidateRaise(id, fragment_id)
+                                                        },
+                                                    );
                                                 }
                                             }
-                                        }
+
+                                            if ui
+                                                .add_enabled(
+                                                    can_lower,
+                                                    Button::new(
+                                                        icon_to_char(Icon::ExpandMore).to_string(),
+                                                    ),
+                                                )
+                                                .on_hover_ui(|ui| {
+                                                    ui.vertical(|ui| {
+                                                        ui.label("Lower candidate");
+
+                                                        ui.horizontal(|ui| {
+                                                            ui.strong("Shift");
+
+                                                            ui.label("Lower to the bottom");
+                                                        });
+                                                    });
+                                                })
+                                                .clicked()
+                                            {
+                                                if let Some(fragment_id) = actived_candidate {
+                                                    self.actions.push_back(
+                                                        if ui.input(|input| input.modifiers.shift) {
+                                                            Action::CandidateLowerBottom(
+                                                                id,
+                                                                fragment_id,
+                                                            )
+                                                        } else {
+                                                            Action::CandidateLower(id, fragment_id)
+                                                        },
+                                                    );
+                                                }
+                                            }
+                                        });
+                                    });
+
+                                    ui.group(|ui| {
+                                        ui.set_height(ui.available_height());
+
+                                        ScrollArea::both()
+                                            .auto_shrink([false, false])
+                                            .max_width(frame_width)
+                                            .show(ui, |ui| {
+                                                ui.vertical(|ui| {
+                                                    ui.spacing_mut().item_spacing.y = 0.0;
+
+                                                    for candidate_id in candidates {
+                                                        if let Some(candidate) =
+                                                            self.ppd.get_fragment(*candidate_id)
+                                                        {
+                                                            let is_actived = adapter_slot
+                                                                .actived_candidate
+                                                                .map_or(
+                                                                    false,
+                                                                    |actived_candidate| {
+                                                                        actived_candidate
+                                                                            == *candidate_id
+                                                                    },
+                                                                );
+
+                                                            let texture = self
+                                                                .textures_fragment
+                                                                .get(&candidate_id);
+
+                                                            let resp = ui.add(
+                                                                FragmentEntry::new(candidate)
+                                                                    .actived(is_actived)
+                                                                    .texture(texture),
+                                                            );
+
+                                                            if resp.clicked() {
+                                                                adapter_slot.actived_candidate =
+                                                                    Some(*candidate_id);
+                                                            }
+
+                                                            if resp.double_clicked() {
+                                                                self.actions.push_back(
+                                                                    Action::SlotRemoveCandidate(
+                                                                        id,
+                                                                        *candidate_id,
+                                                                    ),
+                                                                );
+                                                            }
+                                                        }
+                                                    }
+
+                                                    if ui
+                                                        .allocate_response(
+                                                            ui.available_size(),
+                                                            Sense::click(),
+                                                        )
+                                                        .clicked()
+                                                    {
+                                                        adapter_slot.actived_candidate = None
+                                                    }
+                                                });
+                                            });
+                                    });
+                                });
+
+                                ui.vertical(|ui| {
+                                    ui.allocate_space(vec2(1.0, left_resp.rect.size().y * 0.4));
+
+                                    if ui
+                                        .add_enabled(
+                                            adapter_slot.actived_fragments.len() > 0,
+                                            Button::new(
+                                                icon_to_char(Icon::ChevronLeft).to_string(),
+                                            ),
+                                        )
+                                        .clicked()
+                                    {
+                                        self.actions.push_back(Action::SlotAddCandidates(
+                                            id,
+                                            adapter_slot
+                                                .actived_fragments
+                                                .iter()
+                                                .map(|id| *id)
+                                                .collect::<Vec<u32>>(),
+                                        ));
+                                    }
+
+                                    if ui
+                                        .add_enabled(
+                                            adapter_slot.actived_candidate.is_some(),
+                                            Button::new(
+                                                icon_to_char(Icon::ChevronRight).to_string(),
+                                            ),
+                                        )
+                                        .clicked()
+                                    {
+                                        self.actions.push_back(Action::SlotRemoveCandidate(
+                                            id,
+                                            adapter_slot.actived_candidate.unwrap(),
+                                        ))
                                     }
                                 });
+
+                                ui.vertical(|ui| {
+                                    ui.horizontal(|ui| {
+                                        ui.set_width(frame_width - 8.0);
+
+                                        if ui
+                                            .add(
+                                                TextEdit::singleline(
+                                                    &mut adapter_slot.fragments_filter_keyword,
+                                                )
+                                                .hint_text("Filter by description"),
+                                            )
+                                            .changed()
+                                        {
+                                            self.actions
+                                                .push_back(Action::SlotAdapterFragmentFilter);
+                                        }
+
+                                        if ui
+                                            .button(icon_to_char(Icon::Clear).to_string())
+                                            .clicked()
+                                        {
+                                            adapter_slot.fragments_filter_keyword.clear();
+
+                                            self.actions
+                                                .push_back(Action::SlotAdapterFragmentFilter);
+                                        }
+                                    });
+
+                                    ui.group(|ui| {
+                                        ui.set_height(ui.available_height());
+
+                                        ScrollArea::both()
+                                            .auto_shrink([false, false])
+                                            .max_width(frame_width)
+                                            .show(ui, |ui| {
+                                                ui.horizontal_wrapped(|ui| {
+                                                    for fragment_id in
+                                                        &adapter_slot.filtered_fragments
+                                                    {
+                                                        if candidates.contains(fragment_id) {
+                                                            continue;
+                                                        }
+
+                                                        let is_selected = adapter_slot
+                                                            .actived_fragments
+                                                            .contains(fragment_id);
+
+                                                        if let Some(fragment) =
+                                                            self.ppd.get_fragment(*fragment_id)
+                                                        {
+                                                            let resp = ui.add(
+                                                                Card::new(
+                                                                    self.textures_fragment
+                                                                        .get(fragment_id),
+                                                                )
+                                                                .desc(&fragment.desc)
+                                                                .highlighted(is_selected),
+                                                            );
+
+                                                            if resp.clicked() {
+                                                                if is_selected {
+                                                                    adapter_slot
+                                                                        .actived_fragments
+                                                                        .remove(fragment_id);
+                                                                } else {
+                                                                    adapter_slot
+                                                                        .actived_fragments
+                                                                        .insert(*fragment_id);
+                                                                }
+                                                            }
+
+                                                            if resp.double_clicked() {
+                                                                self.actions.push_back(
+                                                                    Action::SlotAddCandidate(
+                                                                        id,
+                                                                        *fragment_id,
+                                                                    ),
+                                                                );
+                                                            }
+                                                        }
+                                                    }
+                                                });
+                                            });
+                                    });
+                                });
                             });
+                        });
                     });
 
                     ui.add_visible_ui(self.window_slot_error.is_some(), |ui| {

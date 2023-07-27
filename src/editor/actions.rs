@@ -1,6 +1,6 @@
-use std::{path::PathBuf, thread};
+use std::path::PathBuf;
 
-use anyhow::{anyhow, Result};
+use anyhow::{bail, Result};
 use eframe::{egui::Context, epaint::Pos2, Frame};
 use paperdoll_tar::{
     paperdoll::{
@@ -11,10 +11,9 @@ use paperdoll_tar::{
 };
 
 use crate::{
-    adapter::{DollAdapter, FragmentAdapter, FragmentFilter, ImageAdapter, SlotAdapter},
+    adapter::{DollAdapter, FragmentAdapter, ImageAdapter, SlotAdapter},
     common::{upload_image_to_texture, upload_ppd_textures, TextureData},
     fs::{create_file, open_image_rgba, select_file, select_texture},
-    viewer,
 };
 
 use super::{DialogOption, EditorApp, APP_TITLE};
@@ -27,6 +26,10 @@ pub enum Action {
     AssociatedSlotsEdit(u32),
     AssociatedSlotsSelectAll,
     AssociatedSlotsUnselectAll,
+    CandidateLower(Option<u32>, u32),
+    CandidateLowerBottom(Option<u32>, u32),
+    CandidateRaise(Option<u32>, u32),
+    CandidateRaiseTop(Option<u32>, u32),
     CursorMoved(Option<Pos2>),
     DollCreate,
     DollAdapterBackgroundRemove,
@@ -52,8 +55,9 @@ pub enum Action {
     FragmentRemoveRequest(u32),
     PpdLoad(PaperdollFactory),
     PpdChanged,
-    // PpdPreview,
     SlotAdapterFragmentFilter,
+    SlotAddCandidate(Option<u32>, u32),
+    SlotAddCandidates(Option<u32>, Vec<u32>),
     SlotCopy(u32),
     SlotCreate,
     SlotDuplicate(u32, u32),
@@ -65,6 +69,7 @@ pub enum Action {
     SlotPaste(u32),
     SlotRaise(u32, u32),
     SlotRaiseTop(u32, u32),
+    SlotRemoveCandidate(Option<u32>, u32),
     SlotRemoveConfirm(u32),
     SlotRemoveRequest(u32),
     WindowAssociatedSlotsVisible(bool),
@@ -133,6 +138,66 @@ impl EditorApp {
                 }
                 Action::AssociatedSlotsUnselectAll => {
                     self.associated_slots.clear();
+                }
+                Action::CandidateLower(slot_id, fragment_id) => {
+                    let candidates = slot_id
+                        .map(|id| self.ppd.get_slot_mut(id))
+                        .flatten()
+                        .map(|slot| &mut slot.candidates)
+                        .or_else(|| {
+                            self.adapter_slot
+                                .as_mut()
+                                .map(|adapter| &mut adapter.candidates)
+                        });
+
+                    if let Some(candidates) = candidates {
+                        lower_in_vec(fragment_id, candidates);
+                    }
+                }
+                Action::CandidateLowerBottom(slot_id, fragment_id) => {
+                    let candidates = slot_id
+                        .map(|id| self.ppd.get_slot_mut(id))
+                        .flatten()
+                        .map(|slot| &mut slot.candidates)
+                        .or_else(|| {
+                            self.adapter_slot
+                                .as_mut()
+                                .map(|adapter| &mut adapter.candidates)
+                        });
+
+                    if let Some(candidates) = candidates {
+                        lower_bottom_in_vec(fragment_id, candidates);
+                    }
+                }
+                Action::CandidateRaise(slot_id, fragment_id) => {
+                    let candidates = slot_id
+                        .map(|id| self.ppd.get_slot_mut(id))
+                        .flatten()
+                        .map(|slot| &mut slot.candidates)
+                        .or_else(|| {
+                            self.adapter_slot
+                                .as_mut()
+                                .map(|adapter| &mut adapter.candidates)
+                        });
+
+                    if let Some(candidates) = candidates {
+                        raise_in_vec(fragment_id, candidates);
+                    }
+                }
+                Action::CandidateRaiseTop(slot_id, fragment_id) => {
+                    let candidates = slot_id
+                        .map(|id| self.ppd.get_slot_mut(id))
+                        .flatten()
+                        .map(|slot| &mut slot.candidates)
+                        .or_else(|| {
+                            self.adapter_slot
+                                .as_mut()
+                                .map(|adapter| &mut adapter.candidates)
+                        });
+
+                    if let Some(candidates) = candidates {
+                        raise_top_in_vec(fragment_id, candidates);
+                    }
                 }
                 Action::CursorMoved(position) => {
                     self.cursor_position = position;
@@ -474,6 +539,7 @@ impl EditorApp {
                     self.textures_doll = textures_doll;
                     self.textures_fragment = textures_fragment;
 
+                    self.fragments_filter_keyword = String::default();
                     self.associated_slots.clear();
                     self.locked_slots.clear();
                     self.visible_slots = ppd.slots().map(|(id, _)| *id).collect();
@@ -500,24 +566,39 @@ impl EditorApp {
                     self.actions.push_back(Action::WindowFragmentVisible(false));
                     self.actions.push_back(Action::WindowSlotVisible(false));
                 }
-                // Action::PpdPreview => {
-                //     let manifest = self.ppd.to_manifest();
 
-                //     let ppd = PaperdollFactory::from_manifest(manifest)?;
-
-                //     thread::spawn(move || {
-                //         let native_options = eframe::NativeOptions::default();
-
-                //         eframe::run_native(
-                //             viewer::APP_TITLE,
-                //             native_options,
-                //             Box::new(|cc| viewer::setup_eframe(cc, Some(ppd))),
-                //         )
-                //         .map_err(|e| anyhow!("EEE: {}", e));
-                //     });
-                // }
                 Action::SlotAdapterFragmentFilter => {
                     self.filter_slot_fragment();
+                }
+                Action::SlotAddCandidate(slot_id, fragment_id) => {
+                    let candidates = slot_id
+                        .map(|id| self.ppd.get_slot_mut(id))
+                        .flatten()
+                        .map(|slot| &mut slot.candidates)
+                        .or_else(|| {
+                            self.adapter_slot
+                                .as_mut()
+                                .map(|adapter| &mut adapter.candidates)
+                        });
+
+                    if let Some(candidates) = candidates {
+                        candidates.push(fragment_id);
+                    }
+                }
+                Action::SlotAddCandidates(slot_id, fragments) => {
+                    let candidates = slot_id
+                        .map(|id| self.ppd.get_slot_mut(id))
+                        .flatten()
+                        .map(|slot| &mut slot.candidates)
+                        .or_else(|| {
+                            self.adapter_slot
+                                .as_mut()
+                                .map(|adapter| &mut adapter.candidates)
+                        });
+
+                    if let Some(candidates) = candidates {
+                        candidates.extend(fragments);
+                    }
                 }
                 Action::SlotCopy(id) => {
                     self.slot_copy = Some(id);
@@ -605,30 +686,12 @@ impl EditorApp {
                 }
                 Action::SlotLower(doll_id, slot_id) => {
                     if let Some(doll) = self.ppd.get_doll_mut(doll_id) {
-                        if let Some(position) = doll
-                            .slots
-                            .iter()
-                            .position(|v| *v == slot_id)
-                            .and_then(|index| (index < doll.slots.len() - 1).then_some(index))
-                        {
-                            doll.slots.swap(position, position + 1);
-                        }
+                        lower_in_vec(slot_id, &mut doll.slots);
                     }
                 }
                 Action::SlotLowerBottom(doll_id, slot_id) => {
                     if let Some(doll) = self.ppd.get_doll_mut(doll_id) {
-                        let len = doll.slots.len();
-
-                        if let Some(position) = doll
-                            .slots
-                            .iter()
-                            .position(|v| *v == slot_id)
-                            .and_then(|index| (index < len - 1).then_some(index))
-                        {
-                            let id = doll.slots.remove(position);
-
-                            doll.slots.push(id);
-                        }
+                        lower_bottom_in_vec(slot_id, &mut doll.slots);
                     }
                 }
                 Action::SlotPaste(doll_id) => {
@@ -679,27 +742,28 @@ impl EditorApp {
                 }
                 Action::SlotRaise(doll_id, slot_id) => {
                     if let Some(doll) = self.ppd.get_doll_mut(doll_id) {
-                        if let Some(position) = doll
-                            .slots
-                            .iter()
-                            .position(|v| *v == slot_id)
-                            .and_then(|index| (index > 0).then_some(index))
-                        {
-                            doll.slots.swap(position, position - 1);
-                        }
+                        raise_in_vec(slot_id, &mut doll.slots);
                     }
                 }
                 Action::SlotRaiseTop(doll_id, slot_id) => {
                     if let Some(doll) = self.ppd.get_doll_mut(doll_id) {
-                        if let Some(position) = doll
-                            .slots
-                            .iter()
-                            .position(|v| *v == slot_id)
-                            .and_then(|index| (index > 0).then_some(index))
-                        {
-                            let id = doll.slots.remove(position);
+                        raise_top_in_vec(slot_id, &mut doll.slots);
+                    }
+                }
+                Action::SlotRemoveCandidate(slot_id, fragment_id) => {
+                    let candidates = slot_id
+                        .map(|id| self.ppd.get_slot_mut(id))
+                        .flatten()
+                        .map(|slot| &mut slot.candidates)
+                        .or_else(|| {
+                            self.adapter_slot
+                                .as_mut()
+                                .map(|adapter| &mut adapter.candidates)
+                        });
 
-                            doll.slots.insert(0, id);
+                    if let Some(candidates) = candidates {
+                        if let Some(position) = candidates.iter().position(|v| *v == fragment_id) {
+                            candidates.remove(position);
                         }
                     }
                 }
@@ -776,25 +840,11 @@ impl EditorApp {
 
     fn filter_slot_fragment(&mut self) {
         if let Some(ref mut adapter_slot) = &mut self.adapter_slot {
-            adapter_slot.actived_fragments = match adapter_slot.fragments_filter {
-                FragmentFilter::All => self.ppd.fragments().map(|(id, _)| *id).collect(),
-                FragmentFilter::IsCandidate => self
-                    .ppd
-                    .fragments()
-                    .filter(|(id, _)| adapter_slot.candidates.contains(&id))
-                    .map(|(id, _)| *id)
-                    .collect(),
-                FragmentFilter::IsNotCandidate => self
-                    .ppd
-                    .fragments()
-                    .filter(|(id, _)| !adapter_slot.candidates.contains(&id))
-                    .map(|(id, _)| *id)
-                    .collect(),
-            };
+            adapter_slot.filtered_fragments = self.ppd.fragments().map(|(id, _)| *id).collect();
 
             if !adapter_slot.fragments_filter_keyword.is_empty() {
-                adapter_slot.actived_fragments = adapter_slot
-                    .actived_fragments
+                adapter_slot.filtered_fragments = adapter_slot
+                    .filtered_fragments
                     .iter()
                     .filter(|id| {
                         self.ppd.get_fragment(**id).map_or(false, |fragment| {
@@ -830,5 +880,51 @@ impl EditorApp {
         }
 
         None
+    }
+}
+
+fn lower_in_vec<T: PartialEq>(element: T, vec: &mut Vec<T>) {
+    if let Some(position) = vec
+        .iter()
+        .position(|v| *v == element)
+        .and_then(|index| (index < vec.len() - 1).then_some(index))
+    {
+        vec.swap(position, position + 1);
+    }
+}
+
+fn lower_bottom_in_vec<T: PartialEq>(element: T, vec: &mut Vec<T>) {
+    let len = vec.len();
+
+    if let Some(position) = vec
+        .iter()
+        .position(|v| *v == element)
+        .and_then(|index| (index < len - 1).then_some(index))
+    {
+        let id = vec.remove(position);
+
+        vec.push(id);
+    }
+}
+
+fn raise_in_vec<T: PartialEq>(element: T, vec: &mut Vec<T>) {
+    if let Some(position) = vec
+        .iter()
+        .position(|v| *v == element)
+        .and_then(|index| (index > 0).then_some(index))
+    {
+        vec.swap(position, position - 1);
+    }
+}
+
+fn raise_top_in_vec<T: PartialEq>(element: T, vec: &mut Vec<T>) {
+    if let Some(position) = vec
+        .iter()
+        .position(|v| *v == element)
+        .and_then(|index| (index > 0).then_some(index))
+    {
+        let id = vec.remove(position);
+
+        vec.insert(0, id);
     }
 }

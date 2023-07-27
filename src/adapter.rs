@@ -1,15 +1,9 @@
+use std::collections::HashSet;
+
 use eframe::epaint::TextureHandle;
 use paperdoll_tar::paperdoll::{
     common::Point, doll::Doll, fragment::Fragment, image::ImageData, slot::Slot,
 };
-
-#[derive(Default, PartialEq)]
-pub enum FragmentFilter {
-    #[default]
-    All,
-    IsCandidate,
-    IsNotCandidate,
-}
 
 pub struct DollAdapter {
     pub desc: String,
@@ -98,8 +92,9 @@ pub struct SlotAdapter {
 
     pub candidates: Vec<u32>,
 
-    pub actived_fragments: Vec<u32>,
-    pub fragments_filter: FragmentFilter,
+    pub actived_candidate: Option<u32>,
+    pub actived_fragments: HashSet<u32>,
+    pub filtered_fragments: Vec<u32>,
     pub fragments_filter_keyword: String,
 }
 
@@ -114,8 +109,9 @@ impl Default for SlotAdapter {
             height: 50,
             anchor: Point::default(),
             candidates: vec![],
-            actived_fragments: vec![],
-            fragments_filter: FragmentFilter::default(),
+            actived_candidate: None,
+            actived_fragments: HashSet::new(),
+            filtered_fragments: vec![],
             fragments_filter_keyword: String::default(),
         }
     }
@@ -132,9 +128,7 @@ impl From<&Slot> for SlotAdapter {
             height: slot.height,
             anchor: slot.anchor,
             candidates: slot.candidates.clone(),
-            actived_fragments: vec![],
-            fragments_filter: FragmentFilter::default(),
-            fragments_filter_keyword: String::default(),
+            ..Default::default()
         }
     }
 }

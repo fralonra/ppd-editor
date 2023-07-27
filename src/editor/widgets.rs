@@ -1,5 +1,6 @@
 mod card;
 mod dialog;
+mod fragment_entry;
 mod image_upload;
 mod modal;
 mod pivot_select;
@@ -8,6 +9,7 @@ mod tooltip;
 
 pub(super) use card::Card;
 pub(super) use dialog::{Dialog, DialogResponse};
+pub(super) use fragment_entry::FragmentEntry;
 pub(super) use image_upload::ImageUpload;
 pub(super) use modal::Modal;
 pub(super) use pivot_select::PivotSelect;
