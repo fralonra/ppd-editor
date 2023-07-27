@@ -55,7 +55,88 @@ impl EditorApp {
 
         self.ui_fragment_window(ctx);
 
+        self.ui_associated_slots_window(ctx);
+
         self.ui_dialog(ctx);
+    }
+
+    fn ui_associated_slots_window(&mut self, ctx: &Context) {
+        if !self.window_associated_slots_visible {
+            return;
+        }
+
+        Modal::new("slots_window").show(ctx, |ctx| {
+            Window::new("Manage Associated Slots")
+                .pivot(Align2::CENTER_CENTER)
+                .default_pos(ctx.screen_rect().center())
+                .resizable(false)
+                .open(&mut self.window_associated_slots_visible)
+                .show(ctx, |ui| {
+                    ui.label("Use this fragment in highlighted slots. Click to toggle.");
+
+                    ui.horizontal(|ui| {
+                        if ui
+                            .button(icon_to_char(Icon::CheckBox).to_string())
+                            .on_hover_text("Select all")
+                            .clicked()
+                        {
+                            self.actions.push_back(Action::AssociatedSlotsSelectAll);
+                        }
+
+                        if ui
+                            .button(icon_to_char(Icon::CheckBoxOutlineBlank).to_string())
+                            .on_hover_text("Unselect all")
+                            .clicked()
+                        {
+                            self.actions.push_back(Action::AssociatedSlotsUnselectAll);
+                        }
+                    });
+
+                    ui.group(|ui| {
+                        ScrollArea::vertical()
+                            .auto_shrink([false, false])
+                            .max_height(300.0)
+                            .show(ui, |ui| {
+                                ui.vertical(|ui| {
+                                    ui.spacing_mut().item_spacing.y = 2.0;
+
+                                    for (slot_id, slot) in self.ppd.slots() {
+                                        let is_actived = self.associated_slots.contains(slot_id);
+
+                                        if ui
+                                            .add(SlotEntry::new(slot).actived(is_actived))
+                                            .clicked()
+                                        {
+                                            if is_actived {
+                                                self.associated_slots.remove(slot_id);
+                                            } else {
+                                                self.associated_slots.insert(*slot_id);
+                                            }
+                                        }
+                                    }
+                                });
+                            });
+                    });
+
+                    ui.horizontal(|ui| {
+                        if ui.button("Confirm").clicked() {
+                            self.actions
+                                .push_back(Action::AssociatedSlotsConfirm(self.actived_fragment));
+
+                            self.actions
+                                .push_back(Action::WindowAssociatedSlotsVisible(false));
+                        }
+
+                        if ui.button("Cancel").clicked() {
+                            self.actions
+                                .push_back(Action::AssociatedSlotsCancel(self.actived_fragment));
+
+                            self.actions
+                                .push_back(Action::WindowAssociatedSlotsVisible(false));
+                        }
+                    });
+                })
+        });
     }
 
     fn ui_dialog(&mut self, ctx: &Context) {

@@ -63,6 +63,15 @@ impl EditorApp {
 
                 ui.close_menu();
             }
+
+            ui.separator();
+
+            if ui.button("Manage Associated Slots").clicked() {
+                self.actions
+                    .push_back(Action::AssociatedSlotsEdit(fragment.unwrap().id()));
+
+                ui.close_menu();
+            }
         });
     }
 

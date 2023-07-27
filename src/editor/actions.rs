@@ -22,6 +22,11 @@ use super::{DialogOption, EditorApp, APP_TITLE};
 pub enum Action {
     AppQuit,
     AppTitleChanged(Option<String>),
+    AssociatedSlotsCancel(Option<u32>),
+    AssociatedSlotsConfirm(Option<u32>),
+    AssociatedSlotsEdit(u32),
+    AssociatedSlotsSelectAll,
+    AssociatedSlotsUnselectAll,
     CursorMoved(Option<Pos2>),
     DollCreate,
     DollAdapterBackgroundRemove,
@@ -62,6 +67,7 @@ pub enum Action {
     SlotRaiseTop(u32, u32),
     SlotRemoveConfirm(u32),
     SlotRemoveRequest(u32),
+    WindowAssociatedSlotsVisible(bool),
     WindowDollVisible(bool),
     WindowFragmentVisible(bool),
     WindowSlotVisible(bool),
@@ -77,6 +83,56 @@ impl EditorApp {
                         format!("{} - {}", APP_TITLE, title.unwrap_or("Untitled".to_owned()));
 
                     frame.set_window_title(&title)
+                }
+                Action::AssociatedSlotsCancel(_id) => {
+                    self.associated_slots.clear();
+                }
+                Action::AssociatedSlotsConfirm(id) => {
+                    if let Some(id) = id {
+                        let slots: Vec<u32> = self.ppd.slots().map(|(id, _)| *id).collect();
+
+                        for slot_id in slots {
+                            if let Some(slot) = self.ppd.get_slot_mut(slot_id) {
+                                if self.associated_slots.contains(&slot_id) {
+                                    if !slot.candidates.contains(&id) {
+                                        slot.candidates.push(id);
+                                    }
+                                } else {
+                                    if let Some(position) = slot
+                                        .candidates
+                                        .iter()
+                                        .position(|fragment_id| *fragment_id == id)
+                                    {
+                                        slot.candidates.remove(position);
+                                    }
+                                }
+                            }
+                        }
+
+                        self.associated_slots.clear();
+                    }
+                }
+                Action::AssociatedSlotsEdit(id) => {
+                    self.actived_fragment = Some(id);
+
+                    self.associated_slots.clear();
+
+                    for (slot_id, slot) in self.ppd.slots() {
+                        if slot.candidates.contains(&id) {
+                            self.associated_slots.insert(*slot_id);
+                        }
+                    }
+
+                    self.actions
+                        .push_back(Action::WindowAssociatedSlotsVisible(true));
+                }
+                Action::AssociatedSlotsSelectAll => {
+                    for (slot_id, _slot) in self.ppd.slots() {
+                        self.associated_slots.insert(*slot_id);
+                    }
+                }
+                Action::AssociatedSlotsUnselectAll => {
+                    self.associated_slots.clear();
                 }
                 Action::CursorMoved(position) => {
                     self.cursor_position = position;
@@ -418,7 +474,7 @@ impl EditorApp {
                     self.textures_doll = textures_doll;
                     self.textures_fragment = textures_fragment;
 
-                    self.fragments_filter_keyword = String::default();
+                    self.associated_slots.clear();
                     self.locked_slots.clear();
                     self.visible_slots = ppd.slots().map(|(id, _)| *id).collect();
                     self.slot_copy = None;
@@ -438,6 +494,8 @@ impl EditorApp {
                     self.window_fragment_error = None;
                     self.window_slot_error = None;
 
+                    self.actions
+                        .push_back(Action::WindowAssociatedSlotsVisible(false));
                     self.actions.push_back(Action::WindowDollVisible(false));
                     self.actions.push_back(Action::WindowFragmentVisible(false));
                     self.actions.push_back(Action::WindowSlotVisible(false));
@@ -658,6 +716,9 @@ impl EditorApp {
                     self.dialog_option =
                         DialogOption::confirm(&format!("Really delete slot {}?", id))
                             .primary_action(Action::SlotRemoveConfirm(id));
+                }
+                Action::WindowAssociatedSlotsVisible(visible) => {
+                    self.window_associated_slots_visible = visible;
                 }
                 Action::WindowDollVisible(visible) => {
                     if !visible && self.window_doll_error.is_some() {

@@ -113,6 +113,7 @@ struct EditorApp {
     // editor helpers
     fragments_filter_keyword: String,
     cursor_position: Option<Pos2>,
+    associated_slots: HashSet<u32>,
     locked_slots: HashSet<u32>,
     visible_slots: HashSet<u32>,
     slot_copy: Option<u32>,
@@ -132,6 +133,7 @@ struct EditorApp {
     dialog_option: DialogOption,
 
     // window visible
+    window_associated_slots_visible: bool,
     window_doll_visible: bool,
     window_fragment_visible: bool,
     window_slot_visible: bool,
@@ -177,6 +179,7 @@ impl EditorApp {
 
             fragments_filter_keyword: String::default(),
             cursor_position: None,
+            associated_slots: HashSet::new(),
             locked_slots: HashSet::new(),
             visible_slots: HashSet::new(),
             slot_copy: None,
@@ -192,6 +195,7 @@ impl EditorApp {
             dialog_visible: false,
             dialog_option: DialogOption::default(),
 
+            window_associated_slots_visible: false,
             window_doll_visible: false,
             window_fragment_visible: false,
             window_slot_visible: false,
