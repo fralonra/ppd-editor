@@ -4,6 +4,7 @@ use anyhow::{bail, Result};
 use eframe::{egui::Context, epaint::Pos2, Frame};
 use paperdoll_tar::{
     paperdoll::{
+        common::Point,
         factory::PaperdollFactory,
         image::{ColorType, ImageData},
     },
@@ -58,6 +59,7 @@ pub enum Action {
     SlotAdapterFragmentFilter,
     SlotAddCandidate(Option<u32>, u32),
     SlotAddCandidates(Option<u32>, Vec<u32>),
+    SlotAddPosition(Option<u32>),
     SlotCopy(u32),
     SlotCreate,
     SlotDuplicate(u32, u32),
@@ -72,6 +74,7 @@ pub enum Action {
     SlotRemoveCandidate(Option<u32>, u32),
     SlotRemoveCandidates(Option<u32>, Vec<u32>),
     SlotRemoveConfirm(u32),
+    SlotRemovePosition(Option<u32>, usize),
     SlotRemoveRequest(u32),
     WindowAssociatedSlotsVisible(bool),
     WindowDollVisible(bool),
@@ -607,6 +610,21 @@ impl EditorApp {
                         }
                     }
                 }
+                Action::SlotAddPosition(id) => {
+                    let positions = id
+                        .map(|id| self.ppd.get_slot_mut(id))
+                        .flatten()
+                        .map(|slot| &mut slot.positions)
+                        .or_else(|| {
+                            self.adapter_slot
+                                .as_mut()
+                                .map(|adapter| &mut adapter.positions)
+                        });
+
+                    if let Some(positions) = positions {
+                        positions.push(Point::default());
+                    }
+                }
                 Action::SlotCopy(id) => {
                     self.slot_copy = Some(id);
                 }
@@ -648,7 +666,7 @@ impl EditorApp {
                                 slot.desc = adapter_slot.desc;
                                 slot.required = adapter_slot.required;
                                 slot.constrainted = adapter_slot.constrainted;
-                                slot.position = adapter_slot.position;
+                                slot.positions = adapter_slot.positions;
                                 slot.width = adapter_slot.width;
                                 slot.height = adapter_slot.height;
                                 slot.anchor = adapter_slot.anchor;
@@ -671,7 +689,7 @@ impl EditorApp {
                                     slot.desc = adapter_slot.desc;
                                     slot.required = adapter_slot.required;
                                     slot.constrainted = adapter_slot.constrainted;
-                                    slot.position = adapter_slot.position;
+                                    slot.positions = adapter_slot.positions;
                                     slot.width = adapter_slot.width;
                                     slot.height = adapter_slot.height;
                                     slot.anchor = adapter_slot.anchor;
@@ -722,7 +740,7 @@ impl EditorApp {
                     let desc = slot_copy.desc.clone();
                     let required = slot_copy.required;
                     let constrainted = slot_copy.constrainted;
-                    let position = slot_copy.position;
+                    let positions = slot_copy.positions.clone();
                     let width = slot_copy.width;
                     let height = slot_copy.height;
                     let anchor = slot_copy.anchor;
@@ -732,7 +750,7 @@ impl EditorApp {
                         slot.desc = desc.clone();
                         slot.required = required;
                         slot.constrainted = constrainted;
-                        slot.position = position;
+                        slot.positions = positions;
                         slot.width = width;
                         slot.height = height;
                         slot.anchor = anchor;
@@ -801,6 +819,21 @@ impl EditorApp {
                     self.ppd.remove_slot(id);
 
                     self.visible_slots.remove(&id);
+                }
+                Action::SlotRemovePosition(id, index) => {
+                    let positions = id
+                        .map(|id| self.ppd.get_slot_mut(id))
+                        .flatten()
+                        .map(|slot| &mut slot.positions)
+                        .or_else(|| {
+                            self.adapter_slot
+                                .as_mut()
+                                .map(|adapter| &mut adapter.positions)
+                        });
+
+                    if let Some(positions) = positions {
+                        positions.remove(index);
+                    }
                 }
                 Action::SlotRemoveRequest(id) => {
                     self.dialog_visible = true;

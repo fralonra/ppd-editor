@@ -84,7 +84,7 @@ pub struct SlotAdapter {
     pub required: bool,
     pub constrainted: bool,
 
-    pub position: Point,
+    pub positions: Vec<Point>,
     pub width: u32,
     pub height: u32,
 
@@ -92,6 +92,7 @@ pub struct SlotAdapter {
 
     pub candidates: Vec<u32>,
 
+    pub actived_position: Option<usize>,
     pub actived_candidate: Option<u32>,
     pub actived_fragments: HashSet<u32>,
     pub filtered_fragments: Vec<u32>,
@@ -104,11 +105,12 @@ impl Default for SlotAdapter {
             desc: String::default(),
             required: false,
             constrainted: false,
-            position: Point::default(),
+            positions: vec![Point::default()],
             width: 50,
             height: 50,
             anchor: Point::default(),
             candidates: vec![],
+            actived_position: None,
             actived_candidate: None,
             actived_fragments: HashSet::new(),
             filtered_fragments: vec![],
@@ -123,7 +125,7 @@ impl From<&Slot> for SlotAdapter {
             desc: slot.desc.clone(),
             required: slot.required,
             constrainted: slot.constrainted,
-            position: slot.position,
+            positions: slot.positions.clone(),
             width: slot.width,
             height: slot.height,
             anchor: slot.anchor,

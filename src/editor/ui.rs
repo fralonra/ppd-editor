@@ -2,11 +2,11 @@ use std::ops::RangeInclusive;
 
 use eframe::{
     egui::{
-        Button, CentralPanel, Context, DragValue, Grid, Layout, ScrollArea, Sense, SidePanel,
-        TextEdit, TopBottomPanel, Ui, Window,
+        Button, CentralPanel, Context, DragValue, Frame, Grid, Layout, ScrollArea, Sense,
+        SidePanel, TextEdit, TopBottomPanel, Ui, Window,
     },
     emath::{Align, Align2},
-    epaint::{vec2, Color32},
+    epaint::{vec2, Color32, Vec2},
 };
 use material_icons::{icon_to_char, Icon};
 use paperdoll_tar::paperdoll::common::Point;
@@ -1008,42 +1008,237 @@ impl EditorApp {
                 .resizable(false)
                 .open(&mut self.window_slot_visible)
                 .show(ctx, |ui| {
-                    let is_create_mode = id.is_none();
-
                     ui.heading("Slot");
 
                     ui.horizontal(|ui| {
                         let left_resp = ui
                             .vertical(|ui| {
-                                ui.set_max_width(240.0);
+                                ui.set_max_width(250.0);
 
-                                if is_create_mode {
-                                    ui_slot_window_grid(
-                                        &mut adapter_slot.desc,
-                                        &mut adapter_slot.required,
-                                        &mut adapter_slot.constrainted,
-                                        &mut adapter_slot.position,
-                                        &mut adapter_slot.width,
-                                        &mut adapter_slot.height,
-                                        &mut adapter_slot.anchor,
-                                        ui,
-                                    );
-                                } else {
-                                    let slot = id.map(|id| self.ppd.get_slot_mut(id)).flatten();
-
-                                    if let Some(slot) = slot {
-                                        ui_slot_window_grid(
+                                let slot_data = id
+                                    .map(|id| self.ppd.get_slot_mut(id))
+                                    .flatten()
+                                    .map(|slot| {
+                                        (
                                             &mut slot.desc,
                                             &mut slot.required,
                                             &mut slot.constrainted,
-                                            &mut slot.position,
+                                            &mut slot.positions,
                                             &mut slot.width,
                                             &mut slot.height,
                                             &mut slot.anchor,
-                                            ui,
+                                        )
+                                    })
+                                    .unwrap_or((
+                                        &mut adapter_slot.desc,
+                                        &mut adapter_slot.required,
+                                        &mut adapter_slot.constrainted,
+                                        &mut adapter_slot.positions,
+                                        &mut adapter_slot.width,
+                                        &mut adapter_slot.height,
+                                        &mut adapter_slot.anchor,
+                                    ));
+
+                                Grid::new("slot")
+                                    .num_columns(2)
+                                    .striped(true)
+                                    .show(ui, |ui| {
+                                        ui.label("Description:");
+                                        ui.text_edit_singleline(slot_data.0);
+
+                                        ui.end_row();
+
+                                        ui.horizontal_centered(|ui| {
+                                            ui.label("Required:");
+                                            ui.add(Tooltip::new(
+                                                "This slot always displays an image.",
+                                            ));
+                                        });
+                                        ui.checkbox(slot_data.1, "");
+
+                                        ui.end_row();
+
+                                        ui.horizontal_centered(|ui| {
+                                            ui.label("Constrained:");
+
+                                            ui.add(Tooltip::new(
+                                                "Resize image to fit the size of the slot,\
+                                                no matter what the original size of the image is.",
+                                            ));
+                                        });
+                                        ui.checkbox(slot_data.2, "");
+
+                                        ui.end_row();
+
+                                        ui.horizontal_centered(|ui| {
+                                            ui.label("Positions:");
+                                            ui.add(Tooltip::new(
+                                                "The top left position of the slot.\
+                                                One slot can have multiple positions.",
+                                            ));
+                                        });
+
+                                        ui.vertical(|ui| {
+                                            ui.horizontal_wrapped(|ui| {
+                                                if ui
+                                                    .button(icon_to_char(Icon::Add).to_string())
+                                                    .on_hover_text("Add position")
+                                                    .clicked()
+                                                {
+                                                    self.actions
+                                                        .push_back(Action::SlotAddPosition(id));
+                                                }
+
+                                                if ui
+                                                    .add_enabled(
+                                                        adapter_slot.actived_position.is_some(),
+                                                        Button::new(
+                                                            icon_to_char(Icon::Delete).to_string(),
+                                                        ),
+                                                    )
+                                                    .on_hover_text("Delete position")
+                                                    .clicked()
+                                                {
+                                                    self.actions.push_back(
+                                                        Action::SlotRemovePosition(
+                                                            id,
+                                                            adapter_slot.actived_position.unwrap(),
+                                                        ),
+                                                    );
+                                                }
+                                            });
+
+                                            Frame::group(ui.style())
+                                                .inner_margin(Vec2::splat(0.0))
+                                                .show(ui, |ui| {
+                                                    ScrollArea::both()
+                                                        .auto_shrink([false, false])
+                                                        .show(ui, |ui| {
+                                                            ui.spacing_mut().item_spacing.y = 1.0;
+
+                                                            ui.vertical(|ui| {
+                                                            for (position_index, position) in
+                                                                slot_data.3.iter_mut().enumerate()
+                                                            {
+                                                                let is_actived = adapter_slot
+                                                                    .actived_position
+                                                                    .map(|actived_index| {
+                                                                        actived_index
+                                                                            == position_index
+                                                                    })
+                                                                    .unwrap_or(false);
+
+                                                                let (rect, resp) = ui
+                                                                    .allocate_at_least(
+                                                                        vec2(
+                                                                            ui.available_width(),
+                                                                            24.0,
+                                                                        ),
+                                                                        Sense::click(),
+                                                                    );
+
+                                                                let visuals =
+                                                                    ui.style().interact_selectable(
+                                                                        &resp, is_actived,
+                                                                    );
+
+                                                                if is_actived {
+                                                                    ui.painter().rect(
+                                                                        rect,
+                                                                        0.0,
+                                                                        visuals.weak_bg_fill,
+                                                                        visuals.bg_stroke,
+                                                                    );
+                                                                }
+
+                                                                if resp.clicked() {
+                                                                    if is_actived {
+                                                                        adapter_slot
+                                                                            .actived_position =
+                                                                            None;
+                                                                    } else {
+                                                                        adapter_slot
+                                                                            .actived_position =
+                                                                            Some(position_index);
+                                                                    }
+                                                                }
+
+                                                                ui.allocate_ui_at_rect(
+                                                                    rect.shrink2(vec2(4.0, 0.0)),
+                                                                    |ui| {
+                                                                        ui.horizontal_centered(
+                                                                            |ui| {
+                                                                                ui.monospace("x");
+                                                                                ui.add(
+                                                                            DragValue::new(
+                                                                                &mut position.x,
+                                                                            )
+                                                                            .speed(1),
+                                                                        );
+
+                                                                                ui.monospace("y");
+                                                                                ui.add(
+                                                                            DragValue::new(
+                                                                                &mut position.y,
+                                                                            )
+                                                                            .speed(1),
+                                                                        );
+                                                                            },
+                                                                        );
+                                                                    },
+                                                                );
+                                                            }
+                                                        });
+                                                        });
+                                                });
+                                        });
+
+                                        ui.end_row();
+
+                                        ui.horizontal_centered(|ui| {
+                                            ui.label("Size:");
+                                            ui.add(Tooltip::new(
+                                                "The size of the slot.\
+                                                The displayed image will resize\
+                                                to this size if constrained is set.",
+                                            ));
+                                        });
+                                        ui.horizontal_wrapped(|ui| {
+                                            ui.monospace("w");
+                                            ui.add(
+                                                DragValue::new(slot_data.4)
+                                                    .clamp_range(RangeInclusive::new(1, u32::MAX))
+                                                    .speed(1),
+                                            );
+
+                                            ui.monospace("h");
+                                            ui.add(
+                                                DragValue::new(slot_data.5)
+                                                    .clamp_range(RangeInclusive::new(1, u32::MAX))
+                                                    .speed(1),
+                                            );
+                                        });
+
+                                        ui.end_row();
+
+                                        ui.horizontal_centered(|ui| {
+                                            ui.label("Anchor:");
+                                            ui.add(Tooltip::new(
+                                                "If constrained is not set,\
+                                                the position where the pivot\
+                                                of the image placed to.",
+                                            ));
+                                        });
+                                        ui.add_enabled(
+                                            !*slot_data.2,
+                                            PivotSelect::new(
+                                                &mut slot_data.6.x,
+                                                &mut slot_data.6.y,
+                                                *slot_data.4 as f32,
+                                                *slot_data.5 as f32,
+                                            ),
                                         );
-                                    }
-                                }
+                                    });
                             })
                             .response;
 
@@ -1442,82 +1637,4 @@ fn ui_fragment_window_grid(
     ));
 
     ui.end_row();
-}
-
-fn ui_slot_window_grid(
-    desc: &mut String,
-    required: &mut bool,
-    constrainted: &mut bool,
-    position: &mut Point,
-    width: &mut u32,
-    height: &mut u32,
-    anchor: &mut Point,
-    ui: &mut Ui,
-) {
-    Grid::new("slot").num_columns(2).striped(true).show(ui, |ui| {
-        ui.label("Description:");
-        ui.text_edit_singleline(desc);
-
-        ui.end_row();
-
-        ui.horizontal_centered(|ui| {
-            ui.label("Required:");
-            ui.add(Tooltip::new("This slot always displays an image."));
-        });
-        ui.checkbox(required, "");
-
-        ui.end_row();
-
-        ui.horizontal_centered(|ui| {
-            ui.label("Constrained:");
-            ui.add(Tooltip::new("Resize image to fit the size of the slot, no matter what the original size of the image is."));
-        });
-        ui.checkbox(constrainted, "");
-
-        ui.end_row();
-
-        ui.horizontal_centered(|ui| {
-            ui.label("Position:");
-            ui.add(Tooltip::new("The top left position of the slot."));
-        });
-        ui.horizontal_wrapped(|ui| {
-            ui.monospace("x");
-            ui.add(DragValue::new(&mut position.x).speed(1));
-
-            ui.monospace("y");
-            ui.add(DragValue::new(&mut position.y).speed(1));
-        });
-
-        ui.end_row();
-
-        ui.horizontal_centered(|ui| {
-            ui.label("Size:");
-            ui.add(Tooltip::new("The size of the slot. The displayed image will resize to this size if constrained is set."));
-        });
-        ui.horizontal_wrapped(|ui| {
-            ui.monospace("w");
-            ui.add(
-                DragValue::new(width)
-                    .clamp_range(RangeInclusive::new(1, u32::MAX))
-                    .speed(1)
-            );
-
-            ui.monospace("h");
-            ui.add(
-                DragValue::new(height)
-                    .clamp_range(RangeInclusive::new(1, u32::MAX))
-                    .speed(1)
-            );
-        });
-
-        ui.end_row();
-
-        ui.horizontal_centered(|ui| {
-            ui.label("Anchor:");
-            ui.add(Tooltip::new("If constrained is not set, the position where the pivot of the image placed to."));
-        });
-        ui.add_enabled(!*constrainted,
-            PivotSelect::new(&mut anchor.x, &mut anchor.y, *width as f32, *height as f32)
-        );
-    });
 }
