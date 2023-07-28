@@ -12,7 +12,7 @@ use paperdoll_tar::{
 };
 
 use crate::{
-    adapter::{DollAdapter, FragmentAdapter, ImageAdapter, SlotAdapter},
+    adapter::{DollAdapter, FragmentAdapter, ImageAdapter, SlotAdapter, DOLL_DEFAULT_SIZE},
     common::{upload_image_to_texture, upload_ppd_textures, TextureData},
     fs::{create_file, open_image_rgba, select_file, select_texture},
 };
@@ -330,8 +330,14 @@ impl EditorApp {
                     }
                 }
                 Action::FileNew => {
-                    self.actions
-                        .push_back(Action::PpdLoad(PaperdollFactory::default()));
+                    let mut ppd = PaperdollFactory::default();
+
+                    if let Some(doll) = ppd.get_doll_mut(0) {
+                        doll.width = DOLL_DEFAULT_SIZE;
+                        doll.height = DOLL_DEFAULT_SIZE;
+                    }
+
+                    self.actions.push_back(Action::PpdLoad(ppd));
 
                     self.actions.push_back(Action::AppTitleChanged(None));
 

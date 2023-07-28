@@ -5,6 +5,8 @@ use paperdoll_tar::paperdoll::{
     common::Point, doll::Doll, fragment::Fragment, image::ImageData, slot::Slot,
 };
 
+pub const DOLL_DEFAULT_SIZE: u32 = 400;
+
 pub struct DollAdapter {
     pub desc: String,
     pub width: u32,
@@ -18,8 +20,8 @@ impl Default for DollAdapter {
     fn default() -> Self {
         Self {
             desc: String::default(),
-            width: 400,
-            height: 400,
+            width: DOLL_DEFAULT_SIZE,
+            height: DOLL_DEFAULT_SIZE,
             offset: Point::default(),
             path: String::default(),
             image: ImageAdapter::default(),

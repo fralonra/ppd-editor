@@ -19,7 +19,7 @@ use eframe::{
 use paperdoll_tar::paperdoll::factory::PaperdollFactory;
 
 use crate::{
-    adapter::{DollAdapter, FragmentAdapter, SlotAdapter},
+    adapter::{DollAdapter, FragmentAdapter, SlotAdapter, DOLL_DEFAULT_SIZE},
     common::{load_fonts, setup_style, TextureData},
 };
 
@@ -159,8 +159,8 @@ impl EditorApp {
         let mut ppd = PaperdollFactory::default();
 
         if let Some(doll) = ppd.get_doll_mut(0) {
-            doll.width = 400;
-            doll.height = 400;
+            doll.width = DOLL_DEFAULT_SIZE;
+            doll.height = DOLL_DEFAULT_SIZE;
         }
 
         Self::from_ppd(cc, ppd)
