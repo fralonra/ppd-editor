@@ -181,6 +181,10 @@ impl EditorApp {
             }
         }
 
+        if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.viewport_center)) {
+            self.actions.push_back(Action::ViewportCenter);
+        }
+
         if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.viewport_move_down)) {
             self.actions
                 .push_back(Action::ViewportMove(vec2(0.0, -10.0)));
@@ -310,6 +314,21 @@ impl EditorApp {
                 {
                     self.actions
                         .push_back(Action::ViewportZoomTo(self.config.canvas_scale * 2.0));
+
+                    ui.close_menu();
+                }
+
+                ui.separator();
+
+                if ui
+                    .add(
+                        Button::new("Center In Viewport").shortcut_text(
+                            ui.ctx().format_shortcut(&self.shortcut.viewport_center),
+                        ),
+                    )
+                    .clicked()
+                {
+                    self.actions.push_back(Action::ViewportCenter);
 
                     ui.close_menu();
                 }

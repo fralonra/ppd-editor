@@ -84,6 +84,7 @@ pub enum Action {
     WindowDollVisible(bool),
     WindowFragmentVisible(bool),
     WindowSlotVisible(bool),
+    ViewportCenter,
     ViewportMove(Vec2),
     ViewportZoomTo(f32),
 }
@@ -893,6 +894,9 @@ impl EditorApp {
                     if visible {
                         self.window_slot_error = None;
                     }
+                }
+                Action::ViewportCenter => {
+                    self.canvas_center_offset = Vec2::ZERO;
                 }
                 Action::ViewportMove(offset) => self.canvas_center_offset += offset,
                 Action::ViewportZoomTo(scale) => {
