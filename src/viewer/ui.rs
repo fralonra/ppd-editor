@@ -10,7 +10,7 @@ use eframe::{
 use material_icons::{icon_to_char, Icon};
 use paperdoll_tar::paperdoll::{doll::Doll, render_material::RenderMaterial, slot::Slot};
 
-use crate::common::{determine_doll_rect, TextureData};
+use crate::common::{allocate_size_center_in_rect, TextureData};
 
 use super::{actions::Action, ViewerApp};
 
@@ -106,7 +106,8 @@ impl ViewerApp {
 
         let doll = doll.unwrap();
 
-        let doll_rect = determine_doll_rect(doll, &ui.max_rect());
+        let doll_rect =
+            allocate_size_center_in_rect(doll.width as f32, doll.height as f32, &ui.max_rect());
 
         let painter = ui.painter_at(doll_rect);
 

@@ -11,7 +11,7 @@ use eframe::{
 use font_kit::{
     family_name::FamilyName, handle::Handle, properties::Properties, source::SystemSource,
 };
-use paperdoll_tar::paperdoll::{doll::Doll, factory::PaperdollFactory, image::ImageData};
+use paperdoll_tar::paperdoll::{factory::PaperdollFactory, image::ImageData};
 
 pub struct TextureData {
     pub width: u32,
@@ -39,10 +39,6 @@ pub(crate) fn allocate_size_center_in_rect(width: f32, height: f32, container_re
     let max = min + vec2(width, height);
 
     Rect::from([min, max])
-}
-
-pub(crate) fn determine_doll_rect(doll: &Doll, container_rect: &Rect) -> Rect {
-    allocate_size_center_in_rect(doll.width as f32, doll.height as f32, container_rect)
 }
 
 pub(crate) fn layout_text_widget(
@@ -125,7 +121,7 @@ pub(crate) fn upload_image_to_texture(
             [image.width as usize, image.height as usize],
             &image.pixels,
         )),
-        TextureOptions::LINEAR,
+        TextureOptions::NEAREST,
     );
 
     TextureData {

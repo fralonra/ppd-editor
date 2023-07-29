@@ -10,6 +10,12 @@ pub(super) struct Shortcut {
     pub slot_copy: KeyboardShortcut,
     pub slot_duplicate: KeyboardShortcut,
     pub slot_paste: KeyboardShortcut,
+    pub viewport_move_down: KeyboardShortcut,
+    pub viewport_move_left: KeyboardShortcut,
+    pub viewport_move_right: KeyboardShortcut,
+    pub viewport_move_up: KeyboardShortcut,
+    pub zoom_in: KeyboardShortcut,
+    pub zoom_out: KeyboardShortcut,
 }
 
 impl Default for Shortcut {
@@ -24,6 +30,12 @@ impl Default for Shortcut {
             slot_copy: KeyboardShortcut::new(Modifiers::CTRL, Key::C),
             slot_duplicate: KeyboardShortcut::new(Modifiers::CTRL, Key::D),
             slot_paste: KeyboardShortcut::new(Modifiers::CTRL, Key::V),
+            viewport_move_down: KeyboardShortcut::new(Modifiers::NONE, Key::ArrowDown),
+            viewport_move_left: KeyboardShortcut::new(Modifiers::NONE, Key::ArrowLeft),
+            viewport_move_right: KeyboardShortcut::new(Modifiers::NONE, Key::ArrowRight),
+            viewport_move_up: KeyboardShortcut::new(Modifiers::NONE, Key::ArrowUp),
+            zoom_in: KeyboardShortcut::new(Modifiers::NONE, Key::PlusEquals),
+            zoom_out: KeyboardShortcut::new(Modifiers::NONE, Key::Minus),
         }
     }
 }

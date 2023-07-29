@@ -1,4 +1,7 @@
-use eframe::egui::{menu, Button, Ui};
+use eframe::{
+    egui::{menu, Button, Ui},
+    epaint::vec2,
+};
 
 use super::{actions::Action, EditorApp};
 
@@ -178,6 +181,36 @@ impl EditorApp {
             }
         }
 
+        if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.viewport_move_down)) {
+            self.actions
+                .push_back(Action::ViewportMove(vec2(0.0, -10.0)));
+        }
+
+        if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.viewport_move_left)) {
+            self.actions
+                .push_back(Action::ViewportMove(vec2(10.0, 0.0)));
+        }
+
+        if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.viewport_move_right)) {
+            self.actions
+                .push_back(Action::ViewportMove(vec2(-10.0, 0.0)));
+        }
+
+        if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.viewport_move_up)) {
+            self.actions
+                .push_back(Action::ViewportMove(vec2(0.0, 10.0)));
+        }
+
+        if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.zoom_in)) {
+            self.actions
+                .push_back(Action::ViewportZoomTo(self.config.canvas_scale * 2.0));
+        }
+
+        if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.zoom_out)) {
+            self.actions
+                .push_back(Action::ViewportZoomTo(self.config.canvas_scale * 0.5));
+        }
+
         if self.actived_doll.is_some() && self.actived_slot.is_some() {
             if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.slot_duplicate)) {
                 self.actions.push_back(Action::SlotDuplicate(
@@ -254,7 +287,33 @@ impl EditorApp {
                 }
             });
 
-            ui.menu_button("Edit", |ui| {});
+            ui.menu_button("View", |ui| {
+                if ui
+                    .add(
+                        Button::new("Zoom Out")
+                            .shortcut_text(ui.ctx().format_shortcut(&self.shortcut.zoom_out)),
+                    )
+                    .clicked()
+                {
+                    self.actions
+                        .push_back(Action::ViewportZoomTo(self.config.canvas_scale * 0.5));
+
+                    ui.close_menu();
+                }
+
+                if ui
+                    .add(
+                        Button::new("Zoom In")
+                            .shortcut_text(ui.ctx().format_shortcut(&self.shortcut.zoom_in)),
+                    )
+                    .clicked()
+                {
+                    self.actions
+                        .push_back(Action::ViewportZoomTo(self.config.canvas_scale * 2.0));
+
+                    ui.close_menu();
+                }
+            });
 
             ui.menu_button("Doll", |ui| {
                 self.menu_doll(ui, self.actived_doll);
@@ -267,20 +326,6 @@ impl EditorApp {
             ui.menu_button("Fragment", |ui| {
                 self.menu_fragment(ui, self.actived_fragment);
             });
-
-            // ui.menu_button("Preview", |ui| {
-            //     if ui
-            //         .add(
-            //             Button::new("Open in Viewer")
-            //                 .shortcut_text(ui.ctx().format_shortcut(&self.shortcut.preview)),
-            //         )
-            //         .clicked()
-            //     {
-            //         self.actions.push_back(Action::PpdPreview);
-
-            //         ui.close_menu();
-            //     }
-            // });
 
             ui.menu_button("Help", |ui| {});
         });

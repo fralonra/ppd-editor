@@ -12,7 +12,7 @@ use eframe::{
     egui::Context,
     epaint::{
         ahash::{HashSet, HashSetExt},
-        Pos2,
+        Pos2, Vec2,
     },
     App, CreationContext, Frame,
 };
@@ -118,6 +118,9 @@ struct EditorApp {
     visible_slots: HashSet<u32>,
     slot_copy: Option<u32>,
 
+    // canvas helpers
+    canvas_center_offset: Vec2,
+
     // adapters
     adapter_doll: Option<DollAdapter>,
     adapter_fragment: Option<FragmentAdapter>,
@@ -183,6 +186,8 @@ impl EditorApp {
             locked_slots: HashSet::new(),
             visible_slots: HashSet::new(),
             slot_copy: None,
+
+            canvas_center_offset: Vec2::ZERO,
 
             adapter_doll: None,
             adapter_fragment: None,

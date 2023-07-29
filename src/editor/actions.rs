@@ -1,7 +1,11 @@
 use std::path::PathBuf;
 
 use anyhow::{bail, Result};
-use eframe::{egui::Context, epaint::Pos2, Frame};
+use eframe::{
+    egui::Context,
+    epaint::{Pos2, Vec2},
+    Frame,
+};
 use paperdoll_tar::{
     paperdoll::{
         common::Point,
@@ -80,6 +84,8 @@ pub enum Action {
     WindowDollVisible(bool),
     WindowFragmentVisible(bool),
     WindowSlotVisible(bool),
+    ViewportMove(Vec2),
+    ViewportZoomTo(f32),
 }
 
 impl EditorApp {
@@ -544,6 +550,8 @@ impl EditorApp {
                 Action::PpdChanged => {
                     let ppd = &self.ppd;
 
+                    self.config.canvas_scale = 1.0;
+
                     let (textures_doll, textures_fragment) = upload_ppd_textures(ppd, ctx);
 
                     self.textures_doll = textures_doll;
@@ -554,6 +562,8 @@ impl EditorApp {
                     self.locked_slots.clear();
                     self.visible_slots = ppd.slots().map(|(id, _)| *id).collect();
                     self.slot_copy = None;
+
+                    self.canvas_center_offset = Vec2::ZERO;
 
                     self.adapter_doll = None;
                     self.adapter_fragment = None;
@@ -882,6 +892,12 @@ impl EditorApp {
 
                     if visible {
                         self.window_slot_error = None;
+                    }
+                }
+                Action::ViewportMove(offset) => self.canvas_center_offset += offset,
+                Action::ViewportZoomTo(scale) => {
+                    if scale > 0.1 && scale < 10.0 {
+                        self.config.canvas_scale = scale;
                     }
                 }
             }

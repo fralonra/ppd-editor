@@ -2,8 +2,7 @@ use eframe::{
     egui::{CursorIcon, Id, Sense, Ui},
     epaint::{pos2, vec2, Color32, Pos2, Rect, Stroke, Vec2},
 };
-
-use crate::common::determine_doll_rect;
+use paperdoll_tar::paperdoll::doll::Doll;
 
 use super::{actions::Action, EditorApp};
 
@@ -17,22 +16,27 @@ impl EditorApp {
 
         let doll = doll.unwrap();
 
-        let (resp, painter) = ui.allocate_painter(ui.available_size(), Sense::click());
+        let scale = self.config.canvas_scale;
 
-        if resp.clicked() {
+        let (viewport_rect, viewport_resp) =
+            ui.allocate_exact_size(ui.available_size(), Sense::click());
+
+        if viewport_resp.clicked() {
             if !self.window_slot_visible {
                 self.actived_slot = None;
             }
         }
 
-        let canvas_rect = resp.rect;
+        ui.painter()
+            .rect_filled(viewport_rect, 0.0, Color32::from_gray(60));
 
-        let doll_rect = determine_doll_rect(doll, &canvas_rect);
+        let doll_rect = determine_doll_rect(doll, &viewport_rect, scale, self.canvas_center_offset);
 
         if ui.ui_contains_pointer() {
             if let Some(pointer) = ui.ctx().pointer_interact_pos() {
                 self.actions.push_back(Action::CursorMoved(Some(
-                    pointer - vec2(doll_rect.min.x, doll_rect.min.y),
+                    pos2(pointer.x / scale, pointer.y / scale)
+                        - vec2(doll_rect.min.x, doll_rect.min.y) / scale,
                 )));
             }
         } else {
@@ -40,10 +44,9 @@ impl EditorApp {
         }
 
         // paint doll
+        let painter = ui.painter_at(ui.max_rect());
 
-        let scale = doll_rect.width() / (doll.width as f32);
-
-        painter.rect_stroke(doll_rect, 0.0, Stroke::new(1.0, Color32::from_gray(60)));
+        painter.rect_stroke(doll_rect, 0.0, Stroke::new(1.0, Color32::from_gray(90)));
 
         if let Some(texture) = self.textures_doll.get(&doll.id()) {
             let doll_image_position = doll_rect.min + vec2(doll.offset.x, doll.offset.y) * scale;
@@ -177,7 +180,7 @@ impl EditorApp {
                         let control_size = Vec2::splat(8.0);
 
                         control_point(
-                            format!("slot_{}_control_tl", slot_id),
+                            format!("slot_{}_position_{}_control_tl", slot_id, position_index),
                             slot_rect.left_top(),
                             control_size,
                             actived_stroke,
@@ -189,7 +192,7 @@ impl EditorApp {
                         );
 
                         control_point(
-                            format!("slot_{}_control_tr", slot_id),
+                            format!("slot_{}_position_{}_control_tr", slot_id, position_index),
                             slot_rect.right_top(),
                             control_size,
                             actived_stroke,
@@ -202,7 +205,7 @@ impl EditorApp {
                         );
 
                         control_point(
-                            format!("slot_{}_control_br", slot_id),
+                            format!("slot_{}_position_{}_control_br", slot_id, position_index),
                             slot_rect.right_bottom(),
                             control_size,
                             actived_stroke,
@@ -214,7 +217,7 @@ impl EditorApp {
                         );
 
                         control_point(
-                            format!("slot_{}_control_bl", slot_id),
+                            format!("slot_{}_position_{}_control_bl", slot_id, position_index),
                             slot_rect.left_bottom(),
                             control_size,
                             actived_stroke,
@@ -252,20 +255,27 @@ impl EditorApp {
                         };
 
                         // store updates
-                        let min = min - doll_rect.min;
-                        let max = max - doll_rect.min;
+                        let min = (min - doll_rect.min) / scale;
+                        let max = (max - doll_rect.min) / scale;
 
                         if let Some(position) = new_positions.iter_mut().nth(position_index) {
                             position.x = min.x.round();
                             position.y = min.y.round();
 
                             let drag_delta = slot_resp.drag_delta();
-                            position.x += drag_delta.x;
-                            position.y += drag_delta.y;
+                            position.x += drag_delta.x / scale;
+                            position.y += drag_delta.y / scale;
                         }
 
-                        new_width = (max.x.round() - min.x.round()) as u32;
-                        new_height = (max.y.round() - min.y.round()) as u32;
+                        let width = (max.x.round() - min.x.round()) as u32;
+                        if width != slot.width {
+                            new_width = width;
+                        }
+
+                        let height = (max.y.round() - min.y.round()) as u32;
+                        if height != slot.height {
+                            new_height = height;
+                        }
                     }
                 } else {
                     painter.rect_stroke(slot_rect, 0.0, Stroke::new(1.0, Color32::from_gray(128)));
@@ -283,8 +293,8 @@ impl EditorApp {
                     slot.height = new_height;
 
                     if let Some(anchor_delta) = anchor_delta {
-                        slot.anchor.x += anchor_delta.x;
-                        slot.anchor.y += anchor_delta.y;
+                        slot.anchor.x += anchor_delta.x / scale;
+                        slot.anchor.y += anchor_delta.y / scale;
                     }
                 }
             }
@@ -316,4 +326,12 @@ fn control_point(
             on_drag(pointer)
         }
     }
+}
+
+fn determine_doll_rect(doll: &Doll, container_rect: &Rect, scale: f32, offset: Vec2) -> Rect {
+    let doll_size = vec2(doll.width as f32, doll.height as f32) * scale;
+
+    let min = container_rect.center() - container_rect.size().min(doll_size) * 0.5 + offset * scale;
+
+    Rect::from_min_size(min, doll_size)
 }
