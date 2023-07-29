@@ -79,7 +79,10 @@ impl EditorApp {
 
                     ui.horizontal(|ui| {
                         if ui
-                            .button(icon_to_char(Icon::CheckBox).to_string())
+                            .button(format!(
+                                "{} Select All",
+                                icon_to_char(Icon::CheckBox).to_string()
+                            ))
                             .on_hover_text("Select all")
                             .clicked()
                         {
@@ -87,7 +90,10 @@ impl EditorApp {
                         }
 
                         if ui
-                            .button(icon_to_char(Icon::CheckBoxOutlineBlank).to_string())
+                            .button(format!(
+                                "{} Unselect All",
+                                icon_to_char(Icon::CheckBoxOutlineBlank).to_string()
+                            ))
                             .on_hover_text("Unselect all")
                             .clicked()
                         {
