@@ -301,11 +301,13 @@ impl EditorApp {
                                 }
                             }
                         } else {
-                            painter.rect_stroke(
-                                slot_rect,
-                                0.0,
-                                Stroke::new(1.0, Color32::from_gray(128)),
-                            );
+                            if self.config.canvas_show_slot_boundaries {
+                                painter.rect_stroke(
+                                    slot_rect,
+                                    0.0,
+                                    Stroke::new(1.0, Color32::from_gray(128)),
+                                );
+                            }
                         }
                     }
 

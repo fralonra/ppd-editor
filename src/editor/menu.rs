@@ -332,6 +332,16 @@ impl EditorApp {
 
                     ui.close_menu();
                 }
+
+                ui.separator();
+
+                if ui.button("Toggle Slot Boundaries").clicked() {
+                    self.actions.push_back(Action::CanvasShowSlotBoundaries(
+                        !self.config.canvas_show_slot_boundaries,
+                    ));
+
+                    ui.close_menu();
+                }
             });
 
             ui.menu_button("Doll", |ui| {

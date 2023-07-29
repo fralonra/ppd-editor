@@ -35,6 +35,7 @@ pub enum Action {
     CandidateLowerBottom(Option<u32>, u32),
     CandidateRaise(Option<u32>, u32),
     CandidateRaiseTop(Option<u32>, u32),
+    CanvasShowSlotBoundaries(bool),
     CursorMoved(Option<Pos2>),
     DollCreate,
     DollAdapterBackgroundRemove,
@@ -209,6 +210,9 @@ impl EditorApp {
                     if let Some(candidates) = candidates {
                         raise_top_in_vec(fragment_id, candidates);
                     }
+                }
+                Action::CanvasShowSlotBoundaries(value) => {
+                    self.config.canvas_show_slot_boundaries = value;
                 }
                 Action::CursorMoved(position) => {
                     self.cursor_position = position;
