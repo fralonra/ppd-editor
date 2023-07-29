@@ -17,7 +17,9 @@ use paperdoll_tar::{
 
 use crate::{
     adapter::{DollAdapter, FragmentAdapter, ImageAdapter, SlotAdapter, DOLL_DEFAULT_SIZE},
-    common::{upload_image_to_texture, upload_ppd_textures, TextureData},
+    common::{
+        allocate_size_fit_in_rect, upload_image_to_texture, upload_ppd_textures, TextureData,
+    },
     fs::{create_file, open_image_rgba, select_file, select_texture},
 };
 
@@ -86,6 +88,7 @@ pub enum Action {
     WindowFragmentVisible(bool),
     WindowSlotVisible(bool),
     ViewportCenter,
+    ViewportFit,
     ViewportMove(Vec2),
     ViewportZoomTo(f32),
 }
@@ -555,7 +558,8 @@ impl EditorApp {
                 Action::PpdChanged => {
                     let ppd = &self.ppd;
 
-                    self.config.canvas_scale = 1.0;
+                    self.viewport.offset = Vec2::ZERO;
+                    self.viewport.scale = 1.0;
 
                     let (textures_doll, textures_fragment) = upload_ppd_textures(ppd, ctx);
 
@@ -567,8 +571,6 @@ impl EditorApp {
                     self.locked_slots.clear();
                     self.visible_slots = ppd.slots().map(|(id, _)| *id).collect();
                     self.slot_copy = None;
-
-                    self.canvas_center_offset = Vec2::ZERO;
 
                     self.adapter_doll = None;
                     self.adapter_fragment = None;
@@ -900,12 +902,27 @@ impl EditorApp {
                     }
                 }
                 Action::ViewportCenter => {
-                    self.canvas_center_offset = Vec2::ZERO;
+                    self.viewport.offset = Vec2::ZERO;
                 }
-                Action::ViewportMove(offset) => self.canvas_center_offset += offset,
+                Action::ViewportFit => {
+                    let doll = self.actived_doll.map(|id| self.ppd.get_doll(id)).flatten();
+
+                    if let Some(doll) = doll {
+                        let doll_rect = allocate_size_fit_in_rect(
+                            doll.width as f32,
+                            doll.height as f32,
+                            &self.viewport.rect,
+                        );
+
+                        self.viewport.offset = Vec2::ZERO;
+
+                        self.viewport.scale = doll_rect.width() / doll.width as f32;
+                    }
+                }
+                Action::ViewportMove(offset) => self.viewport.offset += offset,
                 Action::ViewportZoomTo(scale) => {
                     if scale > 0.1 && scale < 10.0 {
-                        self.config.canvas_scale = scale;
+                        self.viewport.scale = scale;
                     }
                 }
             }

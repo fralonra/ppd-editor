@@ -4,6 +4,7 @@ mod config;
 mod menu;
 mod shortcut;
 mod ui;
+mod viewport;
 mod widgets;
 
 use std::collections::{HashMap, VecDeque};
@@ -12,7 +13,7 @@ use eframe::{
     egui::Context,
     epaint::{
         ahash::{HashSet, HashSetExt},
-        Pos2, Vec2,
+        Pos2,
     },
     App, CreationContext, Frame,
 };
@@ -23,7 +24,7 @@ use crate::{
     common::{load_fonts, setup_style, TextureData},
 };
 
-use self::{actions::Action, config::Config, shortcut::Shortcut};
+use self::{actions::Action, config::Config, shortcut::Shortcut, viewport::Viewport};
 
 pub const APP_TITLE: &'static str = "Paperdoll Editor";
 
@@ -102,6 +103,7 @@ struct EditorApp {
     actions: VecDeque<Action>,
     config: Config,
     shortcut: Shortcut,
+    viewport: Viewport,
 
     // project core
     ppd: PaperdollFactory,
@@ -117,9 +119,6 @@ struct EditorApp {
     locked_slots: HashSet<u32>,
     visible_slots: HashSet<u32>,
     slot_copy: Option<u32>,
-
-    // canvas helpers
-    canvas_center_offset: Vec2,
 
     // adapters
     adapter_doll: Option<DollAdapter>,
@@ -174,6 +173,7 @@ impl EditorApp {
             actions: VecDeque::from([Action::PpdChanged, Action::AppTitleChanged(None)]),
             config: Config::default(),
             shortcut: Shortcut::default(),
+            viewport: Viewport::default(),
 
             ppd,
 
@@ -186,8 +186,6 @@ impl EditorApp {
             locked_slots: HashSet::new(),
             visible_slots: HashSet::new(),
             slot_copy: None,
-
-            canvas_center_offset: Vec2::ZERO,
 
             adapter_doll: None,
             adapter_fragment: None,

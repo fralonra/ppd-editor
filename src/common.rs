@@ -20,25 +20,11 @@ pub struct TextureData {
 }
 
 pub(crate) fn allocate_size_center_in_rect(width: f32, height: f32, container_rect: &Rect) -> Rect {
-    let origin_aspect_ratio = width / height;
+    allocate_size_in_rect(width, height, container_rect, false)
+}
 
-    let mut width = width.min(container_rect.width());
-    let mut height = height.min(container_rect.height());
-
-    let new_aspect_ratio = width / height;
-
-    if new_aspect_ratio < origin_aspect_ratio {
-        height = width / origin_aspect_ratio;
-    }
-
-    if new_aspect_ratio > origin_aspect_ratio {
-        width = height * origin_aspect_ratio;
-    }
-
-    let min = container_rect.center() - vec2(width * 0.5, height * 0.5);
-    let max = min + vec2(width, height);
-
-    Rect::from([min, max])
+pub(crate) fn allocate_size_fit_in_rect(width: f32, height: f32, container_rect: &Rect) -> Rect {
+    allocate_size_in_rect(width, height, container_rect, true)
 }
 
 pub(crate) fn layout_text_widget(
@@ -172,4 +158,34 @@ fn add_font(fonts: &mut FontDefinitions, font: FontData, font_name: &str) {
     if let Some(vec) = fonts.families.get_mut(&FontFamily::Monospace) {
         vec.push(font_name.to_owned());
     }
+}
+
+fn allocate_size_in_rect(width: f32, height: f32, container_rect: &Rect, fit: bool) -> Rect {
+    let origin_aspect_ratio = width / height;
+
+    let mut width = if fit {
+        container_rect.width()
+    } else {
+        width.min(container_rect.width())
+    };
+    let mut height = if fit {
+        container_rect.height()
+    } else {
+        height.min(container_rect.height())
+    };
+
+    let new_aspect_ratio = width / height;
+
+    if new_aspect_ratio < origin_aspect_ratio {
+        height = width / origin_aspect_ratio;
+    }
+
+    if new_aspect_ratio > origin_aspect_ratio {
+        width = height * origin_aspect_ratio;
+    }
+
+    let min = container_rect.center() - vec2(width * 0.5, height * 0.5);
+    let max = min + vec2(width, height);
+
+    Rect::from([min, max])
 }

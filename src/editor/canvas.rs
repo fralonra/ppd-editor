@@ -20,10 +20,12 @@ impl EditorApp {
 
                 let doll = doll.unwrap();
 
-                let scale = self.config.canvas_scale;
+                let scale = self.viewport.scale;
 
                 let (viewport_rect, viewport_resp) =
                     ui.allocate_exact_size(ui.available_size(), Sense::click());
+
+                self.viewport.rect = viewport_rect;
 
                 if viewport_resp.clicked() {
                     if !self.window_slot_visible {
@@ -35,7 +37,7 @@ impl EditorApp {
                     .rect_filled(viewport_rect, 0.0, Color32::from_gray(60));
 
                 let doll_rect =
-                    determine_doll_rect(doll, &viewport_rect, scale, self.canvas_center_offset);
+                    determine_doll_rect(doll, &viewport_rect, scale, self.viewport.offset);
 
                 if ui.ui_contains_pointer() {
                     if let Some(pointer) = ui.ctx().pointer_interact_pos() {

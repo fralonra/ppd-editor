@@ -185,6 +185,10 @@ impl EditorApp {
             self.actions.push_back(Action::ViewportCenter);
         }
 
+        if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.viewport_fit)) {
+            self.actions.push_back(Action::ViewportFit);
+        }
+
         if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.viewport_move_down)) {
             self.actions
                 .push_back(Action::ViewportMove(vec2(0.0, -10.0)));
@@ -207,12 +211,12 @@ impl EditorApp {
 
         if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.zoom_in)) {
             self.actions
-                .push_back(Action::ViewportZoomTo(self.config.canvas_scale * 2.0));
+                .push_back(Action::ViewportZoomTo(self.viewport.scale * 2.0));
         }
 
         if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.zoom_out)) {
             self.actions
-                .push_back(Action::ViewportZoomTo(self.config.canvas_scale * 0.5));
+                .push_back(Action::ViewportZoomTo(self.viewport.scale * 0.5));
         }
 
         if self.actived_doll.is_some() && self.actived_slot.is_some() {
@@ -300,7 +304,7 @@ impl EditorApp {
                     .clicked()
                 {
                     self.actions
-                        .push_back(Action::ViewportZoomTo(self.config.canvas_scale * 0.5));
+                        .push_back(Action::ViewportZoomTo(self.viewport.scale * 0.5));
 
                     ui.close_menu();
                 }
@@ -313,7 +317,7 @@ impl EditorApp {
                     .clicked()
                 {
                     self.actions
-                        .push_back(Action::ViewportZoomTo(self.config.canvas_scale * 2.0));
+                        .push_back(Action::ViewportZoomTo(self.viewport.scale * 2.0));
 
                     ui.close_menu();
                 }
@@ -329,6 +333,18 @@ impl EditorApp {
                     .clicked()
                 {
                     self.actions.push_back(Action::ViewportCenter);
+
+                    ui.close_menu();
+                }
+
+                if ui
+                    .add(
+                        Button::new("Fit In Viewport")
+                            .shortcut_text(ui.ctx().format_shortcut(&self.shortcut.viewport_fit)),
+                    )
+                    .clicked()
+                {
+                    self.actions.push_back(Action::ViewportFit);
 
                     ui.close_menu();
                 }

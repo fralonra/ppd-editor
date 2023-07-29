@@ -1618,7 +1618,7 @@ impl EditorApp {
                 }
             });
 
-            ui.label(format!("{}%", self.config.canvas_scale * 100.0));
+            ui.label(format!("{}%", self.viewport.scale * 100.0));
         });
     }
 }
