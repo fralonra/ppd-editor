@@ -209,6 +209,10 @@ impl EditorApp {
                 .push_back(Action::ViewportMove(vec2(0.0, 10.0)));
         }
 
+        if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.zoom_reset)) {
+            self.actions.push_back(Action::ViewportZoomReset);
+        }
+
         if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.zoom_in)) {
             self.actions
                 .push_back(Action::ViewportZoomTo(self.viewport.scale * 2.0));
@@ -318,6 +322,18 @@ impl EditorApp {
                 {
                     self.actions
                         .push_back(Action::ViewportZoomTo(self.viewport.scale * 2.0));
+
+                    ui.close_menu();
+                }
+
+                if ui
+                    .add(
+                        Button::new("Zoom 1:1")
+                            .shortcut_text(ui.ctx().format_shortcut(&self.shortcut.zoom_reset)),
+                    )
+                    .clicked()
+                {
+                    self.actions.push_back(Action::ViewportZoomReset);
 
                     ui.close_menu();
                 }

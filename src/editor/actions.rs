@@ -90,6 +90,7 @@ pub enum Action {
     ViewportCenter,
     ViewportFit,
     ViewportMove(Vec2),
+    ViewportZoomReset,
     ViewportZoomTo(f32),
 }
 
@@ -920,6 +921,7 @@ impl EditorApp {
                     }
                 }
                 Action::ViewportMove(offset) => self.viewport.offset += offset,
+                Action::ViewportZoomReset => self.viewport.scale = 1.0,
                 Action::ViewportZoomTo(scale) => {
                     if scale > 0.1 && scale < 10.0 {
                         self.viewport.scale = scale;
