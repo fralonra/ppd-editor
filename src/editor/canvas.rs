@@ -231,6 +231,21 @@ impl EditorApp {
 
                                 control_point(
                                     format!(
+                                        "slot_{}_position_{}_control_t",
+                                        slot_id, position_index
+                                    ),
+                                    slot_rect.center_top(),
+                                    control_size,
+                                    actived_stroke,
+                                    CursorIcon::ResizeVertical,
+                                    ui,
+                                    |pos| {
+                                        min.y = pos.y;
+                                    },
+                                );
+
+                                control_point(
+                                    format!(
                                         "slot_{}_position_{}_control_tr",
                                         slot_id, position_index
                                     ),
@@ -241,6 +256,21 @@ impl EditorApp {
                                     ui,
                                     |pos| {
                                         min.y = pos.y;
+                                        max.x = pos.x;
+                                    },
+                                );
+
+                                control_point(
+                                    format!(
+                                        "slot_{}_position_{}_control_r",
+                                        slot_id, position_index
+                                    ),
+                                    slot_rect.right_center(),
+                                    control_size,
+                                    actived_stroke,
+                                    CursorIcon::ResizeHorizontal,
+                                    ui,
+                                    |pos| {
                                         max.x = pos.x;
                                     },
                                 );
@@ -262,6 +292,21 @@ impl EditorApp {
 
                                 control_point(
                                     format!(
+                                        "slot_{}_position_{}_control_b",
+                                        slot_id, position_index
+                                    ),
+                                    slot_rect.center_bottom(),
+                                    control_size,
+                                    actived_stroke,
+                                    CursorIcon::ResizeVertical,
+                                    ui,
+                                    |pos| {
+                                        max.y = pos.y;
+                                    },
+                                );
+
+                                control_point(
+                                    format!(
                                         "slot_{}_position_{}_control_bl",
                                         slot_id, position_index
                                     ),
@@ -273,6 +318,21 @@ impl EditorApp {
                                     |pos| {
                                         min.x = pos.x;
                                         max.y = pos.y;
+                                    },
+                                );
+
+                                control_point(
+                                    format!(
+                                        "slot_{}_position_{}_control_l",
+                                        slot_id, position_index
+                                    ),
+                                    slot_rect.left_center(),
+                                    control_size,
+                                    actived_stroke,
+                                    CursorIcon::ResizeHorizontal,
+                                    ui,
+                                    |pos| {
+                                        min.x = pos.x;
                                     },
                                 );
 
