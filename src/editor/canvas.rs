@@ -1,5 +1,8 @@
 use eframe::{
-    egui::{scroll_area::ScrollBarVisibility, CursorIcon, Id, ScrollArea, Sense, Ui},
+    egui::{
+        scroll_area::ScrollBarVisibility, Context, CursorIcon, Id, PointerButton, Response,
+        ScrollArea, Sense, Ui,
+    },
     epaint::{pos2, vec2, Color32, Pos2, Rect, Stroke, Vec2},
 };
 use paperdoll_tar::paperdoll::doll::Doll;
@@ -10,6 +13,7 @@ impl EditorApp {
     pub(super) fn ui_canvas(&mut self, ui: &mut Ui) {
         ScrollArea::both()
             .auto_shrink([false, false])
+            .enable_scrolling(false)
             .scroll_bar_visibility(ScrollBarVisibility::AlwaysHidden)
             .show(ui, |ui| {
                 let doll = self.actived_doll.map(|id| self.ppd.get_doll(id)).flatten();
@@ -23,14 +27,18 @@ impl EditorApp {
                 let scale = self.viewport.scale;
 
                 let (viewport_rect, viewport_resp) =
-                    ui.allocate_exact_size(ui.available_size(), Sense::click());
+                    ui.allocate_exact_size(ui.available_size(), Sense::drag());
 
                 self.viewport.rect = viewport_rect;
 
-                if viewport_resp.clicked() {
+                if viewport_resp.drag_started_by(PointerButton::Primary) {
                     if !self.window_slot_visible {
                         self.actived_slot = None;
                     }
+                }
+
+                if viewport_resp.dragged_by(PointerButton::Secondary) {
+                    self.viewport.offset += drag_move(&viewport_resp, scale, ui.ctx());
                 }
 
                 ui.painter()
@@ -49,6 +57,14 @@ impl EditorApp {
                 } else {
                     self.actions.push_back(Action::CursorMoved(None));
                 }
+
+                ui.input(|i| {
+                    if i.scroll_delta.y != 0.0 {
+                        self.actions.push_back(Action::ViewportZoomTo(
+                            self.viewport.scale + i.scroll_delta.y / 100.0,
+                        ));
+                    }
+                });
 
                 // paint doll
                 let painter = ui.painter_at(ui.max_rect());
@@ -105,24 +121,33 @@ impl EditorApp {
                         let slot_resp =
                             ui.allocate_rect(slot_rect, Sense::drag())
                                 .context_menu(|ui| {
-                                    if ui.button("Edit slot").clicked() {
-                                        self.actions.push_back(Action::SlotEdit(slot_id));
+                                    if is_actived_slot {
+                                        if ui.button("Edit slot").clicked() {
+                                            self.actions.push_back(Action::SlotEdit(slot_id));
 
-                                        ui.close_menu();
-                                    }
+                                            ui.close_menu();
+                                        }
 
-                                    if ui.button("Delete slot").clicked() {
-                                        self.actions.push_back(Action::SlotRemoveRequest(slot_id));
+                                        if ui.button("Delete slot").clicked() {
+                                            self.actions
+                                                .push_back(Action::SlotRemoveRequest(slot_id));
 
+                                            ui.close_menu();
+                                        }
+                                    } else {
                                         ui.close_menu();
                                     }
                                 });
 
-                        if slot_resp.dragged() {
+                        if slot_resp.dragged_by(PointerButton::Primary) {
                             self.actived_slot = Some(slot_id);
                         }
 
-                        if slot_resp.hovered() && !is_locked {
+                        if slot_resp.dragged_by(PointerButton::Secondary) && !is_actived_slot {
+                            self.viewport.offset += drag_move(&slot_resp, scale, ui.ctx());
+                        }
+
+                        if slot_resp.hovered() && !slot_resp.dragged() && !is_locked {
                             ui.ctx().set_cursor_icon(CursorIcon::Move);
                         }
 
@@ -287,9 +312,11 @@ impl EditorApp {
                                     position.x = min.x.round();
                                     position.y = min.y.round();
 
-                                    let drag_delta = slot_resp.drag_delta();
-                                    position.x += drag_delta.x / scale;
-                                    position.y += drag_delta.y / scale;
+                                    if slot_resp.dragged_by(PointerButton::Primary) {
+                                        let drag_delta = slot_resp.drag_delta();
+                                        position.x += drag_delta.x / scale;
+                                        position.y += drag_delta.y / scale;
+                                    }
                                 }
 
                                 let width = (max.x.round() - min.x.round()) as u32;
@@ -341,7 +368,7 @@ fn control_point(
     stroke: Stroke,
     cursor_icon: CursorIcon,
     ui: &mut Ui,
-    mut on_drag: impl FnMut(Pos2),
+    mut on_dragged: impl FnMut(Pos2),
 ) {
     let rect = Rect::from_center_size(center_point, size);
 
@@ -353,9 +380,9 @@ fn control_point(
         ui.ctx().set_cursor_icon(cursor_icon);
     }
 
-    if resp.dragged() {
+    if resp.dragged_by(PointerButton::Primary) {
         if let Some(pointer) = ui.ctx().pointer_interact_pos() {
-            on_drag(pointer)
+            on_dragged(pointer)
         }
     }
 }
@@ -366,4 +393,10 @@ fn determine_doll_rect(doll: &Doll, container_rect: &Rect, scale: f32, offset: V
         vec2(doll.width as f32, doll.height as f32) * scale,
     )
     .translate(offset * scale)
+}
+
+fn drag_move(response: &Response, scale: f32, ctx: &Context) -> Vec2 {
+    ctx.set_cursor_icon(CursorIcon::Grabbing);
+
+    response.drag_delta() / scale
 }

@@ -23,7 +23,7 @@ use crate::{
     fs::{create_file, open_image_rgba, select_file, select_texture},
 };
 
-use super::{DialogOption, EditorApp, APP_TITLE};
+use super::{viewport::Viewport, DialogOption, EditorApp, APP_TITLE};
 
 pub enum Action {
     AppQuit,
@@ -559,8 +559,7 @@ impl EditorApp {
                 Action::PpdChanged => {
                     let ppd = &self.ppd;
 
-                    self.viewport.offset = Vec2::ZERO;
-                    self.viewport.scale = 1.0;
+                    self.viewport = Viewport::default();
 
                     let (textures_doll, textures_fragment) = upload_ppd_textures(ppd, ctx);
 
