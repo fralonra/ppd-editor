@@ -107,6 +107,8 @@ impl EditorApp {
 
                     let slot = slot.unwrap();
 
+                    let aspect_ratio = slot.width as f32 / slot.height as f32;
+
                     let mut new_positions = slot.positions.clone();
                     let mut new_width = slot.width;
                     let mut new_height = slot.height;
@@ -218,6 +220,8 @@ impl EditorApp {
                                 // paint controls
                                 let control_size = Vec2::splat(8.0);
 
+                                let is_ctrl_pressed = ui.input(|i| i.modifiers.ctrl);
+
                                 control_point(
                                     format!(
                                         "slot_{}_position_{}_control_tl",
@@ -230,6 +234,10 @@ impl EditorApp {
                                     ui,
                                     |pos| {
                                         min = pos;
+
+                                        if is_ctrl_pressed {
+                                            min.y = max.y - (max.x - min.x) / aspect_ratio;
+                                        }
                                     },
                                 );
 
@@ -245,6 +253,10 @@ impl EditorApp {
                                     ui,
                                     |pos| {
                                         min.y = pos.y;
+
+                                        if is_ctrl_pressed {
+                                            max.x = (max.y - min.y) * aspect_ratio + min.x;
+                                        }
                                     },
                                 );
 
@@ -261,6 +273,10 @@ impl EditorApp {
                                     |pos| {
                                         min.y = pos.y;
                                         max.x = pos.x;
+
+                                        if is_ctrl_pressed {
+                                            max.x = (max.y - min.y) * aspect_ratio + min.x;
+                                        }
                                     },
                                 );
 
@@ -276,6 +292,10 @@ impl EditorApp {
                                     ui,
                                     |pos| {
                                         max.x = pos.x;
+
+                                        if is_ctrl_pressed {
+                                            max.y = (max.x - min.x) / aspect_ratio + min.y;
+                                        }
                                     },
                                 );
 
@@ -291,6 +311,10 @@ impl EditorApp {
                                     ui,
                                     |pos| {
                                         max = pos;
+
+                                        if is_ctrl_pressed {
+                                            max.x = (max.y - min.y) * aspect_ratio + min.x;
+                                        }
                                     },
                                 );
 
@@ -306,6 +330,10 @@ impl EditorApp {
                                     ui,
                                     |pos| {
                                         max.y = pos.y;
+
+                                        if is_ctrl_pressed {
+                                            max.x = (max.y - min.y) * aspect_ratio + min.x;
+                                        }
                                     },
                                 );
 
@@ -322,6 +350,10 @@ impl EditorApp {
                                     |pos| {
                                         min.x = pos.x;
                                         max.y = pos.y;
+
+                                        if is_ctrl_pressed {
+                                            max.y = (max.x - min.x) / aspect_ratio + min.y;
+                                        }
                                     },
                                 );
 
@@ -337,6 +369,10 @@ impl EditorApp {
                                     ui,
                                     |pos| {
                                         min.x = pos.x;
+
+                                        if is_ctrl_pressed {
+                                            max.y = (max.x - min.x) / aspect_ratio + min.y;
+                                        }
                                     },
                                 );
 

@@ -1211,18 +1211,70 @@ impl EditorApp {
                                         });
                                         ui.horizontal_wrapped(|ui| {
                                             ui.monospace("w");
-                                            ui.add(
-                                                DragValue::new(slot_data.4)
-                                                    .clamp_range(RangeInclusive::new(1, u32::MAX))
-                                                    .speed(1),
-                                            );
+                                            if ui
+                                                .add(
+                                                    DragValue::new(slot_data.4)
+                                                        .clamp_range(RangeInclusive::new(
+                                                            1,
+                                                            u32::MAX,
+                                                        ))
+                                                        .speed(1),
+                                                )
+                                                .changed()
+                                            {
+                                                if adapter_slot.keep_aspect_ratio {
+                                                    *slot_data.5 = (*slot_data.4 as f32
+                                                        / adapter_slot.aspect_ratio)
+                                                        as u32;
+                                                }
+
+                                                adapter_slot.aspect_ratio =
+                                                    *slot_data.4 as f32 / *slot_data.5 as f32;
+                                            }
 
                                             ui.monospace("h");
-                                            ui.add(
-                                                DragValue::new(slot_data.5)
-                                                    .clamp_range(RangeInclusive::new(1, u32::MAX))
-                                                    .speed(1),
-                                            );
+                                            if ui
+                                                .add(
+                                                    DragValue::new(slot_data.5)
+                                                        .clamp_range(RangeInclusive::new(
+                                                            1,
+                                                            u32::MAX,
+                                                        ))
+                                                        .speed(1),
+                                                )
+                                                .changed()
+                                            {
+                                                if adapter_slot.keep_aspect_ratio {
+                                                    *slot_data.4 = (*slot_data.5 as f32
+                                                        * adapter_slot.aspect_ratio)
+                                                        as u32;
+                                                }
+
+                                                adapter_slot.aspect_ratio =
+                                                    *slot_data.4 as f32 / *slot_data.5 as f32;
+                                            }
+
+                                            ui.spacing_mut().item_spacing.x = 0.0;
+
+                                            if ui
+                                                .add(
+                                                    Button::new(
+                                                        icon_to_char(
+                                                            if adapter_slot.keep_aspect_ratio {
+                                                                Icon::Link
+                                                            } else {
+                                                                Icon::LinkOff
+                                                            },
+                                                        )
+                                                        .to_string(),
+                                                    )
+                                                    .frame(false),
+                                                )
+                                                .clicked()
+                                            {
+                                                adapter_slot.keep_aspect_ratio =
+                                                    !adapter_slot.keep_aspect_ratio;
+                                            }
                                         });
 
                                         ui.end_row();

@@ -89,6 +89,8 @@ pub struct SlotAdapter {
     pub positions: Vec<Point>,
     pub width: u32,
     pub height: u32,
+    pub aspect_ratio: f32,
+    pub keep_aspect_ratio: bool,
 
     pub anchor: Point,
 
@@ -110,6 +112,8 @@ impl Default for SlotAdapter {
             positions: vec![Point::default()],
             width: 50,
             height: 50,
+            aspect_ratio: 1.0,
+            keep_aspect_ratio: false,
             anchor: Point::default(),
             candidates: vec![],
             actived_position: None,
@@ -130,6 +134,7 @@ impl From<&Slot> for SlotAdapter {
             positions: slot.positions.clone(),
             width: slot.width,
             height: slot.height,
+            aspect_ratio: slot.width as f32 / slot.height as f32,
             anchor: slot.anchor,
             candidates: slot.candidates.clone(),
             ..Default::default()
