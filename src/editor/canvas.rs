@@ -371,13 +371,29 @@ impl EditorApp {
                                 let min = (min - doll_rect.min) / scale;
                                 let max = (max - doll_rect.min) / scale;
 
+                                let mut drag_all = false;
+
                                 if let Some(position) = new_positions.iter_mut().nth(position_index)
                                 {
                                     position.x = min.x.round();
                                     position.y = min.y.round();
 
                                     if slot_resp.dragged_by(PointerButton::Primary) {
-                                        let drag_delta = slot_resp.drag_delta();
+                                        if ui.input(|i| i.modifiers.shift) {
+                                            drag_all = true;
+                                        } else {
+                                            let drag_delta = slot_resp.drag_delta();
+
+                                            position.x += drag_delta.x / scale;
+                                            position.y += drag_delta.y / scale;
+                                        }
+                                    }
+                                }
+
+                                if drag_all {
+                                    let drag_delta = slot_resp.drag_delta();
+
+                                    for position in new_positions.iter_mut() {
                                         position.x += drag_delta.x / scale;
                                         position.y += drag_delta.y / scale;
                                     }
