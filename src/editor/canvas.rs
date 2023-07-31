@@ -228,14 +228,18 @@ impl EditorApp {
 
                         // paint actived slot
                         if is_actived_slot {
-                            let mut min = min;
-                            let mut max = max;
-
                             let actived_stroke = Stroke::new(2.0, Color32::from_gray(180));
 
                             painter.rect_stroke(slot_rect, 0.0, actived_stroke);
 
                             if !is_locked {
+                                let dragged = slot_resp.dragged();
+                                let mut control_point_dragged = false;
+                                let mut anchor_dragged = false;
+
+                                let mut min = min;
+                                let mut max = max;
+
                                 // paint controls
                                 let control_size = Vec2::splat(8.0);
 
@@ -258,7 +262,7 @@ impl EditorApp {
                                             min.y = max.y - (max.x - min.x) / aspect_ratio;
                                         }
 
-                                        state = CanvasState::ResizingSlot;
+                                        control_point_dragged = true;
                                     },
                                 );
 
@@ -279,7 +283,7 @@ impl EditorApp {
                                             max.x = (max.y - min.y) * aspect_ratio + min.x;
                                         }
 
-                                        state = CanvasState::ResizingSlot;
+                                        control_point_dragged = true;
                                     },
                                 );
 
@@ -301,7 +305,7 @@ impl EditorApp {
                                             max.x = (max.y - min.y) * aspect_ratio + min.x;
                                         }
 
-                                        state = CanvasState::ResizingSlot;
+                                        control_point_dragged = true;
                                     },
                                 );
 
@@ -322,7 +326,7 @@ impl EditorApp {
                                             max.y = (max.x - min.x) / aspect_ratio + min.y;
                                         }
 
-                                        state = CanvasState::ResizingSlot;
+                                        control_point_dragged = true;
                                     },
                                 );
 
@@ -343,7 +347,7 @@ impl EditorApp {
                                             max.x = (max.y - min.y) * aspect_ratio + min.x;
                                         }
 
-                                        state = CanvasState::ResizingSlot;
+                                        control_point_dragged = true;
                                     },
                                 );
 
@@ -364,7 +368,7 @@ impl EditorApp {
                                             max.x = (max.y - min.y) * aspect_ratio + min.x;
                                         }
 
-                                        state = CanvasState::ResizingSlot;
+                                        control_point_dragged = true;
                                     },
                                 );
 
@@ -386,7 +390,7 @@ impl EditorApp {
                                             max.y = (max.x - min.x) / aspect_ratio + min.y;
                                         }
 
-                                        state = CanvasState::ResizingSlot;
+                                        control_point_dragged = true;
                                     },
                                 );
 
@@ -407,7 +411,7 @@ impl EditorApp {
                                             max.y = (max.x - min.x) / aspect_ratio + min.y;
                                         }
 
-                                        state = CanvasState::ResizingSlot;
+                                        control_point_dragged = true;
                                     },
                                 );
 
@@ -433,9 +437,7 @@ impl EditorApp {
                                         Sense::drag(),
                                     );
 
-                                    if anchor_resp.dragged() {
-                                        state = CanvasState::DraggingAnchor;
-                                    }
+                                    anchor_dragged = anchor_resp.dragged();
 
                                     Some(anchor_resp.drag_delta())
                                 } else {
@@ -443,47 +445,61 @@ impl EditorApp {
                                 };
 
                                 // store updates
-                                let min = (min - doll_rect.min) / scale;
-                                let max = (max - doll_rect.min) / scale;
+                                if dragged || control_point_dragged || anchor_dragged {
+                                    let min = (min - doll_rect.min) / scale;
+                                    let max = (max - doll_rect.min) / scale;
 
-                                let mut drag_all = false;
+                                    if dragged || control_point_dragged {
+                                        let mut drag_all = false;
 
-                                if let Some(position) = new_positions.iter_mut().nth(position_index)
-                                {
-                                    position.x = min.x.round();
-                                    position.y = min.y.round();
+                                        if let Some(position) =
+                                            new_positions.iter_mut().nth(position_index)
+                                        {
+                                            if dragged || control_point_dragged {
+                                                position.x = min.x.round();
+                                                position.y = min.y.round();
+                                            }
 
-                                    if slot_resp.dragged_by(PointerButton::Primary) {
-                                        if ui.input(|i| i.modifiers.shift) {
-                                            drag_all = true;
-                                        } else {
-                                            let drag_delta = slot_resp.drag_delta();
+                                            if dragged {
+                                                if ui.input(|i| i.modifiers.shift) {
+                                                    drag_all = true;
+                                                } else {
+                                                    let drag_delta = slot_resp.drag_delta();
 
-                                            position.x += drag_delta.x / scale;
-                                            position.y += drag_delta.y / scale;
+                                                    position.x += drag_delta.x / scale;
+                                                    position.y += drag_delta.y / scale;
+                                                }
+
+                                                state = CanvasState::DraggingSlot;
+                                            }
                                         }
 
+                                        if drag_all {
+                                            let drag_delta = slot_resp.drag_delta();
+
+                                            for position in new_positions.iter_mut() {
+                                                position.x += drag_delta.x / scale;
+                                                position.y += drag_delta.y / scale;
+                                            }
+                                        }
+                                    }
+
+                                    if control_point_dragged {
+                                        new_width = (max.x.round() - min.x.round()) as u32;
+                                        new_height = (max.y.round() - min.y.round()) as u32;
+                                    }
+
+                                    if dragged {
                                         state = CanvasState::DraggingSlot;
                                     }
-                                }
 
-                                if drag_all {
-                                    let drag_delta = slot_resp.drag_delta();
-
-                                    for position in new_positions.iter_mut() {
-                                        position.x += drag_delta.x / scale;
-                                        position.y += drag_delta.y / scale;
+                                    if control_point_dragged {
+                                        state = CanvasState::ResizingSlot;
                                     }
-                                }
 
-                                let width = (max.x.round() - min.x.round()) as u32;
-                                if width != slot.width {
-                                    new_width = width;
-                                }
-
-                                let height = (max.y.round() - min.y.round()) as u32;
-                                if height != slot.height {
-                                    new_height = height;
+                                    if anchor_dragged {
+                                        state = CanvasState::DraggingAnchor;
+                                    }
                                 }
                             }
                         } else {

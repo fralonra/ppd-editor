@@ -1698,7 +1698,7 @@ impl EditorApp {
                 CanvasState::DraggingAnchor => ui.horizontal(|ui| {}),
                 CanvasState::DraggingSlot => ui.horizontal(|ui| {
                     ui.strong("Shift");
-                    ui.label("to move all positions of the same slot at once");
+                    ui.label("to move all positions of the same slot at the same time");
                 }),
                 CanvasState::ResizingSlot => ui.horizontal(|ui| {
                     ui.strong("Ctrl");
