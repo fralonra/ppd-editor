@@ -3,15 +3,15 @@ use std::{collections::HashMap, fs::read};
 use anyhow::anyhow;
 use eframe::{
     egui::{
-        self, widget_text::WidgetTextGalley, Context, FontData, FontDefinitions, Style, TextStyle,
-        TextureOptions, Ui, WidgetText,
+        self, widget_text::WidgetTextGalley, Context, CursorIcon, FontData, FontDefinitions,
+        Response, Style, TextStyle, TextureOptions, Ui, WidgetText,
     },
     epaint::{vec2, ColorImage, FontFamily, Rect, TextureHandle, Vec2},
 };
 use font_kit::{
     family_name::FamilyName, handle::Handle, properties::Properties, source::SystemSource,
 };
-use paperdoll_tar::paperdoll::{factory::PaperdollFactory, image::ImageData};
+use paperdoll_tar::paperdoll::{doll::Doll, factory::PaperdollFactory, image::ImageData};
 
 pub struct TextureData {
     pub width: u32,
@@ -25,6 +25,25 @@ pub(crate) fn allocate_size_center_in_rect(width: f32, height: f32, container_re
 
 pub(crate) fn allocate_size_fit_in_rect(width: f32, height: f32, container_rect: &Rect) -> Rect {
     allocate_size_in_rect(width, height, container_rect, true)
+}
+
+pub(crate) fn determine_doll_rect(
+    doll: &Doll,
+    container_rect: &Rect,
+    scale: f32,
+    offset: Vec2,
+) -> Rect {
+    Rect::from_center_size(
+        container_rect.center(),
+        vec2(doll.width as f32, doll.height as f32) * scale,
+    )
+    .translate(offset * scale)
+}
+
+pub(crate) fn drag_move(response: &Response, scale: f32, ctx: &Context) -> Vec2 {
+    ctx.set_cursor_icon(CursorIcon::Grabbing);
+
+    response.drag_delta() / scale
 }
 
 pub(crate) fn layout_text_widget(

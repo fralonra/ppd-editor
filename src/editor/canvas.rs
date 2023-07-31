@@ -1,11 +1,11 @@
 use eframe::{
     egui::{
-        scroll_area::ScrollBarVisibility, Context, CursorIcon, Id, PointerButton, Response,
-        ScrollArea, Sense, Ui,
+        scroll_area::ScrollBarVisibility, CursorIcon, Id, PointerButton, ScrollArea, Sense, Ui,
     },
     epaint::{pos2, vec2, Color32, Pos2, Rect, Stroke, Vec2},
 };
-use paperdoll_tar::paperdoll::doll::Doll;
+
+use crate::common::{determine_doll_rect, drag_move};
 
 use super::{actions::Action, EditorApp};
 
@@ -445,18 +445,4 @@ fn control_point(
             on_dragged(pointer)
         }
     }
-}
-
-fn determine_doll_rect(doll: &Doll, container_rect: &Rect, scale: f32, offset: Vec2) -> Rect {
-    Rect::from_center_size(
-        container_rect.center(),
-        vec2(doll.width as f32, doll.height as f32) * scale,
-    )
-    .translate(offset * scale)
-}
-
-fn drag_move(response: &Response, scale: f32, ctx: &Context) -> Vec2 {
-    ctx.set_cursor_icon(CursorIcon::Grabbing);
-
-    response.drag_delta() / scale
 }

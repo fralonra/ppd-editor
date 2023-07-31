@@ -21,9 +21,10 @@ use crate::{
         allocate_size_fit_in_rect, upload_image_to_texture, upload_ppd_textures, TextureData,
     },
     fs::{create_file, open_image_rgba, select_file, select_texture},
+    viewport::Viewport,
 };
 
-use super::{viewport::Viewport, DialogOption, EditorApp, APP_TITLE};
+use super::{DialogOption, EditorApp, APP_TITLE};
 
 pub enum Action {
     AppQuit,

@@ -2,15 +2,15 @@ use std::collections::HashMap;
 
 use eframe::{
     egui::{
-        Button, CentralPanel, ComboBox, Context, Grid, Painter, RichText, Sense, SidePanel,
-        TopBottomPanel, Ui,
+        scroll_area::ScrollBarVisibility, Button, CentralPanel, ComboBox, Context, Grid, Painter,
+        PointerButton, RichText, ScrollArea, Sense, SidePanel, TopBottomPanel, Ui,
     },
     epaint::{pos2, vec2, Color32, Rect, TextureId, Vec2},
 };
 use material_icons::{icon_to_char, Icon};
 use paperdoll_tar::paperdoll::{doll::Doll, render_material::RenderMaterial, slot::Slot};
 
-use crate::common::{allocate_size_center_in_rect, TextureData};
+use crate::common::{determine_doll_rect, drag_move, TextureData};
 
 use super::{actions::Action, ViewerApp};
 
@@ -24,11 +24,19 @@ impl ViewerApp {
             return;
         }
 
+        TopBottomPanel::top("menu").show(ctx, |ui| {
+            self.ui_menu_bar(ui);
+        });
+
         TopBottomPanel::top("action")
             .exact_height(40.0)
             .show(ctx, |ui| {
                 self.ui_action_bar(ui);
             });
+
+        TopBottomPanel::bottom("status").show(ctx, |ui| {
+            self.ui_status_bar(ui);
+        });
 
         SidePanel::right("control")
             .resizable(false)
@@ -96,29 +104,60 @@ impl ViewerApp {
             return;
         }
 
-        let ppd = self.ppd.as_ref().unwrap();
+        ScrollArea::both()
+            .auto_shrink([false, false])
+            .enable_scrolling(false)
+            .scroll_bar_visibility(ScrollBarVisibility::AlwaysHidden)
+            .show(ui, |ui| {
+                let ppd = self.ppd.as_ref().unwrap();
 
-        let doll = ppd.get_doll(self.actived_doll);
+                let doll = ppd.get_doll(self.actived_doll);
 
-        if doll.is_none() {
-            return;
-        }
+                if doll.is_none() {
+                    return;
+                }
 
-        let doll = doll.unwrap();
+                let doll = doll.unwrap();
 
-        let doll_rect =
-            allocate_size_center_in_rect(doll.width as f32, doll.height as f32, &ui.max_rect());
+                let (viewport_rect, viewport_resp) =
+                    ui.allocate_exact_size(ui.available_size(), Sense::drag());
 
-        let painter = ui.painter_at(doll_rect);
+                self.viewport.rect = viewport_rect;
 
-        if let Ok(material) = ppd.render(doll.id(), &self.slot_map, true) {
-            render_paperdoll(
-                material,
-                &self.textures_doll,
-                &self.textures_fragment,
-                &painter,
-            )
-        }
+                if viewport_resp.dragged_by(PointerButton::Secondary) {
+                    self.viewport.offset +=
+                        drag_move(&viewport_resp, self.viewport.scale, ui.ctx());
+                }
+
+                ui.input(|i| {
+                    if i.scroll_delta.y != 0.0 {
+                        self.actions.push_back(Action::ViewportZoomTo(
+                            self.viewport.scale + i.scroll_delta.y / 100.0,
+                        ));
+                    }
+                });
+
+                let doll_rect = determine_doll_rect(
+                    doll,
+                    &viewport_rect,
+                    self.viewport.scale,
+                    self.viewport.offset,
+                );
+
+                let painter = ui.painter_at(ui.max_rect());
+
+                if let Ok(material) = ppd.render(doll.id(), &self.slot_map, true) {
+                    render_paperdoll(
+                        material,
+                        &self.textures_doll,
+                        &self.textures_fragment,
+                        self.viewport.scale,
+                        self.viewport.offset * self.viewport.scale
+                            + (doll_rect.min - ui.max_rect().min),
+                        &painter,
+                    )
+                }
+            });
     }
 
     fn ui_control(&mut self, ui: &mut Ui) {
@@ -268,6 +307,14 @@ impl ViewerApp {
             },
         );
     }
+
+    fn ui_status_bar(&mut self, ui: &mut Ui) {
+        ui.horizontal(|ui| {
+            ui.allocate_space(vec2(100.0, 1.0));
+
+            ui.label(format!("{}%", self.viewport.scale * 100.0));
+        });
+    }
 }
 
 fn map_doll_title(doll: &Doll) -> String {
@@ -288,6 +335,8 @@ fn render_paperdoll(
     material: RenderMaterial,
     textures_doll: &HashMap<u32, TextureData>,
     textures_fragment: &HashMap<u32, TextureData>,
+    scale: f32,
+    offset: Vec2,
     painter: &Painter,
 ) {
     let RenderMaterial { doll, slots, .. } = material;
@@ -300,6 +349,8 @@ fn render_paperdoll(
                 piece.position.y,
                 piece.image.width as f32,
                 piece.image.height as f32,
+                scale,
+                offset,
                 painter,
             )
         }
@@ -313,6 +364,8 @@ fn render_paperdoll(
                 piece.position.y,
                 piece.image.width as f32,
                 piece.image.height as f32,
+                scale,
+                offset,
                 painter,
             )
         }
@@ -324,12 +377,14 @@ fn render_paperdoll(
         top: f32,
         width: f32,
         height: f32,
+        scale: f32,
+        offset: Vec2,
         painter: &Painter,
     ) {
-        let min = painter.clip_rect().min + vec2(left, top);
-        let max = min + vec2(width, height);
+        let min = painter.clip_rect().min + vec2(left, top) * scale;
+        let max = min + vec2(width, height) * scale;
 
-        let rect = Rect::from([min, max]);
+        let rect = Rect::from([min, max]).translate(offset);
 
         painter.image(
             *texture_id,

@@ -1,8 +1,11 @@
 use anyhow::Result;
-use eframe::{egui::Context, Frame};
+use eframe::{egui::Context, epaint::Vec2, Frame};
 use paperdoll_tar::paperdoll::factory::PaperdollFactory;
 
-use crate::{common::upload_ppd_textures, fs::select_file};
+use crate::{
+    common::{allocate_size_fit_in_rect, upload_ppd_textures},
+    fs::select_file,
+};
 
 use super::ViewerApp;
 
@@ -11,6 +14,11 @@ pub enum Action {
     FileOpen,
     PpdChanged(Option<PaperdollFactory>),
     SlotFragmentChanged(u32, isize),
+    ViewportCenter,
+    ViewportFit,
+    ViewportMove(Vec2),
+    ViewportZoomReset,
+    ViewportZoomTo(f32),
 }
 
 impl ViewerApp {
@@ -74,6 +82,35 @@ impl ViewerApp {
                         }
 
                         self.slot_map.remove(&slot_id);
+                    }
+                }
+                Action::ViewportCenter => {
+                    self.viewport.offset = Vec2::ZERO;
+                }
+                Action::ViewportFit => {
+                    let doll = self
+                        .ppd
+                        .as_ref()
+                        .map(|ppd| ppd.get_doll(self.actived_doll))
+                        .flatten();
+
+                    if let Some(doll) = doll {
+                        let doll_rect = allocate_size_fit_in_rect(
+                            doll.width as f32,
+                            doll.height as f32,
+                            &self.viewport.rect,
+                        );
+
+                        self.viewport.offset = Vec2::ZERO;
+
+                        self.viewport.scale = doll_rect.width() / doll.width as f32;
+                    }
+                }
+                Action::ViewportMove(offset) => self.viewport.offset += offset,
+                Action::ViewportZoomReset => self.viewport.scale = 1.0,
+                Action::ViewportZoomTo(scale) => {
+                    if scale > 0.1 && scale < 10.0 {
+                        self.viewport.scale = scale;
                     }
                 }
             }

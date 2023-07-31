@@ -1,4 +1,5 @@
 mod actions;
+mod menu;
 mod shortcut;
 mod ui;
 
@@ -7,7 +8,10 @@ use std::collections::{HashMap, VecDeque};
 use eframe::{egui::Context, App, CreationContext, Frame};
 use paperdoll_tar::paperdoll::factory::PaperdollFactory;
 
-use crate::common::{load_fonts, setup_style, TextureData};
+use crate::{
+    common::{load_fonts, setup_style, TextureData},
+    viewport::Viewport,
+};
 
 use self::{actions::Action, shortcut::Shortcut};
 
@@ -16,6 +20,7 @@ pub const APP_TITLE: &'static str = "Paperdoll Viewer";
 struct ViewerApp {
     actions: VecDeque<Action>,
     shortcut: Shortcut,
+    viewport: Viewport,
 
     ppd: Option<PaperdollFactory>,
 
@@ -42,6 +47,7 @@ impl ViewerApp {
         Self {
             actions: VecDeque::from([Action::PpdChanged(ppd)]),
             shortcut: Shortcut::default(),
+            viewport: Viewport::default(),
 
             ppd: None,
 

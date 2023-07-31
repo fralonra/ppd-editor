@@ -4,7 +4,6 @@ mod config;
 mod menu;
 mod shortcut;
 mod ui;
-mod viewport;
 mod widgets;
 
 use std::collections::{HashMap, VecDeque};
@@ -22,9 +21,10 @@ use paperdoll_tar::paperdoll::factory::PaperdollFactory;
 use crate::{
     adapter::{DollAdapter, FragmentAdapter, SlotAdapter, DOLL_DEFAULT_SIZE},
     common::{load_fonts, setup_style, TextureData},
+    viewport::Viewport,
 };
 
-use self::{actions::Action, config::Config, shortcut::Shortcut, viewport::Viewport};
+use self::{actions::Action, config::Config, shortcut::Shortcut};
 
 pub const APP_TITLE: &'static str = "Paperdoll Editor";
 
