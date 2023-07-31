@@ -9,6 +9,17 @@ use crate::common::{determine_doll_rect, drag_move};
 
 use super::{actions::Action, EditorApp};
 
+#[derive(Default)]
+pub enum CanvasState {
+    #[default]
+    Idle,
+    ActivedSlotHover,
+    Dragging,
+    DraggingAnchor,
+    DraggingSlot,
+    ResizingSlot,
+}
+
 impl EditorApp {
     pub(super) fn ui_canvas(&mut self, ui: &mut Ui) {
         ScrollArea::both()
@@ -23,6 +34,8 @@ impl EditorApp {
                 }
 
                 let doll = doll.unwrap();
+
+                let mut state = CanvasState::default();
 
                 let scale = self.viewport.scale;
 
@@ -39,6 +52,8 @@ impl EditorApp {
 
                 if viewport_resp.dragged_by(PointerButton::Secondary) {
                     self.viewport.offset += drag_move(&viewport_resp, scale, ui.ctx());
+
+                    state = CanvasState::Dragging;
                 }
 
                 ui.painter()
@@ -155,6 +170,10 @@ impl EditorApp {
                             } else {
                                 CursorIcon::Move
                             });
+
+                            if is_actived_slot {
+                                state = CanvasState::ActivedSlotHover;
+                            }
                         }
 
                         // paint fragment
@@ -238,6 +257,8 @@ impl EditorApp {
                                         if is_ctrl_pressed {
                                             min.y = max.y - (max.x - min.x) / aspect_ratio;
                                         }
+
+                                        state = CanvasState::ResizingSlot;
                                     },
                                 );
 
@@ -257,6 +278,8 @@ impl EditorApp {
                                         if is_ctrl_pressed {
                                             max.x = (max.y - min.y) * aspect_ratio + min.x;
                                         }
+
+                                        state = CanvasState::ResizingSlot;
                                     },
                                 );
 
@@ -277,6 +300,8 @@ impl EditorApp {
                                         if is_ctrl_pressed {
                                             max.x = (max.y - min.y) * aspect_ratio + min.x;
                                         }
+
+                                        state = CanvasState::ResizingSlot;
                                     },
                                 );
 
@@ -296,6 +321,8 @@ impl EditorApp {
                                         if is_ctrl_pressed {
                                             max.y = (max.x - min.x) / aspect_ratio + min.y;
                                         }
+
+                                        state = CanvasState::ResizingSlot;
                                     },
                                 );
 
@@ -315,6 +342,8 @@ impl EditorApp {
                                         if is_ctrl_pressed {
                                             max.x = (max.y - min.y) * aspect_ratio + min.x;
                                         }
+
+                                        state = CanvasState::ResizingSlot;
                                     },
                                 );
 
@@ -334,6 +363,8 @@ impl EditorApp {
                                         if is_ctrl_pressed {
                                             max.x = (max.y - min.y) * aspect_ratio + min.x;
                                         }
+
+                                        state = CanvasState::ResizingSlot;
                                     },
                                 );
 
@@ -354,6 +385,8 @@ impl EditorApp {
                                         if is_ctrl_pressed {
                                             max.y = (max.x - min.x) / aspect_ratio + min.y;
                                         }
+
+                                        state = CanvasState::ResizingSlot;
                                     },
                                 );
 
@@ -373,6 +406,8 @@ impl EditorApp {
                                         if is_ctrl_pressed {
                                             max.y = (max.x - min.x) / aspect_ratio + min.y;
                                         }
+
+                                        state = CanvasState::ResizingSlot;
                                     },
                                 );
 
@@ -397,6 +432,10 @@ impl EditorApp {
                                         Id::new(format!("slot_{}_anchor", slot_id)),
                                         Sense::drag(),
                                     );
+
+                                    if anchor_resp.dragged() {
+                                        state = CanvasState::DraggingAnchor;
+                                    }
 
                                     Some(anchor_resp.drag_delta())
                                 } else {
@@ -423,6 +462,8 @@ impl EditorApp {
                                             position.x += drag_delta.x / scale;
                                             position.y += drag_delta.y / scale;
                                         }
+
+                                        state = CanvasState::DraggingSlot;
                                     }
                                 }
 
@@ -473,6 +514,8 @@ impl EditorApp {
                         }
                     }
                 }
+
+                self.actions.push_back(Action::CanvasStateChanged(state));
             });
     }
 }

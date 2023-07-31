@@ -15,6 +15,7 @@ use crate::common::TextureData;
 
 use super::{
     actions::Action,
+    canvas::CanvasState,
     widgets::{
         Card, Dialog, DialogResponse, FragmentEntry, ImageUpload, Modal, PivotSelect, SlotEntry,
         Tooltip,
@@ -1670,7 +1671,40 @@ impl EditorApp {
                 }
             });
 
-            ui.label(format!("{}%", self.viewport.scale * 100.0));
+            ui.add_visible_ui(true, |ui| {
+                ui.set_width(80.0);
+
+                ui.label(format!("{}%", self.viewport.scale * 100.0));
+            });
+
+            match self.canvas_state {
+                CanvasState::Idle | CanvasState::Dragging => ui.horizontal(|ui| {
+                    ui.strong("Scroll");
+                    ui.label("to zoom in / out");
+
+                    ui.strong("Left Click");
+                    ui.label("to select a slot");
+
+                    ui.strong("Right Drag");
+                    ui.label("to drag around");
+                }),
+                CanvasState::ActivedSlotHover => ui.horizontal(|ui| {
+                    ui.strong("Left Drag");
+                    ui.label("to move the slot");
+
+                    ui.strong("Right Click");
+                    ui.label("to open context menu");
+                }),
+                CanvasState::DraggingAnchor => ui.horizontal(|ui| {}),
+                CanvasState::DraggingSlot => ui.horizontal(|ui| {
+                    ui.strong("Shift");
+                    ui.label("to move all positions of the same slot at once");
+                }),
+                CanvasState::ResizingSlot => ui.horizontal(|ui| {
+                    ui.strong("Ctrl");
+                    ui.label("to lock ratio");
+                }),
+            }
         });
     }
 }

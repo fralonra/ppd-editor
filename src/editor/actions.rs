@@ -24,7 +24,7 @@ use crate::{
     viewport::Viewport,
 };
 
-use super::{DialogOption, EditorApp, APP_TITLE};
+use super::{canvas::CanvasState, DialogOption, EditorApp, APP_TITLE};
 
 pub enum Action {
     AppQuit,
@@ -39,6 +39,7 @@ pub enum Action {
     CandidateRaise(Option<u32>, u32),
     CandidateRaiseTop(Option<u32>, u32),
     CanvasShowSlotBoundaries(bool),
+    CanvasStateChanged(CanvasState),
     CursorMoved(Option<Pos2>),
     DollCreate,
     DollAdapterBackgroundRemove,
@@ -218,6 +219,9 @@ impl EditorApp {
                 }
                 Action::CanvasShowSlotBoundaries(value) => {
                     self.config.canvas_show_slot_boundaries = value;
+                }
+                Action::CanvasStateChanged(state) => {
+                    self.canvas_state = state;
                 }
                 Action::CursorMoved(position) => {
                     self.cursor_position = position;

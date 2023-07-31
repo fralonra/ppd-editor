@@ -24,7 +24,7 @@ use crate::{
     viewport::Viewport,
 };
 
-use self::{actions::Action, config::Config, shortcut::Shortcut};
+use self::{actions::Action, canvas::CanvasState, config::Config, shortcut::Shortcut};
 
 pub const APP_TITLE: &'static str = "Paperdoll Editor";
 
@@ -113,6 +113,7 @@ struct EditorApp {
     textures_fragment: HashMap<u32, TextureData>,
 
     // editor helpers
+    canvas_state: CanvasState,
     fragments_filter_keyword: String,
     cursor_position: Option<Pos2>,
     associated_slots: HashSet<u32>,
@@ -180,6 +181,7 @@ impl EditorApp {
             textures_doll: HashMap::new(),
             textures_fragment: HashMap::new(),
 
+            canvas_state: CanvasState::default(),
             fragments_filter_keyword: String::default(),
             cursor_position: None,
             associated_slots: HashSet::new(),
