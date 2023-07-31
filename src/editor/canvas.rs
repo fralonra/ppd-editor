@@ -147,8 +147,12 @@ impl EditorApp {
                             self.viewport.offset += drag_move(&slot_resp, scale, ui.ctx());
                         }
 
-                        if slot_resp.hovered() && !slot_resp.dragged() && !is_locked {
-                            ui.ctx().set_cursor_icon(CursorIcon::Move);
+                        if slot_resp.hovered() && !is_locked {
+                            ui.ctx().set_cursor_icon(if slot_resp.dragged() {
+                                CursorIcon::Grabbing
+                            } else {
+                                CursorIcon::Move
+                            });
                         }
 
                         // paint fragment
