@@ -1679,7 +1679,7 @@ impl EditorApp {
 
             match self.canvas_state {
                 CanvasState::Idle | CanvasState::Dragging => ui.horizontal(|ui| {
-                    ui.strong("Scroll");
+                    ui.strong("Scroll / +/-");
                     ui.label("to zoom in / out");
 
                     ui.strong("Left Click");
@@ -1687,6 +1687,9 @@ impl EditorApp {
 
                     ui.strong("Right Drag");
                     ui.label("to drag around");
+
+                    ui.strong("Arrow Keys");
+                    ui.label("to move around");
                 }),
                 CanvasState::ActivedSlotHover => ui.horizontal(|ui| {
                     ui.strong("Left Drag");
