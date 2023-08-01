@@ -4,6 +4,7 @@ use eframe::{
     },
     epaint::{pos2, vec2, Color32, Pos2, Rect, Stroke, Vec2},
 };
+use paperdoll_tar::paperdoll::common::Point;
 
 use crate::common::{determine_doll_rect, drag_move};
 
@@ -18,6 +19,12 @@ pub enum CanvasState {
     DraggingAnchor,
     DraggingSlot,
     ResizingSlot,
+}
+
+enum DragRestrict {
+    None,
+    Horizontal,
+    Vertical,
 }
 
 impl EditorApp {
@@ -107,6 +114,9 @@ impl EditorApp {
                 // paint slots
                 let slots = doll.slots.clone();
 
+                let mut anchor_point = None;
+                let mut slot_drag_point = None;
+
                 for slot_id in slots {
                     let slot = self.ppd.get_slot(slot_id);
 
@@ -127,7 +137,6 @@ impl EditorApp {
                     let mut new_positions = slot.positions.clone();
                     let mut new_width = slot.width;
                     let mut new_height = slot.height;
-                    let mut anchor_delta = None;
 
                     for (position_index, position) in slot.positions.iter().enumerate() {
                         let min = doll_rect.min + vec2(position.x, position.y) * scale;
@@ -165,11 +174,7 @@ impl EditorApp {
                         }
 
                         if slot_resp.hovered() && !is_locked {
-                            ui.ctx().set_cursor_icon(if slot_resp.dragged() {
-                                CursorIcon::Grabbing
-                            } else {
-                                CursorIcon::Move
-                            });
+                            ui.ctx().set_cursor_icon(CursorIcon::Move);
 
                             if is_actived_slot {
                                 state = CanvasState::ActivedSlotHover;
@@ -235,7 +240,24 @@ impl EditorApp {
                             if !is_locked {
                                 let dragged = slot_resp.dragged();
                                 let mut control_point_dragged = false;
-                                let mut anchor_dragged = false;
+
+                                if dragged {
+                                    slot_drag_point = ui
+                                        .ctx()
+                                        .pointer_interact_pos()
+                                        .map(|pos| (pos - doll_rect.min) / scale);
+
+                                    if self.canvas_original_pos_slot_and_drag_offset.is_none() {
+                                        self.canvas_original_pos_slot_and_drag_offset =
+                                            ui.ctx().pointer_interact_pos().map(|pos| {
+                                                (
+                                                    slot.positions.clone(),
+                                                    (pos - doll_rect.min) / scale
+                                                        - vec2(position.x, position.y),
+                                                )
+                                            });
+                                    }
+                                }
 
                                 let mut min = min;
                                 let mut max = max;
@@ -244,6 +266,7 @@ impl EditorApp {
                                 let control_size = Vec2::splat(8.0);
 
                                 let is_ctrl_pressed = ui.input(|i| i.modifiers.ctrl);
+                                let is_shift_pressed = ui.input(|i| i.modifiers.shift);
 
                                 control_point(
                                     format!(
@@ -416,17 +439,17 @@ impl EditorApp {
                                 );
 
                                 // paint anchor
-                                anchor_delta = if !slot.constrainted {
+                                if !slot.constrainted {
                                     let anchor_radius = 5.0;
-                                    let anchor_point =
+                                    let anchor_center =
                                         slot_rect.min + vec2(slot.anchor.x, slot.anchor.y) * scale;
                                     let anchor_rect = Rect::from_center_size(
-                                        anchor_point,
+                                        anchor_center,
                                         Vec2::splat(anchor_radius),
                                     );
 
                                     painter.circle_stroke(
-                                        anchor_point,
+                                        anchor_center,
                                         anchor_radius,
                                         Stroke::new(3.0, Color32::from_gray(220)),
                                     );
@@ -437,49 +460,94 @@ impl EditorApp {
                                         Sense::drag(),
                                     );
 
-                                    anchor_dragged = anchor_resp.dragged();
+                                    if anchor_resp.dragged() {
+                                        anchor_point = ui
+                                            .ctx()
+                                            .pointer_interact_pos()
+                                            .map(|pos| (pos - slot_rect.min) / scale);
 
-                                    Some(anchor_resp.drag_delta())
-                                } else {
-                                    None
-                                };
+                                        if self.canvas_original_pos_anchor.is_none() {
+                                            self.canvas_original_pos_anchor = Some(slot.anchor);
+                                        }
+
+                                        state = CanvasState::DraggingAnchor;
+                                    }
+                                }
 
                                 // store updates
-                                if dragged || control_point_dragged || anchor_dragged {
+                                if dragged || control_point_dragged {
                                     let min = (min - doll_rect.min) / scale;
                                     let max = (max - doll_rect.min) / scale;
 
                                     if dragged || control_point_dragged {
-                                        let mut drag_all = false;
+                                        let mut drag_offset = None;
+                                        let mut drag_restrict = DragRestrict::None;
 
                                         if let Some(position) =
                                             new_positions.iter_mut().nth(position_index)
                                         {
-                                            if dragged || control_point_dragged {
+                                            if control_point_dragged {
                                                 position.x = min.x.round();
                                                 position.y = min.y.round();
                                             }
 
                                             if dragged {
-                                                if ui.input(|i| i.modifiers.shift) {
-                                                    drag_all = true;
-                                                } else {
-                                                    let drag_delta = slot_resp.drag_delta();
+                                                if let Some(point) = slot_drag_point {
+                                                    if let Some((origins, offset)) = &self
+                                                        .canvas_original_pos_slot_and_drag_offset
+                                                    {
+                                                        let origin = origins[position_index];
 
-                                                    position.x += drag_delta.x / scale;
-                                                    position.y += drag_delta.y / scale;
+                                                        if is_ctrl_pressed {
+                                                            if (point.x - origin.x - offset.x).abs()
+                                                                > (point.y - origin.y - offset.y)
+                                                                    .abs()
+                                                            {
+                                                                drag_restrict =
+                                                                    DragRestrict::Horizontal;
+                                                            } else {
+                                                                drag_restrict =
+                                                                    DragRestrict::Vertical;
+                                                            }
+                                                        }
+
+                                                        let offset = point
+                                                            - vec2(position.x, position.y)
+                                                            - *offset;
+
+                                                        slot_drag(
+                                                            position,
+                                                            origin,
+                                                            offset,
+                                                            &drag_restrict,
+                                                        );
+
+                                                        drag_offset = Some(offset);
+                                                    }
                                                 }
-
-                                                state = CanvasState::DraggingSlot;
                                             }
                                         }
 
-                                        if drag_all {
-                                            let drag_delta = slot_resp.drag_delta();
+                                        if is_shift_pressed {
+                                            if let Some(offset) = drag_offset {
+                                                if let Some((origins, _)) =
+                                                    &self.canvas_original_pos_slot_and_drag_offset
+                                                {
+                                                    for (index, position) in
+                                                        new_positions.iter_mut().enumerate()
+                                                    {
+                                                        if index == position_index {
+                                                            continue;
+                                                        }
 
-                                            for position in new_positions.iter_mut() {
-                                                position.x += drag_delta.x / scale;
-                                                position.y += drag_delta.y / scale;
+                                                        slot_drag(
+                                                            position,
+                                                            origins[index],
+                                                            offset,
+                                                            &drag_restrict,
+                                                        );
+                                                    }
+                                                }
                                             }
                                         }
                                     }
@@ -495,10 +563,6 @@ impl EditorApp {
 
                                     if control_point_dragged {
                                         state = CanvasState::ResizingSlot;
-                                    }
-
-                                    if anchor_dragged {
-                                        state = CanvasState::DraggingAnchor;
                                     }
                                 }
                             }
@@ -523,12 +587,36 @@ impl EditorApp {
                             slot.width = new_width;
                             slot.height = new_height;
 
-                            if let Some(anchor_delta) = anchor_delta {
-                                slot.anchor.x += anchor_delta.x / scale;
-                                slot.anchor.y += anchor_delta.y / scale;
+                            if let Some(anchor_point) = anchor_point {
+                                if ui.input(|i| i.modifiers.ctrl) {
+                                    if let Some(point) = self.canvas_original_pos_anchor {
+                                        if (anchor_point.x - point.x).abs()
+                                            > (anchor_point.y - point.y).abs()
+                                        {
+                                            slot.anchor.x = anchor_point.x;
+                                            slot.anchor.y = point.y;
+                                        } else {
+                                            slot.anchor.y = anchor_point.y;
+                                            slot.anchor.x = point.x;
+                                        }
+                                    }
+                                } else {
+                                    slot.anchor.x = anchor_point.x;
+                                    slot.anchor.y = anchor_point.y;
+                                }
                             }
                         }
                     }
+                }
+
+                if anchor_point.is_none() {
+                    self.canvas_original_pos_anchor = None;
+                }
+
+                if slot_drag_point.is_none() {
+                    self.canvas_original_pos_slot_and_drag_offset = None;
+                } else {
+                    ui.ctx().set_cursor_icon(CursorIcon::Grabbing);
                 }
 
                 self.actions.push_back(Action::CanvasStateChanged(state));
@@ -559,5 +647,20 @@ fn control_point(
         if let Some(pointer) = ui.ctx().pointer_interact_pos() {
             on_dragged(pointer)
         }
+    }
+}
+
+fn slot_drag(position: &mut Point, origin: Point, drag_offset: Vec2, restrict: &DragRestrict) {
+    position.x += drag_offset.x;
+    position.y += drag_offset.y;
+
+    match restrict {
+        DragRestrict::Horizontal => {
+            position.y = origin.y;
+        }
+        DragRestrict::Vertical => {
+            position.x = origin.x;
+        }
+        _ => {}
     }
 }

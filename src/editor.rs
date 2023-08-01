@@ -12,11 +12,11 @@ use eframe::{
     egui::Context,
     epaint::{
         ahash::{HashSet, HashSetExt},
-        Pos2,
+        Pos2, Vec2,
     },
     App, CreationContext, Frame,
 };
-use paperdoll_tar::paperdoll::factory::PaperdollFactory;
+use paperdoll_tar::paperdoll::{common::Point, factory::PaperdollFactory};
 
 use crate::{
     adapter::{DollAdapter, FragmentAdapter, SlotAdapter, DOLL_DEFAULT_SIZE},
@@ -114,6 +114,8 @@ struct EditorApp {
 
     // editor helpers
     canvas_state: CanvasState,
+    canvas_original_pos_anchor: Option<Point>,
+    canvas_original_pos_slot_and_drag_offset: Option<(Vec<Point>, Vec2)>,
     fragments_filter_keyword: String,
     cursor_position: Option<Pos2>,
     associated_slots: HashSet<u32>,
@@ -182,6 +184,8 @@ impl EditorApp {
             textures_fragment: HashMap::new(),
 
             canvas_state: CanvasState::default(),
+            canvas_original_pos_anchor: None,
+            canvas_original_pos_slot_and_drag_offset: None,
             fragments_filter_keyword: String::default(),
             cursor_position: None,
             associated_slots: HashSet::new(),

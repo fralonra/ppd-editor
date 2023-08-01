@@ -571,6 +571,9 @@ impl EditorApp {
                     self.textures_doll = textures_doll;
                     self.textures_fragment = textures_fragment;
 
+                    self.canvas_state = CanvasState::default();
+                    self.canvas_original_pos_anchor = None;
+                    self.canvas_original_pos_slot_and_drag_offset = None;
                     self.fragments_filter_keyword = String::default();
                     self.associated_slots.clear();
                     self.locked_slots.clear();
