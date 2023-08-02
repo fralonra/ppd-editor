@@ -19,5 +19,5 @@ font-kit = "0.11.0"
 image = "0.24.6"
 log = "0.4.19"
 material-icons = { git = "https://github.com/fschutt/material-icons.git" }
-paperdoll-tar = { path = "../paperdoll-tar" }
+paperdoll-tar = "0.0.1-alpha.2"
 rfd = "0.11.4"
