@@ -409,20 +409,27 @@ impl EditorApp {
                                         .map_or(false, |actived_slot| actived_slot == slot_id);
 
                                     ui.horizontal(|ui| {
-                                        let is_visible = self.visible_slots.contains(&slot_id);
+                                        ui.spacing_mut().item_spacing.x = 0.0;
+
+                                        let is_align_basis =
+                                            self.align_basis_slots.contains(&slot_id);
                                         let is_locked = self.locked_slots.contains(&slot_id);
+                                        let is_visible = self.visible_slots.contains(&slot_id);
 
                                         if ui
-                                            .button(
-                                                icon_to_char(if is_visible {
-                                                    Icon::Visibility
-                                                } else {
-                                                    Icon::VisibilityOff
-                                                })
-                                                .to_string(),
+                                            .add(
+                                                Button::new(
+                                                    icon_to_char(if is_visible {
+                                                        Icon::Visibility
+                                                    } else {
+                                                        Icon::VisibilityOff
+                                                    })
+                                                    .to_string(),
+                                                )
+                                                .frame(false),
                                             )
                                             .on_hover_text(
-                                                "Change visibility of the slot in editor",
+                                                "Change visibility of this slot in editor",
                                             )
                                             .clicked()
                                         {
@@ -434,23 +441,56 @@ impl EditorApp {
                                         }
 
                                         if ui
-                                            .button(
-                                                icon_to_char(if is_locked {
-                                                    Icon::Lock
-                                                } else {
-                                                    Icon::LockOpen
-                                                })
-                                                .to_string(),
+                                            .add(
+                                                Button::new(
+                                                    icon_to_char(if is_locked {
+                                                        Icon::Lock
+                                                    } else {
+                                                        Icon::LockOpen
+                                                    })
+                                                    .to_string(),
+                                                )
+                                                .frame(false),
                                             )
-                                            .on_hover_text(
-                                                "Lock the slot to prevent it from being dragged",
-                                            )
+                                            .on_hover_text(if is_locked {
+                                                "Allow this slot to be dragged around"
+                                            } else {
+                                                "Lock this slot to prevent \
+                                                    it from being dragged"
+                                            })
                                             .clicked()
                                         {
                                             if is_locked {
                                                 self.locked_slots.remove(&slot_id);
                                             } else {
                                                 self.locked_slots.insert(slot_id);
+                                            }
+                                        }
+
+                                        if ui
+                                            .add(
+                                                Button::new(
+                                                    icon_to_char(if is_align_basis {
+                                                        Icon::GridOn
+                                                    } else {
+                                                        Icon::GridOff
+                                                    })
+                                                    .to_string(),
+                                                )
+                                                .frame(false),
+                                            )
+                                            .on_hover_text(if is_align_basis {
+                                                "Do not use this slot as \
+                                                    a basis for aligning other slots"
+                                            } else {
+                                                "Use this slot as a basis for aligning other slots"
+                                            })
+                                            .clicked()
+                                        {
+                                            if is_align_basis {
+                                                self.align_basis_slots.remove(&slot_id);
+                                            } else {
+                                                self.align_basis_slots.insert(slot_id);
                                             }
                                         }
 
@@ -622,7 +662,7 @@ impl EditorApp {
 
     fn ui_dolls(&mut self, ui: &mut Ui) {
         ui.vertical(|ui| {
-            ui.set_height(ui.available_height() * 0.3);
+            ui.set_height(100.0);
 
             ui.heading("Dolls");
 
@@ -650,47 +690,45 @@ impl EditorApp {
             });
 
             ui.group(|ui| {
-                ScrollArea::vertical()
-                    .auto_shrink([false, false])
-                    .show(ui, |ui| {
-                        ui.horizontal_wrapped(|ui| {
-                            let dolls: Vec<u32> = self.ppd.dolls().map(|(id, _)| *id).collect();
+                ScrollArea::horizontal().show(ui, |ui| {
+                    ui.horizontal(|ui| {
+                        let dolls: Vec<u32> = self.ppd.dolls().map(|(id, _)| *id).collect();
 
-                            for id in dolls {
-                                if let Some(doll) = self.ppd.get_doll(id) {
-                                    let is_actived_doll = self
-                                        .actived_doll
-                                        .map_or(false, |actived_doll| actived_doll == id);
+                        for id in dolls {
+                            if let Some(doll) = self.ppd.get_doll(id) {
+                                let is_actived_doll = self
+                                    .actived_doll
+                                    .map_or(false, |actived_doll| actived_doll == id);
 
-                                    ui.add(|ui: &mut Ui| {
-                                        let resp = ui.add(
-                                            Card::new(self.textures_doll.get(&id))
-                                                .desc(&doll.desc)
-                                                .highlighted(is_actived_doll),
-                                        );
+                                ui.add(|ui: &mut Ui| {
+                                    let resp = ui.add(
+                                        Card::new(self.textures_doll.get(&id))
+                                            .desc(&doll.desc)
+                                            .highlighted(is_actived_doll),
+                                    );
 
-                                        if resp.clicked() {
-                                            self.actived_doll = Some(id);
-                                        }
+                                    if resp.clicked() {
+                                        self.actived_doll = Some(id);
+                                    }
 
-                                        if resp.double_clicked() {
-                                            self.actions.push_back(Action::DollEdit(id));
-                                        }
+                                    if resp.double_clicked() {
+                                        self.actions.push_back(Action::DollEdit(id));
+                                    }
 
-                                        resp
-                                    })
-                                    .context_menu(|ui| {
-                                        self.menu_doll(ui, Some(id));
-                                    });
-                                }
+                                    resp
+                                })
+                                .context_menu(|ui| {
+                                    self.menu_doll(ui, Some(id));
+                                });
                             }
-                        });
-
-                        ui.allocate_response(ui.available_size(), Sense::click())
-                            .context_menu(|ui| {
-                                self.menu_doll(ui, self.actived_doll);
-                            });
+                        }
                     });
+
+                    ui.allocate_response(ui.available_size(), Sense::click())
+                        .context_menu(|ui| {
+                            self.menu_doll(ui, self.actived_doll);
+                        });
+                });
             });
         });
     }

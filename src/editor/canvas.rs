@@ -577,7 +577,12 @@ impl EditorApp {
                                     {
                                         let snap_stroke = Stroke::new(1.0, Color32::LIGHT_RED);
 
-                                        let snap_output = self.snap_in_doll(&snap_input, doll_rect);
+                                        let snap_output = self.snap_in_doll(
+                                            &snap_input,
+                                            slot_id,
+                                            position_index,
+                                            doll_rect,
+                                        );
 
                                         if dragged || control_point_dragged {
                                             let width = slot.width as f32 * scale;
@@ -861,8 +866,33 @@ impl EditorApp {
             });
     }
 
-    fn snap_in_doll(&self, input: &SnapInput, doll_rect: Rect) -> SnapOutput {
-        let basis_rects = vec![doll_rect];
+    fn snap_in_doll(
+        &self,
+        input: &SnapInput,
+        slot_id: u32,
+        slot_position_index: usize,
+        doll_rect: Rect,
+    ) -> SnapOutput {
+        let mut basis_rects = vec![doll_rect];
+
+        for basis_slot_id in &self.align_basis_slots {
+            if let Some(slot) = self.ppd.get_slot(*basis_slot_id) {
+                for (position_index, position) in slot.positions.iter().enumerate() {
+                    if *basis_slot_id == slot_id && position_index == slot_position_index {
+                        continue;
+                    }
+
+                    let scale = self.viewport.scale;
+
+                    let min = doll_rect.min + vec2(position.x, position.y) * scale;
+                    let max = min + vec2(slot.width as f32, slot.height as f32) * scale;
+
+                    let slot_rect = Rect::from([min, max]);
+
+                    basis_rects.push(slot_rect);
+                }
+            }
+        }
 
         drag_snap(input, basis_rects, self.config.canvas_snap_tolerance)
     }
@@ -891,20 +921,5 @@ fn control_point(
         if let Some(pointer) = ui.ctx().pointer_interact_pos() {
             on_dragged(pointer);
         }
-    }
-}
-
-fn slot_drag(position: &mut Point, origin: Point, drag_offset: Vec2, restrict: &DragRestrict) {
-    position.x += drag_offset.x;
-    position.y += drag_offset.y;
-
-    match restrict {
-        DragRestrict::Horizontal => {
-            position.y = origin.y;
-        }
-        DragRestrict::Vertical => {
-            position.x = origin.x;
-        }
-        _ => {}
     }
 }

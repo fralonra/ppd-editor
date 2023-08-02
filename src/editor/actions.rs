@@ -575,6 +575,7 @@ impl EditorApp {
                     self.canvas_original_pos_anchor = None;
                     self.canvas_original_pos_slot_and_drag_offset = None;
                     self.fragments_filter_keyword = String::default();
+                    self.align_basis_slots.clear();
                     self.associated_slots.clear();
                     self.locked_slots.clear();
                     self.visible_slots = ppd.slots().map(|(id, _)| *id).collect();
