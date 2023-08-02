@@ -1,3 +1,5 @@
+mod snap;
+
 use eframe::{
     egui::{
         scroll_area::ScrollBarVisibility, CursorIcon, Id, PointerButton, ScrollArea, Sense, Ui,
@@ -7,6 +9,8 @@ use eframe::{
 use paperdoll_tar::paperdoll::common::Point;
 
 use crate::common::{determine_doll_rect, drag_move};
+
+use self::snap::{drag_snap, SnapInput, SnapOutput, SnapType};
 
 use super::{actions::Action, EditorApp};
 
@@ -21,10 +25,22 @@ pub enum CanvasState {
     ResizingSlot,
 }
 
+#[derive(Default, PartialEq)]
 enum DragRestrict {
+    #[default]
     None,
     Horizontal,
     Vertical,
+}
+
+#[derive(Default, PartialEq)]
+enum RatioKeepOptions {
+    #[default]
+    Idle,
+    MinX,
+    MinY,
+    MaxX,
+    MaxY,
 }
 
 impl EditorApp {
@@ -137,6 +153,8 @@ impl EditorApp {
                     let mut new_positions = slot.positions.clone();
                     let mut new_width = slot.width;
                     let mut new_height = slot.height;
+                    let mut ratio_keep_options = RatioKeepOptions::default();
+                    let mut snap_input = SnapInput::default();
 
                     for (position_index, position) in slot.positions.iter().enumerate() {
                         let min = doll_rect.min + vec2(position.x, position.y) * scale;
@@ -210,8 +228,9 @@ impl EditorApp {
                                         slot_rect
                                     } else {
                                         let min = slot_rect.min
-                                            + vec2(slot.anchor.x, slot.anchor.y) * scale
-                                            - vec2(fragment.pivot.x, fragment.pivot.y) * scale;
+                                            + (vec2(slot.anchor.x, slot.anchor.y)
+                                                - vec2(fragment.pivot.x, fragment.pivot.y))
+                                                * scale;
                                         let max = min
                                             + vec2(
                                                 fragment.image.width as f32,
@@ -240,12 +259,13 @@ impl EditorApp {
                             if !is_locked {
                                 let dragged = slot_resp.dragged();
                                 let mut control_point_dragged = false;
+                                let mut anchor_point_dragged = false;
+
+                                let mut min = min;
+                                let mut max = max;
 
                                 if dragged {
-                                    slot_drag_point = ui
-                                        .ctx()
-                                        .pointer_interact_pos()
-                                        .map(|pos| (pos - doll_rect.min) / scale);
+                                    slot_drag_point = ui.ctx().pointer_interact_pos();
 
                                     if self.canvas_original_pos_slot_and_drag_offset.is_none() {
                                         self.canvas_original_pos_slot_and_drag_offset =
@@ -259,12 +279,10 @@ impl EditorApp {
                                     }
                                 }
 
-                                let mut min = min;
-                                let mut max = max;
-
                                 // paint controls
                                 let control_size = Vec2::splat(8.0);
 
+                                let is_alt_pressed = ui.input(|i| i.modifiers.alt);
                                 let is_ctrl_pressed = ui.input(|i| i.modifiers.ctrl);
                                 let is_shift_pressed = ui.input(|i| i.modifiers.shift);
 
@@ -281,8 +299,10 @@ impl EditorApp {
                                     |pos| {
                                         min = pos;
 
+                                        snap_input.min = Some((min, SnapType::Both));
+
                                         if is_ctrl_pressed {
-                                            min.y = max.y - (max.x - min.x) / aspect_ratio;
+                                            ratio_keep_options = RatioKeepOptions::MinY;
                                         }
 
                                         control_point_dragged = true;
@@ -302,8 +322,10 @@ impl EditorApp {
                                     |pos| {
                                         min.y = pos.y;
 
+                                        snap_input.min = Some((min, SnapType::Y));
+
                                         if is_ctrl_pressed {
-                                            max.x = (max.y - min.y) * aspect_ratio + min.x;
+                                            ratio_keep_options = RatioKeepOptions::MaxX;
                                         }
 
                                         control_point_dragged = true;
@@ -324,8 +346,11 @@ impl EditorApp {
                                         min.y = pos.y;
                                         max.x = pos.x;
 
+                                        snap_input.min = Some((min, SnapType::Y));
+                                        snap_input.max = Some((max, SnapType::X));
+
                                         if is_ctrl_pressed {
-                                            max.x = (max.y - min.y) * aspect_ratio + min.x;
+                                            ratio_keep_options = RatioKeepOptions::MaxX;
                                         }
 
                                         control_point_dragged = true;
@@ -345,8 +370,10 @@ impl EditorApp {
                                     |pos| {
                                         max.x = pos.x;
 
+                                        snap_input.max = Some((max, SnapType::X));
+
                                         if is_ctrl_pressed {
-                                            max.y = (max.x - min.x) / aspect_ratio + min.y;
+                                            ratio_keep_options = RatioKeepOptions::MaxY;
                                         }
 
                                         control_point_dragged = true;
@@ -366,8 +393,10 @@ impl EditorApp {
                                     |pos| {
                                         max = pos;
 
+                                        snap_input.max = Some((max, SnapType::Both));
+
                                         if is_ctrl_pressed {
-                                            max.x = (max.y - min.y) * aspect_ratio + min.x;
+                                            ratio_keep_options = RatioKeepOptions::MaxX;
                                         }
 
                                         control_point_dragged = true;
@@ -387,8 +416,10 @@ impl EditorApp {
                                     |pos| {
                                         max.y = pos.y;
 
+                                        snap_input.max = Some((max, SnapType::Y));
+
                                         if is_ctrl_pressed {
-                                            max.x = (max.y - min.y) * aspect_ratio + min.x;
+                                            ratio_keep_options = RatioKeepOptions::MaxX;
                                         }
 
                                         control_point_dragged = true;
@@ -409,8 +440,11 @@ impl EditorApp {
                                         min.x = pos.x;
                                         max.y = pos.y;
 
+                                        snap_input.min = Some((min, SnapType::X));
+                                        snap_input.max = Some((max, SnapType::Y));
+
                                         if is_ctrl_pressed {
-                                            max.y = (max.x - min.x) / aspect_ratio + min.y;
+                                            ratio_keep_options = RatioKeepOptions::MaxY;
                                         }
 
                                         control_point_dragged = true;
@@ -430,8 +464,10 @@ impl EditorApp {
                                     |pos| {
                                         min.x = pos.x;
 
+                                        snap_input.min = Some((min, SnapType::X));
+
                                         if is_ctrl_pressed {
-                                            max.y = (max.x - min.x) / aspect_ratio + min.y;
+                                            ratio_keep_options = RatioKeepOptions::MaxY;
                                         }
 
                                         control_point_dragged = true;
@@ -464,88 +500,55 @@ impl EditorApp {
                                         anchor_point = ui
                                             .ctx()
                                             .pointer_interact_pos()
-                                            .map(|pos| (pos - slot_rect.min) / scale);
+                                            .map(|pos| (pos, slot_rect));
 
                                         if self.canvas_original_pos_anchor.is_none() {
                                             self.canvas_original_pos_anchor = Some(slot.anchor);
                                         }
 
+                                        if let Some((point, _)) = anchor_point {
+                                            snap_input.anchor = Some((point, SnapType::Both));
+                                        }
+
                                         state = CanvasState::DraggingAnchor;
+
+                                        anchor_point_dragged = true;
                                     }
                                 }
 
                                 // store updates
-                                if dragged || control_point_dragged {
-                                    let min = (min - doll_rect.min) / scale;
-                                    let max = (max - doll_rect.min) / scale;
+                                if dragged || control_point_dragged || anchor_point_dragged {
+                                    let mut drag_offset: Option<Vec2> = None;
+                                    let mut drag_restrict = DragRestrict::default();
 
-                                    if dragged || control_point_dragged {
-                                        let mut drag_offset = None;
-                                        let mut drag_restrict = DragRestrict::None;
+                                    if dragged {
+                                        if let Some(global_point) = slot_drag_point {
+                                            if let Some((origins, offset)) =
+                                                &self.canvas_original_pos_slot_and_drag_offset
+                                            {
+                                                let delta =
+                                                    global_point - slot_rect.min - *offset * scale;
 
-                                        if let Some(position) =
-                                            new_positions.iter_mut().nth(position_index)
-                                        {
-                                            if control_point_dragged {
-                                                position.x = min.x.round();
-                                                position.y = min.y.round();
-                                            }
+                                                min += delta;
+                                                max += delta;
 
-                                            if dragged {
-                                                if let Some(point) = slot_drag_point {
-                                                    if let Some((origins, offset)) = &self
-                                                        .canvas_original_pos_slot_and_drag_offset
-                                                    {
-                                                        let origin = origins[position_index];
+                                                snap_input.min = Some((min, SnapType::Both));
+                                                snap_input.max = Some((max, SnapType::Both));
 
-                                                        if is_ctrl_pressed {
-                                                            if (point.x - origin.x - offset.x).abs()
-                                                                > (point.y - origin.y - offset.y)
-                                                                    .abs()
-                                                            {
-                                                                drag_restrict =
-                                                                    DragRestrict::Horizontal;
-                                                            } else {
-                                                                drag_restrict =
-                                                                    DragRestrict::Vertical;
-                                                            }
-                                                        }
+                                                // restrict direction
+                                                if is_ctrl_pressed {
+                                                    let point =
+                                                        (global_point - doll_rect.min) / scale;
 
-                                                        let offset = point
-                                                            - vec2(position.x, position.y)
-                                                            - *offset;
+                                                    let origin = origins[position_index];
 
-                                                        slot_drag(
-                                                            position,
-                                                            origin,
-                                                            offset,
-                                                            &drag_restrict,
-                                                        );
+                                                    let x_offset = point.x - origin.x - offset.x;
+                                                    let y_offset = point.y - origin.y - offset.y;
 
-                                                        drag_offset = Some(offset);
-                                                    }
-                                                }
-                                            }
-                                        }
-
-                                        if is_shift_pressed {
-                                            if let Some(offset) = drag_offset {
-                                                if let Some((origins, _)) =
-                                                    &self.canvas_original_pos_slot_and_drag_offset
-                                                {
-                                                    for (index, position) in
-                                                        new_positions.iter_mut().enumerate()
-                                                    {
-                                                        if index == position_index {
-                                                            continue;
-                                                        }
-
-                                                        slot_drag(
-                                                            position,
-                                                            origins[index],
-                                                            offset,
-                                                            &drag_restrict,
-                                                        );
+                                                    if x_offset.abs() > y_offset.abs() {
+                                                        drag_restrict = DragRestrict::Horizontal;
+                                                    } else {
+                                                        drag_restrict = DragRestrict::Vertical;
                                                     }
                                                 }
                                             }
@@ -553,16 +556,249 @@ impl EditorApp {
                                     }
 
                                     if control_point_dragged {
-                                        new_width = (max.x.round() - min.x.round()) as u32;
-                                        new_height = (max.y.round() - min.y.round()) as u32;
+                                        // keep aspect ratio
+                                        match ratio_keep_options {
+                                            RatioKeepOptions::MinY => {
+                                                min.y = max.y - (max.x - min.x) / aspect_ratio;
+                                            }
+                                            RatioKeepOptions::MaxX => {
+                                                max.x = (max.y - min.y) * aspect_ratio + min.x;
+                                            }
+                                            RatioKeepOptions::MaxY => {
+                                                max.y = (max.x - min.x) / aspect_ratio + min.y;
+                                            }
+                                            _ => {}
+                                        }
                                     }
 
-                                    if dragged {
-                                        state = CanvasState::DraggingSlot;
+                                    // snapping
+                                    if !is_alt_pressed
+                                        && ratio_keep_options == RatioKeepOptions::Idle
+                                    {
+                                        let snap_stroke = Stroke::new(1.0, Color32::LIGHT_RED);
+
+                                        let snap_output = self.snap_in_doll(&snap_input, doll_rect);
+
+                                        if dragged || control_point_dragged {
+                                            let width = slot.width as f32 * scale;
+                                            let height = slot.height as f32 * scale;
+
+                                            let mut snap_min_x = false;
+                                            let mut snap_min_y = false;
+                                            let mut snap_max_x = false;
+                                            let mut snap_max_y = false;
+
+                                            if drag_restrict != DragRestrict::Vertical {
+                                                if let Some(x) = snap_output.min.x {
+                                                    snap_min_x = true;
+
+                                                    min.x = x;
+                                                }
+
+                                                if let Some(x) = snap_output.max.x {
+                                                    snap_max_x = true;
+
+                                                    max.x = x;
+                                                }
+                                            }
+
+                                            if drag_restrict != DragRestrict::Horizontal {
+                                                if let Some(y) = snap_output.min.y {
+                                                    snap_min_y = true;
+
+                                                    min.y = y;
+                                                }
+
+                                                if let Some(y) = snap_output.max.y {
+                                                    snap_max_y = true;
+
+                                                    max.y = y;
+                                                }
+                                            }
+
+                                            if let Some(global_point) = slot_drag_point {
+                                                let x_not_fit = max.x - min.x != width;
+                                                let y_not_fit = max.y - min.y != height;
+
+                                                if x_not_fit || y_not_fit {
+                                                    let is_cursor_near_min = global_point
+                                                        .distance(min)
+                                                        < global_point.distance(max);
+
+                                                    if x_not_fit
+                                                        && drag_restrict != DragRestrict::Vertical
+                                                    {
+                                                        if snap_max_x && snap_min_x {
+                                                            if is_cursor_near_min {
+                                                                snap_max_x = false;
+
+                                                                max.x = min.x + width;
+                                                            } else {
+                                                                snap_min_x = false;
+
+                                                                min.x = max.x - width;
+                                                            }
+                                                        } else if snap_max_x {
+                                                            snap_min_x = false;
+
+                                                            min.x = max.x - width;
+                                                        } else if snap_min_x {
+                                                            snap_max_x = false;
+
+                                                            max.x = min.x + width;
+                                                        }
+                                                    }
+
+                                                    if y_not_fit
+                                                        && drag_restrict != DragRestrict::Horizontal
+                                                    {
+                                                        if snap_max_y && snap_min_y {
+                                                            if is_cursor_near_min {
+                                                                snap_max_y = false;
+
+                                                                max.y = min.y + height;
+                                                            } else {
+                                                                snap_min_y = false;
+
+                                                                min.y = max.y - height;
+                                                            }
+                                                        } else if snap_max_y {
+                                                            snap_min_y = false;
+
+                                                            min.y = max.y - height;
+                                                        } else if snap_min_y {
+                                                            snap_max_y = false;
+
+                                                            max.y = min.y + height;
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+                                            if snap_min_x {
+                                                painter.vline(
+                                                    min.x,
+                                                    painter.clip_rect().y_range(),
+                                                    snap_stroke,
+                                                );
+                                            }
+
+                                            if snap_min_y {
+                                                painter.hline(
+                                                    painter.clip_rect().x_range(),
+                                                    min.y,
+                                                    snap_stroke,
+                                                );
+                                            }
+
+                                            if snap_max_x {
+                                                painter.vline(
+                                                    max.x,
+                                                    painter.clip_rect().y_range(),
+                                                    snap_stroke,
+                                                );
+                                            }
+
+                                            if snap_max_y {
+                                                painter.hline(
+                                                    painter.clip_rect().x_range(),
+                                                    max.y,
+                                                    snap_stroke,
+                                                );
+                                            }
+                                        }
+
+                                        if anchor_point_dragged {
+                                            if let Some((anchor_point, _)) = &mut anchor_point {
+                                                if let Some(x) = snap_output.anchor.x {
+                                                    anchor_point.x = x;
+
+                                                    painter.vline(
+                                                        anchor_point.x,
+                                                        painter.clip_rect().y_range(),
+                                                        snap_stroke,
+                                                    );
+                                                }
+
+                                                if let Some(y) = snap_output.anchor.y {
+                                                    anchor_point.y = y;
+
+                                                    painter.hline(
+                                                        painter.clip_rect().x_range(),
+                                                        anchor_point.y,
+                                                        snap_stroke,
+                                                    );
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    if dragged || control_point_dragged {
+                                        if let Some(position) =
+                                            new_positions.iter_mut().nth(position_index)
+                                        {
+                                            let mut top_left =
+                                                ((min - doll_rect.min) / scale).round();
+                                            let bottom_right =
+                                                ((max - doll_rect.min) / scale).round();
+
+                                            if drag_restrict != DragRestrict::None {
+                                                if let Some((origins, _)) =
+                                                    &self.canvas_original_pos_slot_and_drag_offset
+                                                {
+                                                    if drag_restrict == DragRestrict::Horizontal {
+                                                        top_left.y = origins[position_index].y;
+                                                    } else {
+                                                        top_left.x = origins[position_index].x;
+                                                    }
+                                                }
+                                            }
+
+                                            if is_shift_pressed
+                                                && (top_left.x != position.x
+                                                    || top_left.y != position.y)
+                                            {
+                                                drag_offset = Some(vec2(
+                                                    top_left.x - position.x,
+                                                    top_left.y - position.y,
+                                                ));
+                                            }
+
+                                            position.x = top_left.x;
+                                            position.y = top_left.y;
+
+                                            if control_point_dragged {
+                                                new_width = (bottom_right.x.round()
+                                                    - top_left.x.round())
+                                                    as u32;
+                                                new_height = (bottom_right.y.round()
+                                                    - top_left.y.round())
+                                                    as u32;
+                                            }
+                                        }
+                                    }
+
+                                    if dragged && is_shift_pressed {
+                                        if let Some(offset) = drag_offset {
+                                            for (index, position) in
+                                                new_positions.iter_mut().enumerate()
+                                            {
+                                                if index == position_index {
+                                                    continue;
+                                                }
+
+                                                position.x += offset.x;
+                                                position.y += offset.y;
+                                            }
+                                        }
                                     }
 
                                     if control_point_dragged {
                                         state = CanvasState::ResizingSlot;
+                                    }
+
+                                    if dragged {
+                                        state = CanvasState::DraggingSlot;
                                     }
                                 }
                             }
@@ -587,7 +823,9 @@ impl EditorApp {
                             slot.width = new_width;
                             slot.height = new_height;
 
-                            if let Some(anchor_point) = anchor_point {
+                            if let Some((anchor_point, slot_rect)) = anchor_point {
+                                let anchor_point = (anchor_point - slot_rect.min) / scale;
+
                                 if ui.input(|i| i.modifiers.ctrl) {
                                     if let Some(point) = self.canvas_original_pos_anchor {
                                         if (anchor_point.x - point.x).abs()
@@ -622,6 +860,12 @@ impl EditorApp {
                 self.actions.push_back(Action::CanvasStateChanged(state));
             });
     }
+
+    fn snap_in_doll(&self, input: &SnapInput, doll_rect: Rect) -> SnapOutput {
+        let basis_rects = vec![doll_rect];
+
+        drag_snap(input, basis_rects, self.config.canvas_snap_tolerance)
+    }
 }
 
 fn control_point(
@@ -645,7 +889,7 @@ fn control_point(
 
     if resp.dragged_by(PointerButton::Primary) {
         if let Some(pointer) = ui.ctx().pointer_interact_pos() {
-            on_dragged(pointer)
+            on_dragged(pointer);
         }
     }
 }

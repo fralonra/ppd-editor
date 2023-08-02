@@ -1698,14 +1698,29 @@ impl EditorApp {
                     ui.strong("Right Click");
                     ui.label("to open context menu");
                 }),
-                CanvasState::DraggingAnchor => ui.horizontal(|ui| {}),
+                CanvasState::DraggingAnchor => ui.horizontal(|ui| {
+                    ui.strong("Ctrl");
+                    ui.label("to restrict to horizontal / vertical");
+
+                    ui.strong("Alt");
+                    ui.label("to disable snapping");
+                }),
                 CanvasState::DraggingSlot => ui.horizontal(|ui| {
+                    ui.strong("Ctrl");
+                    ui.label("to restrict to horizontal / vertical");
+
                     ui.strong("Shift");
                     ui.label("to move all positions of the same slot at the same time");
+
+                    ui.strong("Alt");
+                    ui.label("to disable snapping");
                 }),
                 CanvasState::ResizingSlot => ui.horizontal(|ui| {
                     ui.strong("Ctrl");
                     ui.label("to lock ratio");
+
+                    ui.strong("Alt");
+                    ui.label("to disable snapping");
                 }),
             }
         });
