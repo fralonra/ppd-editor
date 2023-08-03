@@ -2,15 +2,17 @@ use eframe::epaint::{Pos2, Rect};
 
 #[derive(Default)]
 pub(super) struct SnapInput {
-    pub min: Option<(Pos2, SnapType)>,
-    pub max: Option<(Pos2, SnapType)>,
-    pub anchor: Option<(Pos2, SnapType)>,
+    pub min: (Pos2, SnapType),
+    pub max: (Pos2, SnapType),
+    pub center: (Pos2, SnapType),
+    pub anchor: (Pos2, SnapType),
 }
 
 #[derive(Default)]
 pub(super) struct SnapOutput {
     pub min: SnapPointResult,
     pub max: SnapPointResult,
+    pub center: SnapPointResult,
     pub anchor: SnapPointResult,
 }
 
@@ -20,8 +22,10 @@ pub(super) struct SnapPointResult {
     pub y: Option<f32>,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub(super) enum SnapType {
+    #[default]
+    DisplayOnly,
     X,
     Y,
     Both,
@@ -54,17 +58,37 @@ pub(super) fn drag_snap(input: &SnapInput, basis_rects: Vec<Rect>, tolerance: f3
 }
 
 fn snap_to_point(snap_point: Pos2, input: &SnapInput, output: &mut SnapOutput, tolerance: f32) {
-    if let Some((point, snap_type)) = input.min {
-        apply_snap(snap_point, point, snap_type, tolerance, &mut output.min);
-    }
+    apply_snap(
+        snap_point,
+        input.min.0,
+        input.min.1,
+        tolerance,
+        &mut output.min,
+    );
 
-    if let Some((point, snap_type)) = input.max {
-        apply_snap(snap_point, point, snap_type, tolerance, &mut output.max);
-    }
+    apply_snap(
+        snap_point,
+        input.max.0,
+        input.max.1,
+        tolerance,
+        &mut output.max,
+    );
 
-    if let Some((point, snap_type)) = input.anchor {
-        apply_snap(snap_point, point, snap_type, tolerance, &mut output.anchor);
-    }
+    apply_snap(
+        snap_point,
+        input.center.0,
+        input.center.1,
+        tolerance,
+        &mut output.center,
+    );
+
+    apply_snap(
+        snap_point,
+        input.anchor.0,
+        input.anchor.1,
+        tolerance,
+        &mut output.anchor,
+    );
 
     fn apply_snap(
         snap_point: Pos2,
@@ -74,12 +98,29 @@ fn snap_to_point(snap_point: Pos2, input: &SnapInput, output: &mut SnapOutput, t
         result: &mut SnapPointResult,
     ) {
         match snap_type {
+            SnapType::DisplayOnly => {
+                if point.x == snap_point.x {
+                    result.x = Some(point.x);
+                }
+
+                if point.y == snap_point.y {
+                    result.y = Some(point.y);
+                }
+            }
             SnapType::X => {
                 if (point.x - snap_point.x).abs() <= tolerance {
                     result.x = Some(snap_point.x);
                 }
+
+                if point.y == snap_point.y {
+                    result.y = Some(point.y);
+                }
             }
             SnapType::Y => {
+                if point.x == snap_point.x {
+                    result.x = Some(point.x);
+                }
+
                 if (point.y - snap_point.y).abs() <= tolerance {
                     result.y = Some(snap_point.y);
                 }
