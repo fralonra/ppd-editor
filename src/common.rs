@@ -4,7 +4,7 @@ use anyhow::anyhow;
 use eframe::{
     egui::{
         self, widget_text::WidgetTextGalley, Context, CursorIcon, FontData, FontDefinitions,
-        Response, Style, TextStyle, TextureOptions, Ui, WidgetText,
+        Response, TextStyle, TextureOptions, Ui, WidgetText,
     },
     epaint::{vec2, ColorImage, FontFamily, Rect, TextureHandle, Vec2},
 };
