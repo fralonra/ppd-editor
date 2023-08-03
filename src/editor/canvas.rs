@@ -101,10 +101,20 @@ impl EditorApp {
                 }
 
                 ui.input(|i| {
-                    if i.scroll_delta.y != 0.0 {
-                        self.actions.push_back(Action::ViewportZoomTo(
-                            self.viewport.scale + i.scroll_delta.y / 100.0,
-                        ));
+                    let zoom_delta = i.zoom_delta();
+                    if zoom_delta != 1.0 {
+                        self.actions
+                            .push_back(Action::ViewportZoomTo(self.viewport.scale * zoom_delta));
+                    } else {
+                        if i.scroll_delta.x != 0.0 {
+                            self.actions
+                                .push_back(Action::ViewportMove(vec2(i.scroll_delta.x, 0.0)));
+                        }
+
+                        if i.scroll_delta.y != 0.0 {
+                            self.actions
+                                .push_back(Action::ViewportMove(vec2(0.0, i.scroll_delta.y)));
+                        }
                     }
                 });
 

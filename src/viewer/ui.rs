@@ -130,10 +130,20 @@ impl ViewerApp {
                 }
 
                 ui.input(|i| {
-                    if i.scroll_delta.y != 0.0 {
-                        self.actions.push_back(Action::ViewportZoomTo(
-                            self.viewport.scale + i.scroll_delta.y / 100.0,
-                        ));
+                    let zoom_delta = i.zoom_delta();
+                    if zoom_delta != 1.0 {
+                        self.actions
+                            .push_back(Action::ViewportZoomTo(self.viewport.scale * zoom_delta));
+                    } else {
+                        if i.scroll_delta.x != 0.0 {
+                            self.actions
+                                .push_back(Action::ViewportMove(vec2(i.scroll_delta.x, 0.0)));
+                        }
+
+                        if i.scroll_delta.y != 0.0 {
+                            self.actions
+                                .push_back(Action::ViewportMove(vec2(0.0, i.scroll_delta.y)));
+                        }
                     }
                 });
 
@@ -319,7 +329,9 @@ impl ViewerApp {
             });
 
             ui.horizontal(|ui| {
-                ui.strong("Scroll / +/-");
+                ui.strong("Ctrl + Scroll");
+                ui.label("or");
+                ui.strong("+/-");
                 ui.label("to zoom in / out");
 
                 ui.strong("Right Drag");
@@ -327,6 +339,12 @@ impl ViewerApp {
 
                 ui.strong("Arrow Keys");
                 ui.label("to move around");
+
+                ui.strong("Scroll");
+                ui.label("to move vertically");
+
+                ui.strong("Shift + Scroll");
+                ui.label("to move horizontally");
             });
         });
     }

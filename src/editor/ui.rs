@@ -1749,8 +1749,10 @@ impl EditorApp {
             });
 
             match self.canvas_state {
-                CanvasState::Idle | CanvasState::Dragging => ui.horizontal(|ui| {
-                    ui.strong("Scroll / +/-");
+                CanvasState::Idle | CanvasState::Dragging => ui.horizontal_wrapped(|ui| {
+                    ui.strong("Ctrl + Scroll");
+                    ui.label("or");
+                    ui.strong("+/-");
                     ui.label("to zoom in / out");
 
                     ui.strong("Left Click");
@@ -1761,6 +1763,12 @@ impl EditorApp {
 
                     ui.strong("Arrow Keys");
                     ui.label("to move around");
+
+                    ui.strong("Scroll");
+                    ui.label("to move vertically");
+
+                    ui.strong("Shift + Scroll");
+                    ui.label("to move horizontally");
                 }),
                 CanvasState::ActivedSlotHover => ui.horizontal(|ui| {
                     ui.strong("Left Drag");
