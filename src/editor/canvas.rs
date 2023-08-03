@@ -6,13 +6,17 @@ use eframe::{
     },
     epaint::{pos2, vec2, Color32, Pos2, Rect, Stroke, Vec2},
 };
-use paperdoll_tar::paperdoll::common::Point;
 
 use crate::common::{determine_doll_rect, drag_move};
 
 use self::snap::{drag_snap, SnapInput, SnapOutput, SnapType};
 
 use super::{actions::Action, EditorApp};
+
+enum AuxiliaryLine {
+    Horizontal(f32),
+    Vertical(f32),
+}
 
 #[derive(Default)]
 pub enum CanvasState {
@@ -132,6 +136,7 @@ impl EditorApp {
 
                 let mut anchor_point = None;
                 let mut slot_drag_point = None;
+                let mut auxiliary_lines = vec![];
 
                 for slot_id in slots {
                     let slot = self.ppd.get_slot(slot_id);
@@ -580,8 +585,6 @@ impl EditorApp {
 
                                     // snapping
                                     if !is_alt_pressed {
-                                        let snap_stroke = Stroke::new(1.0, Color32::LIGHT_RED);
-
                                         if dragged || control_point_dragged {
                                             if ratio_keep_options == RatioKeepOptions::Idle {
                                                 let snap_output = self.snap_in_doll(
@@ -688,51 +691,27 @@ impl EditorApp {
                                             );
 
                                             if let Some(x) = snap_output.min.x {
-                                                painter.vline(
-                                                    x,
-                                                    painter.clip_rect().y_range(),
-                                                    snap_stroke,
-                                                );
+                                                auxiliary_lines.push(AuxiliaryLine::Vertical(x));
                                             }
 
                                             if let Some(y) = snap_output.min.y {
-                                                painter.hline(
-                                                    painter.clip_rect().x_range(),
-                                                    y,
-                                                    snap_stroke,
-                                                );
+                                                auxiliary_lines.push(AuxiliaryLine::Horizontal(y));
                                             }
 
                                             if let Some(x) = snap_output.max.x {
-                                                painter.vline(
-                                                    x,
-                                                    painter.clip_rect().y_range(),
-                                                    snap_stroke,
-                                                );
+                                                auxiliary_lines.push(AuxiliaryLine::Vertical(x));
                                             }
 
                                             if let Some(y) = snap_output.max.y {
-                                                painter.hline(
-                                                    painter.clip_rect().x_range(),
-                                                    y,
-                                                    snap_stroke,
-                                                );
+                                                auxiliary_lines.push(AuxiliaryLine::Horizontal(y));
                                             }
 
                                             if let Some(x) = snap_output.center.x {
-                                                painter.vline(
-                                                    x,
-                                                    painter.clip_rect().y_range(),
-                                                    snap_stroke,
-                                                );
+                                                auxiliary_lines.push(AuxiliaryLine::Vertical(x));
                                             }
 
                                             if let Some(y) = snap_output.center.y {
-                                                painter.hline(
-                                                    painter.clip_rect().x_range(),
-                                                    y,
-                                                    snap_stroke,
-                                                );
+                                                auxiliary_lines.push(AuxiliaryLine::Horizontal(y));
                                             }
                                         }
 
@@ -748,20 +727,16 @@ impl EditorApp {
                                                 if let Some(x) = snap_output.anchor.x {
                                                     anchor_point.x = x;
 
-                                                    painter.vline(
+                                                    auxiliary_lines.push(AuxiliaryLine::Vertical(
                                                         anchor_point.x,
-                                                        painter.clip_rect().y_range(),
-                                                        snap_stroke,
-                                                    );
+                                                    ));
                                                 }
 
                                                 if let Some(y) = snap_output.anchor.y {
                                                     anchor_point.y = y;
 
-                                                    painter.hline(
-                                                        painter.clip_rect().x_range(),
-                                                        anchor_point.y,
-                                                        snap_stroke,
+                                                    auxiliary_lines.push(
+                                                        AuxiliaryLine::Horizontal(anchor_point.y),
                                                     );
                                                 }
                                             }
@@ -894,6 +869,21 @@ impl EditorApp {
                     self.canvas_original_pos_slot_and_drag_offset = None;
                 } else {
                     ui.ctx().set_cursor_icon(CursorIcon::Grabbing);
+                }
+
+                if !auxiliary_lines.is_empty() {
+                    let snap_stroke = Stroke::new(1.0, Color32::LIGHT_RED);
+
+                    for line in auxiliary_lines {
+                        match line {
+                            AuxiliaryLine::Horizontal(y) => {
+                                painter.hline(painter.clip_rect().x_range(), y, snap_stroke);
+                            }
+                            AuxiliaryLine::Vertical(x) => {
+                                painter.vline(x, painter.clip_rect().y_range(), snap_stroke);
+                            }
+                        }
+                    }
                 }
 
                 self.actions.push_back(Action::CanvasStateChanged(state));
