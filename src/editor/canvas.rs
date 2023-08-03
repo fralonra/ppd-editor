@@ -60,6 +60,14 @@ impl EditorApp {
                     return;
                 }
 
+                let is_dark = ui.ctx().style().visuals.dark_mode;
+
+                let color_background = if is_dark {
+                    Color32::from_gray(60)
+                } else {
+                    Color32::from_gray(240)
+                };
+
                 let doll = doll.unwrap();
 
                 let mut state = CanvasState::default();
@@ -84,7 +92,7 @@ impl EditorApp {
                 }
 
                 ui.painter()
-                    .rect_filled(viewport_rect, 0.0, Color32::from_gray(60));
+                    .rect_filled(viewport_rect, 0.0, color_background);
 
                 let doll_rect =
                     determine_doll_rect(doll, &viewport_rect, scale, self.viewport.offset);
