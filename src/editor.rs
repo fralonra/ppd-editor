@@ -139,6 +139,7 @@ struct EditorApp {
     dialog_option: DialogOption,
 
     // window visible
+    window_about_visible: bool,
     window_associated_slots_visible: bool,
     window_doll_visible: bool,
     window_fragment_visible: bool,
@@ -206,6 +207,7 @@ impl EditorApp {
             dialog_visible: false,
             dialog_option: DialogOption::default(),
 
+            window_about_visible: false,
             window_associated_slots_visible: false,
             window_doll_visible: false,
             window_fragment_visible: false,

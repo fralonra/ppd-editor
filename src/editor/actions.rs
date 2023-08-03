@@ -85,6 +85,7 @@ pub enum Action {
     SlotRemoveConfirm(u32),
     SlotRemovePosition(Option<u32>, usize),
     SlotRemoveRequest(u32),
+    WindowAboutVisible(bool),
     WindowAssociatedSlotsVisible(bool),
     WindowDollVisible(bool),
     WindowFragmentVisible(bool),
@@ -873,6 +874,9 @@ impl EditorApp {
                     self.dialog_option =
                         DialogOption::confirm(&format!("Really delete slot {}?", id))
                             .primary_action(Action::SlotRemoveConfirm(id));
+                }
+                Action::WindowAboutVisible(visible) => {
+                    self.window_about_visible = visible;
                 }
                 Action::WindowAssociatedSlotsVisible(visible) => {
                     self.window_associated_slots_visible = visible;

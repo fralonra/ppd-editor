@@ -2,6 +2,7 @@
 name = "ppd-editor"
 version = "0.1.0"
 edition = "2021"
+homepage = "https://github.com/fralonra/ppd-editor"
 
 [[bin]]
 path = "src/bin/editor.rs"

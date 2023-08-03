@@ -388,7 +388,13 @@ impl EditorApp {
                 self.menu_fragment(ui, self.actived_fragment);
             });
 
-            ui.menu_button("Help", |ui| {});
+            ui.menu_button("Help", |ui| {
+                if ui.button("About").clicked() {
+                    self.actions.push_back(Action::WindowAboutVisible(true));
+
+                    ui.close_menu();
+                }
+            });
         });
     }
 }

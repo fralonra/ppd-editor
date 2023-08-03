@@ -61,7 +61,40 @@ impl EditorApp {
 
         self.ui_associated_slots_window(ctx);
 
+        self.ui_about_window(ctx);
+
         self.ui_dialog(ctx);
+    }
+
+    fn ui_about_window(&mut self, ctx: &Context) {
+        if !self.window_about_visible {
+            return;
+        }
+
+        Modal::new("about_window").show(ctx, |ctx| {
+            Window::new("About")
+                .pivot(Align2::CENTER_CENTER)
+                .default_pos(ctx.screen_rect().center())
+                .collapsible(false)
+                .resizable(false)
+                .open(&mut self.window_about_visible)
+                .show(ctx, |ui| {
+                    ui.vertical_centered(|ui| {
+                        ui.heading("Paperdoll Editor");
+                        ui.strong(env!("CARGO_PKG_VERSION"));
+
+                        if let Some(hash) = option_env!("GIT_COMMIT_HASH") {
+                            ui.strong(hash);
+                        }
+
+                        if let Some(homepage) = option_env!("CARGO_PKG_HOMEPAGE") {
+                            ui.hyperlink(homepage);
+                        }
+                    });
+
+                    ui.allocate_space(vec2(ui.available_width(), 10.0));
+                })
+        });
     }
 
     fn ui_associated_slots_window(&mut self, ctx: &Context) {
