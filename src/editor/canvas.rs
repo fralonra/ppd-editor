@@ -121,8 +121,6 @@ impl EditorApp {
                 // paint doll
                 let painter = ui.painter_at(ui.max_rect());
 
-                painter.rect_stroke(doll_rect, 0.0, Stroke::new(1.0, Color32::from_gray(90)));
-
                 if let Some(texture) = self.textures_doll.get(&doll.id()) {
                     let doll_image_position =
                         doll_rect.min + vec2(doll.offset.x, doll.offset.y) * scale;
@@ -140,6 +138,8 @@ impl EditorApp {
                         Color32::WHITE,
                     )
                 }
+
+                painter.rect_stroke(doll_rect, 0.0, Stroke::new(1.0, Color32::from_gray(90)));
 
                 // paint slots
                 let slots = doll.slots.clone();
