@@ -310,9 +310,24 @@ impl ViewerApp {
 
     fn ui_status_bar(&mut self, ui: &mut Ui) {
         ui.horizontal(|ui| {
-            ui.allocate_space(vec2(100.0, 1.0));
+            ui.horizontal(|ui| {
+                ui.set_width(200.0);
 
-            ui.label(format!("{}%", self.viewport.scale * 100.0));
+                ui.allocate_space(vec2(100.0, 1.0));
+
+                ui.label(format!("{}%", self.viewport.scale * 100.0));
+            });
+
+            ui.horizontal(|ui| {
+                ui.strong("Scroll / +/-");
+                ui.label("to zoom in / out");
+
+                ui.strong("Right Drag");
+                ui.label("to drag around");
+
+                ui.strong("Arrow Keys");
+                ui.label("to move around");
+            });
         });
     }
 }
