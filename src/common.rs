@@ -106,11 +106,9 @@ pub(crate) fn load_fonts(ctx: &Context) {
 }
 
 pub(crate) fn setup_style(ctx: &Context) {
-    let mut style = Style::default();
+    let mut style = (*ctx.style()).clone();
 
     style.spacing.item_spacing.y = 8.0;
-
-    // style.debug.debug_on_hover = true;
 
     ctx.set_style(style);
 }
