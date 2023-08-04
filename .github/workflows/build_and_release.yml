@@ -1,0 +1,58 @@
+name: Release
+
+on:
+  push:
+    tags: ['v[0-9]+.[0-9]+.[0-9]+*']
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies on Ubuntu
+        run: sudo apt-get update && sudo apt-get install libgtk-3-dev
+      - name: Build
+        run: GIT_COMMIT_HASH=$(git rev-parse --short HEAD) cargo build --release
+      - name: Gzip
+        run: |
+          mkdir ppd-editor
+          mv ./target/release/ppd-editor ppd-editor/
+          tar -zcvf ./ppd-editor-linux-${{ github.ref_name }}.tar.gz ppd-editor
+          mkdir ppd-viewer
+          mv ./target/release/ppd-viewer ppd-viewer/
+          tar -zcvf ./ppd-viewer-linux-${{ github.ref_name }}.tar.gz ppd-viewer
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            ./ppd-editor-linux-${{ github.ref_name }}.tar.gz
+            ./ppd-viewer-linux-${{ github.ref_name }}.tar.gz
+
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build
+        run: GIT_COMMIT_HASH=$(git rev-parse --short HEAD) cargo build --release
+      - name: Install WiX
+        run: nuget install WiX -Version 3.11.2
+      - name: Create msi installer
+        run: |
+          ./WiX.*/tools/candle.exe -arch "x64" -ext WixUIExtension -ext WixUtilExtension \
+            -out "./ppd-editor.wixobj" "build/windows/wix/ppd-editor.wxs"
+          ./WiX.*/tools/light.exe -ext WixUIExtension -ext WixUtilExtension \
+            -out "./ppd-editor-windows-${{ github.ref_name }}.msi" -sice:ICE61 -sice:ICE91 \
+            "./ppd-editor.wixobj"
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ./ppd-editor-windows-${{ github.ref_name }}.msi

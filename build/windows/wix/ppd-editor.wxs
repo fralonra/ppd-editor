@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="windows-1252"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
+    <Product Name="PpdEditor"
+             Id="*"
+             UpgradeCode="7c3c9894-b3d3-4e6a-b71a-4187e60183b3"
+             Language="1033"
+             Codepage="1252"
+             Version="0.1.0"
+             Manufacturer="Fralonra">
+        <Package InstallerVersion="200" Compressed="yes"/>
+        <MajorUpgrade AllowSameVersionUpgrades="yes" DowngradeErrorMessage="A newer version of [ProductName] is already installed."/>
+        <Icon Id="PpdEditorIcon" SourceFile=".\build\windows\ppd-editor.ico"/>
+        <Icon Id="PpdViewerIcon" SourceFile=".\build\windows\ppd-viewer.ico"/>
+        <WixVariable Id="WixUILicenseRtf" Value=".\build\windows\wix\license.rtf"/>
+        <Property Id="ApplicationFolderName" Value="PpdEditor"/>
+        <Property Id="WixAppFolder" Value="WixPerMachineFolder"/>
+        <Property Id="ARPPRODUCTICON" Value="PpdEditorIcon"/>
+        <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Launch PpdEditor"/>
+        <Property Id="WixShellExecTarget" Value="[#PpdEditorExeFile]"/>
+        <CustomAction Id="LaunchApplication" BinaryKey="WixCA" DllEntry="WixShellExec" Impersonate="yes"/>
+        <MediaTemplate EmbedCab="yes"/>
+
+        <UI>
+            <UIRef Id="WixUI_Advanced"/>
+            <Publish Dialog="ExitDialog"
+                     Control="Finish" 
+                     Event="DoAction" 
+                     Value="LaunchApplication">WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1 and NOT Installed</Publish>
+        </UI>
+
+        <Directory Id="TARGETDIR" Name="SourceDir">
+            <Directory Id="ProgramFiles64Folder">
+                <Directory Id="APPLICATIONFOLDER" Name="PpdEditor"/>
+            </Directory>
+            <Directory Id="ProgramMenuFolder">
+                <Directory Id="ProgramMenu" Name="PpdEditor"/>
+                <Directory Id="ProgramMenuPpdViewer" Name="PpdEditor"/>
+            </Directory>
+        </Directory>
+
+        <DirectoryRef Id="APPLICATIONFOLDER">
+            <Component Id="PpdEditorExe" Guid="*">
+                <File Id="PpdEditorExeFile" Source=".\target\release\ppd-editor.exe" Name="ppd-editor.exe" KeyPath="yes" Checksum="yes"/>
+            </Component>
+            <Component Id="PpdViewerExe" Guid="*">
+                <File Id="PpdViewerExeFile" Source=".\target\release\ppd-viewer.exe" Name="ppd-viewer.exe" KeyPath="yes" Checksum="yes"/>
+            </Component>
+        </DirectoryRef>
+
+        <DirectoryRef Id="ProgramMenu">
+            <Component Id="Shortcut" Guid="*">
+                <Shortcut Id="ShortcutFile"
+                          Icon="PpdEditorIcon"
+                          Name="PpdEditor"
+                          Description="Paperdoll Editor"
+                          Target="[!PpdEditorExeFile]"
+                          WorkingDirectory="APPLICATIONFOLDER"/>
+                <RemoveFolder Id="CleanUpShortCut" Directory="ProgramMenu" On="uninstall"/>
+                <RegistryValue Root="HKCU" Key="Software\Fralonra\PpdEditor" Name="installed" Type="integer" Value="1" KeyPath="yes"/>
+            </Component>
+        </DirectoryRef>
+
+        <DirectoryRef Id="ProgramMenuPpdViewer">
+            <Component Id="ShortcutPpdViewer" Guid="*">
+                <Shortcut Id="ShortcutPpdViewerFile"
+                          Icon="PpdViewerIcon"
+                          Name="PpdViewer"
+                          Description="Paperdoll Viewer"
+                          Target="[!PpdViewerExeFile]"
+                          WorkingDirectory="APPLICATIONFOLDER"/>
+                <RemoveFolder Id="CleanUpShortCutPpdViewer" Directory="ProgramMenuPpdViewer" On="uninstall"/>
+                <RegistryValue Root="HKCU" Key="Software\Fralonra\PpdViewer" Name="installed" Type="integer" Value="1" KeyPath="yes"/>
+            </Component>
+        </DirectoryRef>
+
+        <DirectoryRef Id="APPLICATIONFOLDER">
+            <Component Id="ModifyPathEnv" Guid="4e6e462c-8e9e-45b8-ab8a-8de938d4961f" KeyPath="yes">
+                <Environment Id="PathEnv" Value="[APPLICATIONFOLDER]" Name="PATH" Permanent="no" Part="first" Action="set" System="yes"/>
+            </Component>
+        </DirectoryRef>
+
+        <Feature Id="PpdEditor" Title="Paperdoll Editor" Absent="disallow" Level="1">
+            <ComponentRef Id="PpdEditorExe"/>
+            <ComponentRef Id="Shortcut"/>
+            <ComponentRef Id="ModifyPathEnv"/>
+        </Feature>
+
+        <Feature Id="PpdViewer" Title="Paperdoll Viewer" Level="1">
+            <ComponentRef Id="PpdViewerExe"/>
+            <ComponentRef Id="ShortcutPpdViewer"/>
+        </Feature>
+    </Product>
+</Wix>
