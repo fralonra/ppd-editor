@@ -30,6 +30,8 @@ struct ViewerApp {
     actived_doll: u32,
     slot_map: HashMap<u32, u32>,
     slot_index_map: HashMap<u32, isize>,
+
+    window_about_visible: bool,
 }
 
 impl App for ViewerApp {
@@ -57,6 +59,8 @@ impl ViewerApp {
             actived_doll: 0,
             slot_map: HashMap::new(),
             slot_index_map: HashMap::new(),
+
+            window_about_visible: false,
         }
     }
 }

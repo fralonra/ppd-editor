@@ -3,8 +3,9 @@ use std::collections::HashMap;
 use eframe::{
     egui::{
         scroll_area::ScrollBarVisibility, Button, CentralPanel, ComboBox, Context, Grid, Painter,
-        PointerButton, RichText, ScrollArea, Sense, SidePanel, TopBottomPanel, Ui,
+        PointerButton, RichText, ScrollArea, Sense, SidePanel, TopBottomPanel, Ui, Window,
     },
+    emath::Align2,
     epaint::{pos2, vec2, Color32, Rect, TextureId, Vec2},
 };
 use material_icons::{icon_to_char, Icon};
@@ -47,6 +48,36 @@ impl ViewerApp {
         CentralPanel::default().show(ctx, |ui| {
             self.ui_canvas(ui);
         });
+
+        self.ui_about_window(ctx);
+    }
+
+    fn ui_about_window(&mut self, ctx: &Context) {
+        if !self.window_about_visible {
+            return;
+        }
+
+        Window::new("About")
+            .pivot(Align2::CENTER_CENTER)
+            .default_pos(ctx.screen_rect().center())
+            .collapsible(false)
+            .resizable(false)
+            .open(&mut self.window_about_visible)
+            .show(ctx, |ui| {
+                ui.vertical_centered(|ui| {
+                    ui.heading("Paperdoll Viewer");
+
+                    let hash = option_env!("GIT_COMMIT_HASH").unwrap_or_default();
+
+                    ui.strong(format!(" v{} {}", env!("CARGO_PKG_VERSION"), hash));
+
+                    if let Some(homepage) = option_env!("CARGO_PKG_HOMEPAGE") {
+                        ui.hyperlink(homepage);
+                    }
+                });
+
+                ui.allocate_space(vec2(ui.available_width(), 10.0));
+            });
     }
 
     fn ui_action_bar(&mut self, ui: &mut Ui) {
@@ -294,14 +325,11 @@ impl ViewerApp {
             Rect::from_center_size(ui.max_rect().center(), vec2(400.0, 200.0)),
             |ui| {
                 ui.vertical_centered(|ui| {
-                    ui.vertical_centered(|ui| {
-                        ui.heading("Paperdoll Viewer");
-                        ui.strong(env!("CARGO_PKG_VERSION"));
+                    ui.heading("Paperdoll Viewer");
 
-                        if let Some(hash) = option_env!("GIT_COMMIT_HASH") {
-                            ui.strong(hash);
-                        }
-                    });
+                    let hash = option_env!("GIT_COMMIT_HASH").unwrap_or_default();
+
+                    ui.strong(format!(" v{} {}", env!("CARGO_PKG_VERSION"), hash));
 
                     if let Some(homepage) = option_env!("CARGO_PKG_HOMEPAGE") {
                         ui.hyperlink(homepage);

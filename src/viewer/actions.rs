@@ -19,6 +19,7 @@ pub enum Action {
     ViewportMove(Vec2),
     ViewportZoomReset,
     ViewportZoomTo(f32),
+    WindowAboutVisible(bool),
 }
 
 impl ViewerApp {
@@ -112,6 +113,9 @@ impl ViewerApp {
                     if scale > 0.1 && scale < 10.0 {
                         self.viewport.scale = scale;
                     }
+                }
+                Action::WindowAboutVisible(visible) => {
+                    self.window_about_visible = visible;
                 }
             }
         }

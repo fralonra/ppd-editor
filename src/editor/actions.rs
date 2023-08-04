@@ -85,16 +85,16 @@ pub enum Action {
     SlotRemoveConfirm(u32),
     SlotRemovePosition(Option<u32>, usize),
     SlotRemoveRequest(u32),
-    WindowAboutVisible(bool),
-    WindowAssociatedSlotsVisible(bool),
-    WindowDollVisible(bool),
-    WindowFragmentVisible(bool),
-    WindowSlotVisible(bool),
     ViewportCenter,
     ViewportFit,
     ViewportMove(Vec2),
     ViewportZoomReset,
     ViewportZoomTo(f32),
+    WindowAboutVisible(bool),
+    WindowAssociatedSlotsVisible(bool),
+    WindowDollVisible(bool),
+    WindowFragmentVisible(bool),
+    WindowSlotVisible(bool),
 }
 
 impl EditorApp {
@@ -875,6 +875,31 @@ impl EditorApp {
                         DialogOption::confirm(&format!("Really delete slot {}?", id))
                             .primary_action(Action::SlotRemoveConfirm(id));
                 }
+                Action::ViewportCenter => {
+                    self.viewport.offset = Vec2::ZERO;
+                }
+                Action::ViewportFit => {
+                    let doll = self.actived_doll.map(|id| self.ppd.get_doll(id)).flatten();
+
+                    if let Some(doll) = doll {
+                        let doll_rect = allocate_size_fit_in_rect(
+                            doll.width as f32,
+                            doll.height as f32,
+                            &self.viewport.rect,
+                        );
+
+                        self.viewport.offset = Vec2::ZERO;
+
+                        self.viewport.scale = doll_rect.width() / doll.width as f32;
+                    }
+                }
+                Action::ViewportMove(offset) => self.viewport.offset += offset,
+                Action::ViewportZoomReset => self.viewport.scale = 1.0,
+                Action::ViewportZoomTo(scale) => {
+                    if scale > 0.1 && scale < 10.0 {
+                        self.viewport.scale = scale;
+                    }
+                }
                 Action::WindowAboutVisible(visible) => {
                     self.window_about_visible = visible;
                 }
@@ -912,31 +937,6 @@ impl EditorApp {
 
                     if visible {
                         self.window_slot_error = None;
-                    }
-                }
-                Action::ViewportCenter => {
-                    self.viewport.offset = Vec2::ZERO;
-                }
-                Action::ViewportFit => {
-                    let doll = self.actived_doll.map(|id| self.ppd.get_doll(id)).flatten();
-
-                    if let Some(doll) = doll {
-                        let doll_rect = allocate_size_fit_in_rect(
-                            doll.width as f32,
-                            doll.height as f32,
-                            &self.viewport.rect,
-                        );
-
-                        self.viewport.offset = Vec2::ZERO;
-
-                        self.viewport.scale = doll_rect.width() / doll.width as f32;
-                    }
-                }
-                Action::ViewportMove(offset) => self.viewport.offset += offset,
-                Action::ViewportZoomReset => self.viewport.scale = 1.0,
-                Action::ViewportZoomTo(scale) => {
-                    if scale > 0.1 && scale < 10.0 {
-                        self.viewport.scale = scale;
                     }
                 }
             }

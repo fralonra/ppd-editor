@@ -81,11 +81,10 @@ impl EditorApp {
                 .show(ctx, |ui| {
                     ui.vertical_centered(|ui| {
                         ui.heading("Paperdoll Editor");
-                        ui.strong(env!("CARGO_PKG_VERSION"));
 
-                        if let Some(hash) = option_env!("GIT_COMMIT_HASH") {
-                            ui.strong(hash);
-                        }
+                        let hash = option_env!("GIT_COMMIT_HASH").unwrap_or_default();
+
+                        ui.strong(format!(" v{} {}", env!("CARGO_PKG_VERSION"), hash));
 
                         if let Some(homepage) = option_env!("CARGO_PKG_HOMEPAGE") {
                             ui.hyperlink(homepage);
