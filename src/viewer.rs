@@ -6,7 +6,7 @@ mod ui;
 use std::collections::{HashMap, VecDeque};
 
 use eframe::{egui::Context, App, CreationContext, Frame};
-use paperdoll_tar::paperdoll::factory::PaperdollFactory;
+use paperdoll_tar::paperdoll::{factory::PaperdollFactory, paperdoll::Paperdoll};
 
 use crate::{
     common::{load_fonts, setup_style, TextureData},
@@ -23,12 +23,10 @@ struct ViewerApp {
     viewport: Viewport,
 
     ppd: Option<PaperdollFactory>,
+    paperdoll: Paperdoll,
 
-    textures_doll: HashMap<u32, TextureData>,
-    textures_fragment: HashMap<u32, TextureData>,
+    texture: Option<TextureData>,
 
-    actived_doll: u32,
-    slot_map: HashMap<u32, u32>,
     slot_index_map: HashMap<u32, isize>,
 
     window_about_visible: bool,
@@ -52,12 +50,13 @@ impl ViewerApp {
             viewport: Viewport::default(),
 
             ppd: None,
+            paperdoll: Paperdoll {
+                doll: 0,
+                slot_map: HashMap::new(),
+            },
 
-            textures_doll: HashMap::new(),
-            textures_fragment: HashMap::new(),
+            texture: None,
 
-            actived_doll: 0,
-            slot_map: HashMap::new(),
             slot_index_map: HashMap::new(),
 
             window_about_visible: false,

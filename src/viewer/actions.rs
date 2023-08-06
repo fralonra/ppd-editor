@@ -3,7 +3,7 @@ use eframe::{egui::Context, epaint::Vec2, Frame};
 use paperdoll_tar::paperdoll::factory::PaperdollFactory;
 
 use crate::{
-    common::{allocate_size_fit_in_rect, upload_ppd_textures},
+    common::{allocate_size_fit_in_rect, upload_image_to_texture},
     fs::select_file,
 };
 
@@ -43,9 +43,9 @@ impl ViewerApp {
 
                     let ppd = ppd.unwrap();
 
-                    self.actived_doll = 0;
+                    self.paperdoll.doll = 0;
+                    self.paperdoll.slot_map.clear();
 
-                    self.slot_map.clear();
                     self.slot_index_map.clear();
 
                     for (id, slot) in ppd.slots() {
@@ -56,15 +56,14 @@ impl ViewerApp {
                         }
 
                         if let Some(fragment_id) = slot.candidates.first() {
-                            self.slot_map.insert(*id, *fragment_id);
+                            self.paperdoll.slot_map.insert(*id, *fragment_id);
                             self.slot_index_map.insert(*id, 0);
                         }
                     }
 
-                    let (textures_doll, textures_fragment) = upload_ppd_textures(&ppd, ctx);
-
-                    self.textures_doll = textures_doll;
-                    self.textures_fragment = textures_fragment;
+                    if let Ok(image) = ppd.render_paperdoll(&self.paperdoll) {
+                        self.texture = Some(upload_image_to_texture(&image, &ppd.meta.name, ctx));
+                    }
 
                     self.ppd = Some(ppd);
                 }
@@ -75,14 +74,17 @@ impl ViewerApp {
                                 if let Some(fragment_id) =
                                     slot.candidates.iter().nth(candidate_index as usize)
                                 {
-                                    self.slot_map.insert(slot_id, *fragment_id);
-
-                                    continue;
+                                    self.paperdoll.slot_map.insert(slot_id, *fragment_id);
                                 }
                             }
+                        } else {
+                            self.paperdoll.slot_map.remove(&slot_id);
                         }
 
-                        self.slot_map.remove(&slot_id);
+                        if let Ok(image) = ppd.render_paperdoll(&self.paperdoll) {
+                            self.texture =
+                                Some(upload_image_to_texture(&image, &ppd.meta.name, ctx));
+                        }
                     }
                 }
                 Action::ViewportCenter => {
@@ -92,7 +94,7 @@ impl ViewerApp {
                     let doll = self
                         .ppd
                         .as_ref()
-                        .map(|ppd| ppd.get_doll(self.actived_doll))
+                        .map(|ppd| ppd.get_doll(self.paperdoll.doll))
                         .flatten();
 
                     if let Some(doll) = doll {

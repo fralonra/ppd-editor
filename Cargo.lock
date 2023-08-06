@@ -498,9 +498,9 @@ checksum = "6d43a04d8753f35258c91f8ec639f792891f748a1edbd759cf1dcea3382ad83c"
 
 [[package]]
 name = "cfg-expr"
-version = "0.15.3"
+version = "0.15.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "215c0072ecc28f92eeb0eea38ba63ddfcb65c2828c46311d646f1a3ff5f9841c"
+checksum = "b40ccee03b5175c18cde8f37e7d2a33bcef6f8ec8f7cc0d81090d1bb380949c9"
 dependencies = [
  "smallvec",
  "target-lexicon",
@@ -2054,9 +2054,9 @@ dependencies = [
 
 [[package]]
 name = "paperdoll"
-version = "0.0.1-alpha.3"
+version = "0.0.1-alpha.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "466925123837e113747a3fbf448901faca406c557ca1612b4ab24390a45fa14d"
+checksum = "400d20c75b99bc127f2b6a22ec9139dfeae960d6ca60997c4deeea155426f7e0"
 dependencies = [
  "anyhow",
  "serde",
@@ -2064,9 +2064,9 @@ dependencies = [
 
 [[package]]
 name = "paperdoll-tar"
-version = "0.0.1-alpha.2"
+version = "0.0.1-alpha.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7d2b7bc128a023ad5e815b5a0dc95399449d17a6b412e9bfb66379e18d72329f"
+checksum = "9c7273e9994755f0b7296c1faed06cf4d0b41e8f70520d35107639479785fee1"
 dependencies = [
  "anyhow",
  "image",
@@ -2779,9 +2779,9 @@ dependencies = [
 
 [[package]]
 name = "target-lexicon"
-version = "0.12.9"
+version = "0.12.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "df8e77cb757a61f51b947ec4a7e3646efd825b73561db1c232a8ccb639e611a0"
+checksum = "9d0e916b1148c8e263850e1ebcbd046f333e0683c724876bb0da63ea4373dc8a"
 
 [[package]]
 name = "tempdir"

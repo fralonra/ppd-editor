@@ -1,17 +1,15 @@
-use std::collections::HashMap;
-
 use eframe::{
     egui::{
-        scroll_area::ScrollBarVisibility, Button, CentralPanel, ComboBox, Context, Grid, Painter,
+        scroll_area::ScrollBarVisibility, Button, CentralPanel, ComboBox, Context, Grid,
         PointerButton, RichText, ScrollArea, Sense, SidePanel, TopBottomPanel, Ui, Window,
     },
     emath::Align2,
-    epaint::{pos2, vec2, Color32, Rect, TextureId, Vec2},
+    epaint::{pos2, vec2, Color32, Rect, Stroke, Vec2},
 };
 use material_icons::{icon_to_char, Icon};
-use paperdoll_tar::paperdoll::{doll::Doll, render_material::RenderMaterial, slot::Slot};
+use paperdoll_tar::paperdoll::{doll::Doll, slot::Slot};
 
-use crate::common::{determine_doll_rect, drag_move, TextureData};
+use crate::common::{determine_doll_rect, drag_move};
 
 use super::{actions::Action, ViewerApp};
 
@@ -116,14 +114,18 @@ impl ViewerApp {
                 ui.label("Doll: ");
 
                 let doll_title = ppd
-                    .get_doll(self.actived_doll)
+                    .get_doll(self.paperdoll.doll)
                     .map_or("Doll Not Found".to_owned(), map_doll_title);
 
                 ComboBox::from_label("")
                     .selected_text(doll_title)
                     .show_ui(ui, |ui| {
                         for (id, doll) in ppd.dolls() {
-                            ui.selectable_value(&mut self.actived_doll, *id, map_doll_title(doll));
+                            ui.selectable_value(
+                                &mut self.paperdoll.doll,
+                                *id,
+                                map_doll_title(doll),
+                            );
                         }
                     });
             }
@@ -142,7 +144,7 @@ impl ViewerApp {
             .show(ui, |ui| {
                 let ppd = self.ppd.as_ref().unwrap();
 
-                let doll = ppd.get_doll(self.actived_doll);
+                let doll = ppd.get_doll(self.paperdoll.doll);
 
                 if doll.is_none() {
                     return;
@@ -187,16 +189,15 @@ impl ViewerApp {
 
                 let painter = ui.painter_at(ui.max_rect());
 
-                if let Ok(material) = ppd.render(doll.id(), &self.slot_map, true) {
-                    render_paperdoll(
-                        material,
-                        &self.textures_doll,
-                        &self.textures_fragment,
-                        self.viewport.scale,
-                        self.viewport.offset * self.viewport.scale
-                            + (doll_rect.min - ui.max_rect().min),
-                        &painter,
-                    )
+                painter.rect_stroke(doll_rect, 0.0, Stroke::new(1.0, Color32::from_gray(60)));
+
+                if let Some(texture) = &self.texture {
+                    painter.image(
+                        texture.texture.id(),
+                        doll_rect,
+                        Rect::from([pos2(0.0, 0.0), pos2(1.0, 1.0)]),
+                        Color32::WHITE,
+                    );
                 }
             });
     }
@@ -208,7 +209,7 @@ impl ViewerApp {
 
         let ppd = self.ppd.as_ref().unwrap();
 
-        let doll = ppd.get_doll(self.actived_doll);
+        let doll = ppd.get_doll(self.paperdoll.doll);
 
         if doll.is_none() {
             return;
@@ -390,68 +391,4 @@ fn map_slot_title(slot: &Slot) -> String {
         .is_empty()
         .then_some(format!("Unnamed Slot - {}", slot.id()))
         .map_or(slot.desc.clone(), |s| s)
-}
-
-fn render_paperdoll(
-    material: RenderMaterial,
-    textures_doll: &HashMap<u32, TextureData>,
-    textures_fragment: &HashMap<u32, TextureData>,
-    scale: f32,
-    offset: Vec2,
-    painter: &Painter,
-) {
-    let RenderMaterial { doll, slots, .. } = material;
-
-    if let Some(piece) = doll {
-        if let Some(texture) = textures_doll.get(&piece.id) {
-            render_texture(
-                &texture.texture.id(),
-                piece.position.x,
-                piece.position.y,
-                piece.image.width as f32,
-                piece.image.height as f32,
-                scale,
-                offset,
-                painter,
-            )
-        }
-    }
-
-    for piece in slots {
-        if let Some(texture) = textures_fragment.get(&piece.id) {
-            render_texture(
-                &texture.texture.id(),
-                piece.position.x,
-                piece.position.y,
-                piece.image.width as f32,
-                piece.image.height as f32,
-                scale,
-                offset,
-                painter,
-            )
-        }
-    }
-
-    fn render_texture(
-        texture_id: &TextureId,
-        left: f32,
-        top: f32,
-        width: f32,
-        height: f32,
-        scale: f32,
-        offset: Vec2,
-        painter: &Painter,
-    ) {
-        let min = painter.clip_rect().min + vec2(left, top) * scale;
-        let max = min + vec2(width, height) * scale;
-
-        let rect = Rect::from([min, max]).translate(offset);
-
-        painter.image(
-            *texture_id,
-            rect,
-            Rect::from([pos2(0.0, 0.0), pos2(1.0, 1.0)]),
-            Color32::WHITE,
-        );
-    }
 }
