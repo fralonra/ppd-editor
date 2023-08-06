@@ -31,6 +31,39 @@ jobs:
             ./ppd-editor-linux-${{ github.ref_name }}.tar.gz
             ./ppd-viewer-linux-${{ github.ref_name }}.tar.gz
 
+  macos:
+    strategy:
+      matrix:
+        version: [11, 12]
+
+    runs-on: macos-${{ matrix.version }}
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Dependencies
+        run: cargo install cargo-bundle
+      - name: Bundle
+        run: |
+          cargo bundle --release --bin ppd-editor
+          cargo bundle --release --bin ppd-viewer
+      - name: Gzip
+        run: |
+          mkdir ppd-editor
+          mv ./target/release/bundle/osx/PpdEditor.app ppd-editor/
+          tar -zcvf ./ppd-editor-macos${{ matrix.version }}-${{ github.ref_name }}.tar.gz ppd-editor
+          mkdir ppd-viewer
+          mv ./target/release/bundle/osx/PpdViewer.app ppd-viewer/
+          tar -zcvf ./ppd-viewer-macos${{ matrix.version }}-${{ github.ref_name }}.tar.gz ppd-viewer
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            ./ppd-editor-macos${{ matrix.version }}-${{ github.ref_name }}.tar.gz
+            ./ppd-viewer-macos${{ matrix.version }}-${{ github.ref_name }}.tar.gz
+
   windows:
     runs-on: windows-latest
     defaults:

@@ -1,8 +1,12 @@
 [package]
 name = "ppd-editor"
 version = "0.1.0"
+authors = ["Fralonra <zoronlivingston@gmail.com>"]
+description = "Editor for 2D paperdoll file"
 edition = "2021"
 homepage = "https://github.com/fralonra/ppd-editor"
+license = "MIT"
+repository = "https://github.com/fralonra/ppd-editor"
 
 [[bin]]
 path = "src/bin/editor.rs"
@@ -22,3 +26,17 @@ log = "0.4.19"
 material-icons = { git = "https://github.com/fschutt/material-icons.git" }
 paperdoll-tar = "0.0.1-alpha.3"
 rfd = "0.11.4"
+
+# for macOS only
+[package.metadata.bundle.bin.ppd-editor]
+name = "PpdEditor"
+identifier = "io.github.fralonra.PpdEditor"
+icon = ["./build/macos/ppd-editor.icns"]
+category = "public.app-category.graphics-design"
+
+[package.metadata.bundle.bin.ppd-viewer]
+name = "PpdViewer"
+identifier = "io.github.fralonra.PpdViewer"
+icon = ["./build/macos/ppd-viewer.icns"]
+category = "public.app-category.graphics-design"
+short_description = "Viewer for 2D paperdoll file"
