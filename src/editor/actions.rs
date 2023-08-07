@@ -409,6 +409,12 @@ impl EditorApp {
 
                     if let Some((path, texture, pixels)) = self.upload_texture("fragment", ctx) {
                         if let Some(adapter_fragment) = self.adapter_fragment.as_mut() {
+                            if adapter_fragment.desc.is_empty() {
+                                if let Some(stem) = path.file_stem() {
+                                    adapter_fragment.desc = stem.to_string_lossy().to_string();
+                                }
+                            }
+
                             adapter_fragment.path = path.to_string_lossy().to_string();
 
                             adapter_fragment.image.width = texture.width;
@@ -425,6 +431,12 @@ impl EditorApp {
 
                     if let Some((path, texture, pixels)) = self.upload_texture("fragment", ctx) {
                         if let Some(fragment) = self.ppd.get_fragment_mut(id) {
+                            if fragment.desc.is_empty() {
+                                if let Some(stem) = path.file_stem() {
+                                    fragment.desc = stem.to_string_lossy().to_string();
+                                }
+                            }
+
                             fragment.path = path.to_string_lossy().to_string();
 
                             self.textures_fragment.insert(
