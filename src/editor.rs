@@ -220,6 +220,15 @@ impl EditorApp {
             window_slot_error: None,
         }
     }
+
+    pub fn has_modal_open(&self) -> bool {
+        self.dialog_visible
+            || self.window_about_visible
+            || self.window_associated_slots_visible
+            || self.window_doll_visible
+            || self.window_fragment_visible
+            || self.window_slot_visible
+    }
 }
 
 pub fn setup_eframe(cc: &CreationContext<'_>) -> Box<dyn App> {

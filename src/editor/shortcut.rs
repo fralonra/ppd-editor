@@ -51,6 +51,10 @@ impl Default for Shortcut {
 
 impl EditorApp {
     pub(super) fn handle_shortcut(&mut self, ctx: &Context) {
+        if self.has_modal_open() {
+            return;
+        }
+
         ctx.input_mut(|i| {
             if i.consume_shortcut(&self.shortcut.file_new) {
                 self.actions.push_back(Action::FileNew);
