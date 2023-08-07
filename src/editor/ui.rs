@@ -250,18 +250,28 @@ impl EditorApp {
                     });
                     ui.horizontal_wrapped(|ui| {
                         ui.monospace("w");
-                        ui.add(
-                            DragValue::new(&mut doll.width)
-                                .clamp_range(RangeInclusive::new(1, u32::MAX))
-                                .speed(1),
-                        );
+                        if ui
+                            .add(
+                                DragValue::new(&mut doll.width)
+                                    .clamp_range(RangeInclusive::new(1, u32::MAX))
+                                    .speed(1),
+                            )
+                            .has_focus()
+                        {
+                            self.has_drag_value_focused = true;
+                        }
 
                         ui.monospace("h");
-                        ui.add(
-                            DragValue::new(&mut doll.height)
-                                .clamp_range(RangeInclusive::new(1, u32::MAX))
-                                .speed(1),
-                        );
+                        if ui
+                            .add(
+                                DragValue::new(&mut doll.height)
+                                    .clamp_range(RangeInclusive::new(1, u32::MAX))
+                                    .speed(1),
+                            )
+                            .has_focus()
+                        {
+                            self.has_drag_value_focused = true;
+                        }
                     });
 
                     ui.end_row();
@@ -275,10 +285,20 @@ impl EditorApp {
                     });
                     ui.horizontal_wrapped(|ui| {
                         ui.monospace("x");
-                        ui.add(DragValue::new(&mut doll.offset.x).speed(1));
+                        if ui
+                            .add(DragValue::new(&mut doll.offset.x).speed(1))
+                            .has_focus()
+                        {
+                            self.has_drag_value_focused = true;
+                        }
 
                         ui.monospace("y");
-                        ui.add(DragValue::new(&mut doll.offset.y).speed(1));
+                        if ui
+                            .add(DragValue::new(&mut doll.offset.y).speed(1))
+                            .has_focus()
+                        {
+                            self.has_drag_value_focused = true;
+                        }
                     });
 
                     ui.end_row();
@@ -581,92 +601,118 @@ impl EditorApp {
                 .show(ctx, |ui| {
                     ui.heading("Doll");
 
-                    Grid::new("doll").num_columns(2).striped(true).show(ui, |ui| {
-                        let adapter_doll = self.adapter_doll.as_mut().unwrap();
+                    Grid::new("doll")
+                        .num_columns(2)
+                        .striped(true)
+                        .show(ui, |ui| {
+                            let adapter_doll = self.adapter_doll.as_mut().unwrap();
 
-                        ui.label("Description:");
-                        ui.text_edit_singleline(&mut adapter_doll.desc);
+                            ui.label("Description:");
+                            ui.text_edit_singleline(&mut adapter_doll.desc);
 
-                        ui.end_row();
+                            ui.end_row();
 
-                        ui.horizontal_centered(|ui| {
-                            ui.label("Size:");
-                            ui.add(Tooltip::new("The size of the doll."));
+                            ui.horizontal_centered(|ui| {
+                                ui.label("Size:");
+                                ui.add(Tooltip::new("The size of the doll."));
+                            });
+                            ui.horizontal_wrapped(|ui| {
+                                ui.monospace("w");
+                                if ui
+                                    .add(
+                                        DragValue::new(&mut adapter_doll.width)
+                                            .clamp_range(RangeInclusive::new(1, u32::MAX))
+                                            .speed(1),
+                                    )
+                                    .has_focus()
+                                {
+                                    self.has_drag_value_focused = true;
+                                }
+
+                                ui.monospace("h");
+                                if ui
+                                    .add(
+                                        DragValue::new(&mut adapter_doll.height)
+                                            .clamp_range(RangeInclusive::new(1, u32::MAX))
+                                            .speed(1),
+                                    )
+                                    .has_focus()
+                                {
+                                    self.has_drag_value_focused = true;
+                                }
+                            });
+
+                            ui.end_row();
+
+                            ui.horizontal_centered(|ui| {
+                                ui.label("Offset:");
+                                ui.add(Tooltip::new(
+                                    "Offset pixels of the top left position\
+                                    of the background image, if any.",
+                                ));
+                            });
+                            ui.horizontal_wrapped(|ui| {
+                                ui.monospace("x");
+                                if ui
+                                    .add(DragValue::new(&mut adapter_doll.offset.x).speed(1))
+                                    .has_focus()
+                                {
+                                    self.has_drag_value_focused = true;
+                                }
+
+                                ui.monospace("y");
+                                if ui
+                                    .add(DragValue::new(&mut adapter_doll.offset.y).speed(1))
+                                    .has_focus()
+                                {
+                                    self.has_drag_value_focused = true;
+                                }
+                            });
+
+                            ui.end_row();
+
+                            ui.horizontal_centered(|ui| {
+                                ui.label("Background:");
+                                ui.add(Tooltip::new("The background of the doll. It's optional."));
+                            });
+
+                            let texture =
+                                adapter_doll
+                                    .image
+                                    .texture
+                                    .as_ref()
+                                    .map(|texture| TextureData {
+                                        width: adapter_doll.image.width,
+                                        height: adapter_doll.image.height,
+                                        texture: texture.clone(),
+                                    });
+
+                            let mut request_edit = false;
+                            let mut request_remove = false;
+
+                            if ui
+                                .add(
+                                    ImageUpload::new(texture.as_ref())
+                                        .on_edit(|| {
+                                            request_edit = true;
+                                        })
+                                        .on_remove(|| {
+                                            request_remove = true;
+                                        }),
+                                )
+                                .clicked()
+                            {
+                                self.actions.push_back(Action::DollAdapterBackgroundUpload);
+                            }
+
+                            if request_edit {
+                                self.actions.push_back(Action::DollAdapterBackgroundUpload);
+                            }
+
+                            if request_remove {
+                                self.actions.push_back(Action::DollAdapterBackgroundRemove);
+                            }
                         });
-                        ui.horizontal_wrapped(|ui| {
-                            ui.monospace("w");
-                            ui.add(
-                                DragValue::new(&mut adapter_doll.width)
-                                    .clamp_range(RangeInclusive::new(1, u32::MAX))
-                                    .speed(1)
-                            );
-
-                            ui.monospace("h");
-                            ui.add(
-                                DragValue::new(&mut adapter_doll.height)
-                                    .clamp_range(RangeInclusive::new(1, u32::MAX))
-                                    .speed(1)
-                            );
-                        });
-
-                        ui.end_row();
-
-                        ui.horizontal_centered(|ui| {
-                            ui.label("Offset:");
-                            ui.add(Tooltip::new("Offset pixels of the top left position of the background image, if any."));
-                        });
-                        ui.horizontal_wrapped(|ui| {
-                            ui.monospace("x");
-                            ui.add(DragValue::new(&mut adapter_doll.offset.x).speed(1));
-
-                            ui.monospace("y");
-                            ui.add(DragValue::new(&mut adapter_doll.offset.y).speed(1));
-                        });
-
-                        ui.end_row();
-
-                        ui.horizontal_centered(|ui| {
-                            ui.label("Background:");
-                            ui.add(Tooltip::new("The background of the doll. It's optional."));
-                        });
-
-                        let texture =
-                            adapter_doll
-                                .image
-                                .texture
-                                .as_ref()
-                                .map(|texture| TextureData {
-                                    width: adapter_doll.image.width,
-                                    height: adapter_doll.image.height,
-                                    texture: texture.clone(),
-                                });
-
-                        let mut request_edit = false;
-                        let mut request_remove = false;
-
-                        if ui
-                            .add(
-                                ImageUpload::new(texture.as_ref())
-                                    .on_edit(|| {
-                                        request_edit = true;
-                                    })
-                                    .on_remove(|| {
-                                        request_remove = true;
-                                    }),
-                            )
-                            .clicked()
-                        {
-                            self.actions.push_back(Action::DollAdapterBackgroundUpload);
-                        }
-
-                        if request_edit {
-                            self.actions.push_back(Action::DollAdapterBackgroundUpload);
-                        }
-
-                        if request_remove {
-                            self.actions.push_back(Action::DollAdapterBackgroundRemove);
-                        }
-                    });
 
                     ui.add_visible_ui(self.window_doll_error.is_some(), |ui| {
                         ui.colored_label(
@@ -905,6 +951,34 @@ impl EditorApp {
                     });
                 })
         });
+
+        fn ui_fragment_window_grid(
+            desc: &mut String,
+            width: u32,
+            height: u32,
+            pivot: &mut Point,
+            ui: &mut Ui,
+        ) {
+            ui.label("Description:");
+            ui.text_edit_singleline(desc);
+
+            ui.end_row();
+
+            ui.horizontal_centered(|ui| {
+                ui.label("Pivot:");
+                ui.add(Tooltip::new(
+                    "The position where connects to the anchor point of a slot.",
+                ));
+            });
+            ui.add(PivotSelect::new(
+                &mut pivot.x,
+                &mut pivot.y,
+                width as f32,
+                height as f32,
+            ));
+
+            ui.end_row();
+        }
     }
 
     fn ui_left_panel(&mut self, ui: &mut Ui) {
@@ -1186,89 +1260,13 @@ impl EditorApp {
                                                 }
                                             });
 
-                                            Frame::group(ui.style())
-                                                .inner_margin(Vec2::splat(0.0))
-                                                .show(ui, |ui| {
-                                                    ScrollArea::both()
-                                                        .auto_shrink([false, false])
-                                                        .show(ui, |ui| {
-                                                            ui.spacing_mut().item_spacing.y = 1.0;
-
-                                                            ui.vertical(|ui| {
-                                                            for (position_index, position) in
-                                                                slot_data.3.iter_mut().enumerate()
-                                                            {
-                                                                let is_actived = adapter_slot
-                                                                    .actived_position
-                                                                    .map(|actived_index| {
-                                                                        actived_index
-                                                                            == position_index
-                                                                    })
-                                                                    .unwrap_or(false);
-
-                                                                let (rect, resp) = ui
-                                                                    .allocate_at_least(
-                                                                        vec2(
-                                                                            ui.available_width(),
-                                                                            24.0,
-                                                                        ),
-                                                                        Sense::click(),
-                                                                    );
-
-                                                                let visuals =
-                                                                    ui.style().interact_selectable(
-                                                                        &resp, is_actived,
-                                                                    );
-
-                                                                if is_actived {
-                                                                    ui.painter().rect(
-                                                                        rect,
-                                                                        0.0,
-                                                                        visuals.weak_bg_fill,
-                                                                        visuals.bg_stroke,
-                                                                    );
-                                                                }
-
-                                                                if resp.clicked() {
-                                                                    if is_actived {
-                                                                        adapter_slot
-                                                                            .actived_position =
-                                                                            None;
-                                                                    } else {
-                                                                        adapter_slot
-                                                                            .actived_position =
-                                                                            Some(position_index);
-                                                                    }
-                                                                }
-
-                                                                ui.allocate_ui_at_rect(
-                                                                    rect.shrink2(vec2(4.0, 0.0)),
-                                                                    |ui| {
-                                                                        ui.horizontal_centered(
-                                                                            |ui| {
-                                                                                ui.monospace("x");
-                                                                                ui.add(
-                                                                            DragValue::new(
-                                                                                &mut position.x,
-                                                                            )
-                                                                            .speed(1),
-                                                                        );
-
-                                                                                ui.monospace("y");
-                                                                                ui.add(
-                                                                            DragValue::new(
-                                                                                &mut position.y,
-                                                                            )
-                                                                            .speed(1),
-                                                                        );
-                                                                            },
-                                                                        );
-                                                                    },
-                                                                );
-                                                            }
-                                                        });
-                                                        });
-                                                });
+                                            if ui_positions(
+                                                slot_data.3,
+                                                &mut adapter_slot.actived_position,
+                                                ui,
+                                            ) {
+                                                self.has_drag_value_focused = true;
+                                            }
                                         });
 
                                         ui.end_row();
@@ -1283,17 +1281,18 @@ impl EditorApp {
                                         });
                                         ui.horizontal_wrapped(|ui| {
                                             ui.monospace("w");
-                                            if ui
-                                                .add(
-                                                    DragValue::new(slot_data.4)
-                                                        .clamp_range(RangeInclusive::new(
-                                                            1,
-                                                            u32::MAX,
-                                                        ))
-                                                        .speed(1),
-                                                )
-                                                .changed()
-                                            {
+
+                                            let resp = ui.add(
+                                                DragValue::new(slot_data.4)
+                                                    .clamp_range(RangeInclusive::new(1, u32::MAX))
+                                                    .speed(1),
+                                            );
+
+                                            if resp.has_focus() {
+                                                self.has_drag_value_focused = true;
+                                            }
+
+                                            if resp.changed() {
                                                 if adapter_slot.keep_aspect_ratio {
                                                     *slot_data.5 = (*slot_data.4 as f32
                                                         / adapter_slot.aspect_ratio)
@@ -1305,17 +1304,18 @@ impl EditorApp {
                                             }
 
                                             ui.monospace("h");
-                                            if ui
-                                                .add(
-                                                    DragValue::new(slot_data.5)
-                                                        .clamp_range(RangeInclusive::new(
-                                                            1,
-                                                            u32::MAX,
-                                                        ))
-                                                        .speed(1),
-                                                )
-                                                .changed()
-                                            {
+
+                                            let resp = ui.add(
+                                                DragValue::new(slot_data.5)
+                                                    .clamp_range(RangeInclusive::new(1, u32::MAX))
+                                                    .speed(1),
+                                            );
+
+                                            if resp.has_focus() {
+                                                self.has_drag_value_focused = true;
+                                            }
+
+                                            if resp.changed() {
                                                 if adapter_slot.keep_aspect_ratio {
                                                     *slot_data.4 = (*slot_data.5 as f32
                                                         * adapter_slot.aspect_ratio)
@@ -1730,6 +1730,80 @@ impl EditorApp {
                     });
                 })
         });
+
+        fn ui_positions(
+            positions: &mut Vec<Point>,
+            actived_position: &mut Option<usize>,
+            ui: &mut Ui,
+        ) -> bool {
+            Frame::group(ui.style())
+                .inner_margin(Vec2::splat(0.0))
+                .show(ui, |ui| {
+                    ScrollArea::both()
+                        .auto_shrink([false, false])
+                        .show(ui, |ui| {
+                            let mut has_drag_value_focused = false;
+
+                            ui.spacing_mut().item_spacing.y = 1.0;
+
+                            ui.vertical(|ui| {
+                                for (position_index, position) in positions.iter_mut().enumerate() {
+                                    let is_actived = actived_position
+                                        .map(|actived_index| actived_index == position_index)
+                                        .unwrap_or(false);
+
+                                    let (rect, resp) = ui.allocate_at_least(
+                                        vec2(ui.available_width(), 24.0),
+                                        Sense::click(),
+                                    );
+
+                                    let visuals = ui.style().interact_selectable(&resp, is_actived);
+
+                                    if is_actived {
+                                        ui.painter().rect(
+                                            rect,
+                                            0.0,
+                                            visuals.weak_bg_fill,
+                                            visuals.bg_stroke,
+                                        );
+                                    }
+
+                                    if resp.clicked() {
+                                        if is_actived {
+                                            *actived_position = None;
+                                        } else {
+                                            *actived_position = Some(position_index);
+                                        }
+                                    }
+
+                                    ui.allocate_ui_at_rect(rect.shrink2(vec2(4.0, 0.0)), |ui| {
+                                        ui.horizontal_centered(|ui| {
+                                            ui.monospace("x");
+                                            if ui
+                                                .add(DragValue::new(&mut position.x).speed(1))
+                                                .has_focus()
+                                            {
+                                                has_drag_value_focused = true;
+                                            }
+
+                                            ui.monospace("y");
+                                            if ui
+                                                .add(DragValue::new(&mut position.y).speed(1))
+                                                .has_focus()
+                                            {
+                                                has_drag_value_focused = true;
+                                            }
+                                        });
+                                    });
+                                }
+                            });
+
+                            has_drag_value_focused
+                        })
+                })
+                .inner
+                .inner
+        }
     }
 
     fn ui_status_bar(&mut self, ui: &mut Ui) {
@@ -1804,32 +1878,4 @@ impl EditorApp {
             }
         });
     }
-}
-
-fn ui_fragment_window_grid(
-    desc: &mut String,
-    width: u32,
-    height: u32,
-    pivot: &mut Point,
-    ui: &mut Ui,
-) {
-    ui.label("Description:");
-    ui.text_edit_singleline(desc);
-
-    ui.end_row();
-
-    ui.horizontal_centered(|ui| {
-        ui.label("Pivot:");
-        ui.add(Tooltip::new(
-            "The position where connects to the anchor point of a slot.",
-        ));
-    });
-    ui.add(PivotSelect::new(
-        &mut pivot.x,
-        &mut pivot.y,
-        width as f32,
-        height as f32,
-    ));
-
-    ui.end_row();
 }

@@ -51,7 +51,7 @@ impl Default for Shortcut {
 
 impl EditorApp {
     pub(super) fn handle_shortcut(&mut self, ctx: &Context) {
-        if self.has_modal_open() {
+        if self.has_modal_open() || self.has_drag_value_focused {
             return;
         }
 

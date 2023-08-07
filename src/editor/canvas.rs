@@ -108,7 +108,7 @@ impl EditorApp {
                     self.actions.push_back(Action::CursorMoved(None));
                 }
 
-                if !self.has_modal_open() {
+                if !self.has_modal_open() && !self.has_drag_value_focused {
                     ui.input(|i| {
                         let zoom_delta = i.zoom_delta();
                         if zoom_delta != 1.0 {

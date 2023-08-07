@@ -117,6 +117,7 @@ struct EditorApp {
     canvas_original_pos_anchor: Option<Point>,
     canvas_original_pos_slot_and_drag_offset: Option<(Vec<Point>, Vec2)>,
     fragments_filter_keyword: String,
+    has_drag_value_focused: bool,
     cursor_position: Option<Pos2>,
     align_basis_slots: HashSet<u32>,
     associated_slots: HashSet<u32>,
@@ -153,6 +154,8 @@ struct EditorApp {
 
 impl App for EditorApp {
     fn update(&mut self, ctx: &Context, frame: &mut Frame) {
+        self.prepare();
+
         self.ui(ctx);
 
         self.handle_shortcut(ctx);
@@ -191,6 +194,7 @@ impl EditorApp {
             canvas_original_pos_anchor: None,
             canvas_original_pos_slot_and_drag_offset: None,
             fragments_filter_keyword: String::default(),
+            has_drag_value_focused: false,
             cursor_position: None,
             align_basis_slots: HashSet::new(),
             associated_slots: HashSet::new(),
@@ -228,6 +232,10 @@ impl EditorApp {
             || self.window_doll_visible
             || self.window_fragment_visible
             || self.window_slot_visible
+    }
+
+    fn prepare(&mut self) {
+        self.has_drag_value_focused = false;
     }
 }
 
