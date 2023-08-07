@@ -111,25 +111,11 @@ impl EditorApp {
                     ui.label("Use this fragment in highlighted slots. Click to toggle.");
 
                     ui.horizontal(|ui| {
-                        if ui
-                            .button(format!(
-                                "{} Select All",
-                                icon_to_char(Icon::CheckBox).to_string()
-                            ))
-                            .on_hover_text("Select all")
-                            .clicked()
-                        {
+                        if ui.button("Select All").clicked() {
                             self.actions.push_back(Action::AssociatedSlotsSelectAll);
                         }
 
-                        if ui
-                            .button(format!(
-                                "{} Unselect All",
-                                icon_to_char(Icon::CheckBoxOutlineBlank).to_string()
-                            ))
-                            .on_hover_text("Unselect all")
-                            .clicked()
-                        {
+                        if ui.button("Unselect All").clicked() {
                             self.actions.push_back(Action::AssociatedSlotsUnselectAll);
                         }
                     });
@@ -139,6 +125,24 @@ impl EditorApp {
                             .auto_shrink([false, false])
                             .max_height(300.0)
                             .show(ui, |ui| {
+                                if self.ppd.slots().nth(0).is_none() {
+                                    ui.allocate_space(vec2(1.0, 60.0));
+
+                                    ui.vertical_centered(|ui| {
+                                        ui.set_width(240.0);
+
+                                        ui.horizontal_wrapped(|ui| {
+                                            ui.label(
+                                                "No slots found.\n\n\
+                                                You can add slots in the \
+                                                left panel first.",
+                                            );
+                                        });
+                                    });
+
+                                    return;
+                                }
+
                                 ui.vertical(|ui| {
                                     ui.spacing_mut().item_spacing.y = 2.0;
 
@@ -780,9 +784,15 @@ impl EditorApp {
                                     .map_or(false, |actived_doll| actived_doll == id);
 
                                 ui.add(|ui: &mut Ui| {
+                                    let desc = if doll.desc.is_empty() {
+                                        format!("Doll - {}", id)
+                                    } else {
+                                        doll.desc.clone()
+                                    };
+
                                     let resp = ui.add(
                                         Card::new(self.textures_doll.get(&id))
-                                            .desc(&doll.desc)
+                                            .desc(&desc)
                                             .highlighted(is_actived_doll),
                                     );
 
@@ -1048,7 +1058,13 @@ impl EditorApp {
                         .desired_width(120.0),
                 );
 
-                if ui.button(icon_to_char(Icon::Clear).to_string()).clicked() {
+                if ui
+                    .add_enabled(
+                        !self.fragments_filter_keyword.is_empty(),
+                        Button::new(icon_to_char(Icon::Clear).to_string()),
+                    )
+                    .clicked()
+                {
                     self.fragments_filter_keyword.clear();
                 }
             });
@@ -1384,6 +1400,7 @@ impl EditorApp {
 
                             ui.horizontal_centered(|ui| {
                                 let frame_width = 166.0;
+                                let top_padding = 60.0;
 
                                 let candidates = id
                                     .map(|id| self.ppd.get_slot(id))
@@ -1547,7 +1564,7 @@ impl EditorApp {
                                 });
 
                                 ui.vertical(|ui| {
-                                    ui.allocate_space(vec2(1.0, 60.0));
+                                    ui.allocate_space(vec2(1.0, top_padding));
 
                                     if ui
                                         .add_enabled(
@@ -1634,7 +1651,10 @@ impl EditorApp {
                                         }
 
                                         if ui
-                                            .button(icon_to_char(Icon::Clear).to_string())
+                                            .add_enabled(
+                                                !adapter_slot.fragments_filter_keyword.is_empty(),
+                                                Button::new(icon_to_char(Icon::Clear).to_string()),
+                                            )
                                             .clicked()
                                         {
                                             adapter_slot.fragments_filter_keyword.clear();
@@ -1645,12 +1665,42 @@ impl EditorApp {
                                     });
 
                                     ui.group(|ui| {
-                                        ui.set_height(ui.available_height());
-
                                         ScrollArea::both()
                                             .auto_shrink([false, false])
                                             .max_width(frame_width)
                                             .show(ui, |ui| {
+                                                if self.ppd.fragments().nth(0).is_none() {
+                                                    ui.allocate_space(vec2(1.0, top_padding));
+
+                                                    ui.vertical_centered(|ui| {
+                                                        ui.set_width(frame_width * 0.8);
+
+                                                        ui.horizontal_wrapped(|ui| {
+                                                            ui.label(
+                                                                "No fragments found.\n\n\
+                                                                    You can add fragments in the \
+                                                                    right panel first.",
+                                                            );
+                                                        });
+                                                    });
+
+                                                    return;
+                                                }
+
+                                                if adapter_slot.filtered_fragments.is_empty() {
+                                                    ui.allocate_space(vec2(1.0, top_padding));
+
+                                                    ui.vertical_centered(|ui| {
+                                                        ui.set_width(frame_width * 0.8);
+
+                                                        ui.horizontal_wrapped(|ui| {
+                                                            ui.label("No fragments found.");
+                                                        });
+                                                    });
+
+                                                    return;
+                                                }
+
                                                 ui.horizontal_wrapped(|ui| {
                                                     for fragment_id in
                                                         &adapter_slot.filtered_fragments
