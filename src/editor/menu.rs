@@ -1,7 +1,4 @@
-use eframe::{
-    egui::{menu, Button, Ui},
-    epaint::vec2,
-};
+use eframe::egui::{menu, Button, Ui};
 
 use super::{actions::Action, EditorApp};
 
@@ -150,88 +147,6 @@ impl EditorApp {
     }
 
     pub(super) fn ui_menu_bar(&mut self, ui: &mut Ui) {
-        let ctx = ui.ctx();
-
-        if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.file_new)) {
-            self.actions.push_back(Action::FileNew);
-        }
-
-        if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.file_open)) {
-            self.actions.push_back(Action::FileOpen);
-        }
-
-        if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.file_save)) {
-            self.actions.push_back(Action::FileSave);
-        }
-
-        if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.file_save_as)) {
-            self.actions.push_back(Action::FileSaveAs);
-        }
-
-        if let Some(slot_id) = self.actived_slot {
-            if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.slot_copy)) {
-                self.actions.push_back(Action::SlotCopy(slot_id));
-            }
-        }
-
-        if self.actived_doll.is_some() && self.slot_copy.is_some() {
-            if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.slot_paste)) {
-                self.actions
-                    .push_back(Action::SlotPaste(self.actived_doll.unwrap()));
-            }
-        }
-
-        if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.viewport_center)) {
-            self.actions.push_back(Action::ViewportCenter);
-        }
-
-        if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.viewport_fit)) {
-            self.actions.push_back(Action::ViewportFit);
-        }
-
-        if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.viewport_move_down)) {
-            self.actions
-                .push_back(Action::ViewportMove(vec2(0.0, -10.0)));
-        }
-
-        if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.viewport_move_left)) {
-            self.actions
-                .push_back(Action::ViewportMove(vec2(10.0, 0.0)));
-        }
-
-        if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.viewport_move_right)) {
-            self.actions
-                .push_back(Action::ViewportMove(vec2(-10.0, 0.0)));
-        }
-
-        if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.viewport_move_up)) {
-            self.actions
-                .push_back(Action::ViewportMove(vec2(0.0, 10.0)));
-        }
-
-        if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.zoom_reset)) {
-            self.actions.push_back(Action::ViewportZoomReset);
-        }
-
-        if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.zoom_in)) {
-            self.actions
-                .push_back(Action::ViewportZoomTo(self.viewport.scale * 2.0));
-        }
-
-        if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.zoom_out)) {
-            self.actions
-                .push_back(Action::ViewportZoomTo(self.viewport.scale * 0.5));
-        }
-
-        if self.actived_doll.is_some() && self.actived_slot.is_some() {
-            if ctx.input_mut(|i| i.consume_shortcut(&self.shortcut.slot_duplicate)) {
-                self.actions.push_back(Action::SlotDuplicate(
-                    self.actived_doll.unwrap(),
-                    self.actived_slot.unwrap(),
-                ));
-            }
-        }
-
         menu::bar(ui, |ui| {
             ui.menu_button("File", |ui| {
                 if ui

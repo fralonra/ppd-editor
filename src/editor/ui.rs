@@ -269,8 +269,9 @@ impl EditorApp {
                     ui.horizontal_centered(|ui| {
                         ui.label("Offset:");
                         ui.add(Tooltip::new(
-                        "Offset pixels of the top left position of the background image, if any.",
-                    ));
+                            "Offset pixels of the top left\
+                            position of the background image, if any.",
+                        ));
                     });
                     ui.horizontal_wrapped(|ui| {
                         ui.monospace("x");
