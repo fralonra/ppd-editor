@@ -339,7 +339,7 @@ impl EditorApp {
                     self.dialog_visible = true;
 
                     self.dialog_option =
-                        DialogOption::confirm(&format!("Really delete doll {}?", id))
+                        DialogOption::confirm(&format!("Are you sure to delete doll {}?", id))
                             .primary_action(Action::DollRemoveConfirm(id));
                 }
                 Action::DollResizeToBackground(id) => {
@@ -554,7 +554,7 @@ impl EditorApp {
                     self.dialog_visible = true;
 
                     self.dialog_option =
-                        DialogOption::confirm(&format!("Really delete fragment {}?", id))
+                        DialogOption::confirm(&format!("Are you sure to delete fragment {}?", id))
                             .primary_action(Action::FragmentRemoveConfirm(id));
                 }
                 Action::PpdLoad(ppd) => {
@@ -872,7 +872,7 @@ impl EditorApp {
                     self.dialog_visible = true;
 
                     self.dialog_option =
-                        DialogOption::confirm(&format!("Really delete slot {}?", id))
+                        DialogOption::confirm(&format!("Are you sure to delete slot {}?", id))
                             .primary_action(Action::SlotRemoveConfirm(id));
                 }
                 Action::ViewportCenter => {
