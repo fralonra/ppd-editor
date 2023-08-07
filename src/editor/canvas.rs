@@ -373,7 +373,7 @@ impl EditorApp {
 
                                         snap_input.min = (min, SnapType::Y);
                                         snap_input.max = (max, SnapType::X);
-                                        snap_input.center = (min + half_size, SnapType::Both);
+                                        snap_input.center = (max - half_size, SnapType::Both);
 
                                         if is_ctrl_pressed {
                                             ratio_keep_options = RatioKeepOptions::MaxX;
@@ -397,7 +397,7 @@ impl EditorApp {
                                         max.x = pos.x;
 
                                         snap_input.max = (max, SnapType::X);
-                                        snap_input.center = (min + half_size, SnapType::X);
+                                        snap_input.center = (max - half_size, SnapType::X);
 
                                         if is_ctrl_pressed {
                                             ratio_keep_options = RatioKeepOptions::MaxY;
