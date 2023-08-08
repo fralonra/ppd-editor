@@ -1023,6 +1023,15 @@ impl EditorApp {
                 }
 
                 if ui
+                    .button(icon_to_char(Icon::PlaylistAdd).to_string())
+                    .on_hover_text("Add fragments from a batch of images")
+                    .clicked()
+                {
+                    self.actions
+                        .push_back(Action::FragmentCreateFromBatchImages);
+                }
+
+                if ui
                     .add_enabled(
                         self.actived_fragment.is_some(),
                         Button::new(icon_to_char(Icon::Edit).to_string()),

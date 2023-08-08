@@ -48,6 +48,13 @@ pub fn select_texture() -> Option<PathBuf> {
         .pick_file()
 }
 
+pub fn select_textures() -> Option<Vec<PathBuf>> {
+    FileDialog::new()
+        .set_directory("~")
+        .add_filter("Images", &["png", "jpg", "webp"])
+        .pick_files()
+}
+
 pub fn write_file<P, C>(path: P, contents: C) -> Result<()>
 where
     P: AsRef<Path>,

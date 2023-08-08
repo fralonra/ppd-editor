@@ -20,7 +20,7 @@ use crate::{
     common::{
         allocate_size_fit_in_rect, upload_image_to_texture, upload_ppd_textures, TextureData,
     },
-    fs::{create_file, open_image_rgba, select_file, select_texture},
+    fs::{create_file, open_image_rgba, select_file, select_texture, select_textures},
     viewport::Viewport,
 };
 
@@ -59,11 +59,13 @@ pub enum Action {
     FragmentAdapterBackgroundUpload,
     FragmentBackgroundUpload(u32),
     FragmentCreate,
+    FragmentCreateFromBatchImages,
     FragmentEdit(u32),
     FragmentEditCancel(Option<u32>),
     FragmentEditConfirm(Option<u32>),
     FragmentRemoveConfirm(u32),
     FragmentRemoveRequest(u32),
+    FragmentUpdateTexture(u32, PathBuf, TextureData, Vec<u8>),
     PpdLoad(PaperdollFactory),
     PpdChanged,
     RecentFilesClean,
@@ -440,29 +442,8 @@ impl EditorApp {
                     }
 
                     if let Some((path, texture, pixels)) = self.upload_texture("fragment", ctx) {
-                        if let Some(fragment) = self.ppd.get_fragment_mut(id) {
-                            if fragment.desc.is_empty() {
-                                if let Some(stem) = path.file_stem() {
-                                    fragment.desc = stem.to_string_lossy().to_string();
-                                }
-                            }
-
-                            fragment.path = path.to_string_lossy().to_string();
-
-                            self.textures_fragment.insert(
-                                id,
-                                TextureData {
-                                    width: texture.width,
-                                    height: texture.height,
-                                    texture: texture.texture,
-                                },
-                            );
-
-                            fragment.image.width = texture.width;
-                            fragment.image.height = texture.height;
-                            fragment.image.color_type = ColorType::Rgba;
-                            fragment.image.pixels = pixels;
-                        }
+                        self.actions
+                            .push_back(Action::FragmentUpdateTexture(id, path, texture, pixels));
                     }
                 }
                 Action::FragmentCreate => {
@@ -471,6 +452,26 @@ impl EditorApp {
                     self.adapter_fragment = Some(FragmentAdapter::default());
 
                     self.actions.push_back(Action::WindowFragmentVisible(true));
+                }
+                Action::FragmentCreateFromBatchImages => {
+                    self.actived_fragment = None;
+
+                    if let Some(paths) = select_textures() {
+                        for path in paths {
+                            if let Ok(image) = open_image_rgba(&path) {
+                                let texture = upload_image_to_texture(&image, "fragment", ctx);
+
+                                if let Ok(id) = self.ppd.add_fragment() {
+                                    self.actions.push_back(Action::FragmentUpdateTexture(
+                                        id,
+                                        path,
+                                        texture,
+                                        image.pixels,
+                                    ));
+                                }
+                            }
+                        }
+                    }
                 }
                 Action::FragmentEdit(id) => {
                     if let Some(fragment) = self.ppd.get_fragment(id) {
@@ -578,6 +579,31 @@ impl EditorApp {
                     self.dialog_option =
                         DialogOption::confirm(&format!("Are you sure to delete fragment {}?", id))
                             .primary_action(Action::FragmentRemoveConfirm(id));
+                }
+                Action::FragmentUpdateTexture(id, path, texture, pixels) => {
+                    if let Some(fragment) = self.ppd.get_fragment_mut(id) {
+                        if fragment.desc.is_empty() {
+                            if let Some(stem) = path.file_stem() {
+                                fragment.desc = stem.to_string_lossy().to_string();
+                            }
+                        }
+
+                        fragment.path = path.to_string_lossy().to_string();
+
+                        self.textures_fragment.insert(
+                            fragment.id(),
+                            TextureData {
+                                width: texture.width,
+                                height: texture.height,
+                                texture: texture.texture,
+                            },
+                        );
+
+                        fragment.image.width = texture.width;
+                        fragment.image.height = texture.height;
+                        fragment.image.color_type = ColorType::Rgba;
+                        fragment.image.pixels = pixels;
+                    }
                 }
                 Action::PpdLoad(ppd) => {
                     self.ppd = ppd;
