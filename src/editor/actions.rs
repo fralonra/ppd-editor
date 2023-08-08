@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Result};
 use eframe::{
@@ -53,6 +53,7 @@ pub enum Action {
     DollResizeToBackground(u32),
     FileNew,
     FileOpen,
+    FileOpenPath(PathBuf),
     FileSave,
     FileSaveAs,
     FragmentAdapterBackgroundUpload,
@@ -65,6 +66,7 @@ pub enum Action {
     FragmentRemoveRequest(u32),
     PpdLoad(PaperdollFactory),
     PpdChanged,
+    RecentFilesClean,
     SlotAdapterFragmentFilter,
     SlotAddCandidate(Option<u32>, u32),
     SlotAddCandidates(Option<u32>, Vec<u32>),
@@ -366,15 +368,23 @@ impl EditorApp {
                 }
                 Action::FileOpen => {
                     if let Some(path) = select_file() {
-                        self.actions
-                            .push_back(Action::PpdLoad(paperdoll_tar::load(&path)?));
+                        self.load_ppd_from_path(&path)?;
 
                         self.actions.push_back(Action::AppTitleChanged(Some(
                             path.to_string_lossy().to_string(),
                         )));
 
-                        self.config.file_path = Some(path);
+                        self.storage.recent_files.push(path);
                     }
+                }
+                Action::FileOpenPath(path) => {
+                    self.load_ppd_from_path(&path)?;
+
+                    self.actions.push_back(Action::AppTitleChanged(Some(
+                        path.to_string_lossy().to_string(),
+                    )));
+
+                    self.storage.recent_files.push(path);
                 }
                 Action::FileSave => {
                     let path = if let Some(path) = &self.config.file_path {
@@ -615,7 +625,9 @@ impl EditorApp {
                     self.actions.push_back(Action::WindowFragmentVisible(false));
                     self.actions.push_back(Action::WindowSlotVisible(false));
                 }
-
+                Action::RecentFilesClean => {
+                    self.storage.recent_files.clear();
+                }
                 Action::SlotAdapterFragmentFilter => {
                     self.filter_slot_fragment();
                 }
@@ -991,6 +1003,18 @@ impl EditorApp {
                     .collect();
             }
         }
+    }
+
+    fn load_ppd_from_path<P>(&mut self, path: P) -> Result<()>
+    where
+        P: AsRef<Path>,
+    {
+        self.actions
+            .push_back(Action::PpdLoad(paperdoll_tar::load(&path)?));
+
+        self.config.file_path = Some(path.as_ref().to_path_buf());
+
+        Ok(())
     }
 
     fn upload_texture(

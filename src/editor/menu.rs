@@ -173,6 +173,45 @@ impl EditorApp {
                     ui.close_menu();
                 }
 
+                ui.menu_button("Open Recent", |ui| {
+                    let recent_files = self.storage.recent_files.iter();
+
+                    let is_empty = recent_files.len() == 0;
+
+                    for file in recent_files {
+                        let file_name = file
+                            .file_name()
+                            .unwrap_or_default()
+                            .to_string_lossy()
+                            .to_string();
+
+                        if ui
+                            .button(file_name)
+                            .on_hover_text(file.to_string_lossy().to_string())
+                            .clicked()
+                        {
+                            self.actions
+                                .push_back(Action::FileOpenPath(file.to_path_buf()));
+
+                            ui.close_menu();
+                        }
+                    }
+
+                    if !is_empty {
+                        ui.separator();
+                    }
+
+                    if is_empty {
+                        ui.label("No recently opened files.");
+                    } else {
+                        if ui.button("Clean Recent").clicked() {
+                            self.actions.push_back(Action::RecentFilesClean);
+
+                            ui.close_menu();
+                        }
+                    }
+                });
+
                 ui.separator();
 
                 if ui

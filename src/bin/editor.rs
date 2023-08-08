@@ -1,12 +1,13 @@
 #![windows_subsystem = "windows"]
 
 use eframe::IconData;
-use ppd_editor::editor;
+use ppd_editor::editor::{self, APP_ID};
 
 fn main() {
     env_logger::init();
 
     let native_options = eframe::NativeOptions {
+        app_id: Some(APP_ID.to_owned()),
         centered: true,
         icon_data: match IconData::try_from_png_bytes(include_bytes!(
             "../../build/logo/ppd-editor.png"

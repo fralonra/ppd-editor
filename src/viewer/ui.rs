@@ -342,6 +342,50 @@ impl ViewerApp {
                     {
                         self.actions.push_back(Action::FileOpen);
                     }
+
+                    let recent_files = self.storage.recent_files.iter();
+
+                    if recent_files.len() != 0 {
+                        ui.allocate_space(vec2(1.0, 10.0));
+
+                        ui.group(|ui| {
+                            ui.set_width(ui.available_width());
+
+                            ui.heading("Recently opened projects");
+
+                            Grid::new("recent").num_columns(2).show(ui, |ui| {
+                                for file in recent_files {
+                                    let file_name = file
+                                        .file_name()
+                                        .unwrap_or_default()
+                                        .to_string_lossy()
+                                        .to_string();
+
+                                    if ui.add(Button::new(file_name).frame(false)).double_clicked()
+                                    {
+                                        self.actions
+                                            .push_back(Action::FileOpenPath(file.to_path_buf()));
+                                    }
+
+                                    if ui
+                                        .add(
+                                            Button::new(
+                                                RichText::new(file.to_string_lossy().to_string())
+                                                    .color(Color32::from_gray(90)),
+                                            )
+                                            .frame(false),
+                                        )
+                                        .double_clicked()
+                                    {
+                                        self.actions
+                                            .push_back(Action::FileOpenPath(file.to_path_buf()));
+                                    }
+
+                                    ui.end_row();
+                                }
+                            });
+                        });
+                    }
                 });
             },
         );

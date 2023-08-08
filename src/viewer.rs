@@ -1,6 +1,7 @@
 mod actions;
 mod menu;
 mod shortcut;
+mod storage;
 mod ui;
 
 use std::collections::{HashMap, VecDeque};
@@ -13,13 +14,15 @@ use crate::{
     viewport::Viewport,
 };
 
-use self::{actions::Action, shortcut::Shortcut};
+use self::{actions::Action, shortcut::Shortcut, storage::Storage};
 
+pub const APP_ID: &'static str = "io.github.fralonra.PpdViewer";
 pub const APP_TITLE: &'static str = "Paperdoll Viewer";
 
 struct ViewerApp {
     actions: VecDeque<Action>,
     shortcut: Shortcut,
+    storage: Storage,
     viewport: Viewport,
 
     ppd: Option<PaperdollFactory>,
@@ -42,13 +45,30 @@ impl App for ViewerApp {
             log::error!("{}", err);
         }
     }
+
+    fn save(&mut self, storage: &mut dyn eframe::Storage) {
+        match self.storage.save(storage) {
+            Ok(()) => log::info!("Saving app data successfully."),
+            Err(err) => log::error!("Saving app data failed: {}", err),
+        }
+    }
 }
 
 impl ViewerApp {
-    pub fn new(_cc: &CreationContext<'_>, ppd: Option<PaperdollFactory>) -> Self {
+    pub fn new(cc: &CreationContext<'_>, ppd: Option<PaperdollFactory>) -> Self {
+        let mut storage = Storage::default();
+
+        if let Some(s) = cc.storage {
+            match storage.restore(s) {
+                Ok(()) => log::info!("Restoring app data successfully."),
+                Err(err) => log::error!("Restoring app data failed: {}", err),
+            }
+        }
+
         Self {
             actions: VecDeque::from([Action::PpdChanged(ppd)]),
             shortcut: Shortcut::default(),
+            storage,
             viewport: Viewport::default(),
 
             ppd: None,

@@ -3,6 +3,7 @@ mod canvas;
 mod config;
 mod menu;
 mod shortcut;
+mod storage;
 mod ui;
 mod widgets;
 
@@ -24,8 +25,11 @@ use crate::{
     viewport::Viewport,
 };
 
-use self::{actions::Action, canvas::CanvasState, config::Config, shortcut::Shortcut};
+use self::{
+    actions::Action, canvas::CanvasState, config::Config, shortcut::Shortcut, storage::Storage,
+};
 
+pub const APP_ID: &'static str = "io.github.fralonra.PpdEditor";
 pub const APP_TITLE: &'static str = "Paperdoll Editor";
 
 struct DialogOption {
@@ -103,6 +107,7 @@ struct EditorApp {
     actions: VecDeque<Action>,
     config: Config,
     shortcut: Shortcut,
+    storage: Storage,
     viewport: Viewport,
 
     // project core
@@ -164,6 +169,13 @@ impl App for EditorApp {
             log::error!("{}", err);
         }
     }
+
+    fn save(&mut self, storage: &mut dyn eframe::Storage) {
+        match self.storage.save(storage) {
+            Ok(()) => log::info!("Saving app data successfully."),
+            Err(err) => log::error!("Saving app data failed: {}", err),
+        }
+    }
 }
 
 impl EditorApp {
@@ -178,11 +190,21 @@ impl EditorApp {
         Self::from_ppd(cc, ppd)
     }
 
-    pub fn from_ppd(_cc: &CreationContext<'_>, ppd: PaperdollFactory) -> Self {
+    pub fn from_ppd(cc: &CreationContext<'_>, ppd: PaperdollFactory) -> Self {
+        let mut storage = Storage::default();
+
+        if let Some(s) = cc.storage {
+            match storage.restore(s) {
+                Ok(()) => log::info!("Restoring app data successfully."),
+                Err(err) => log::error!("Restoring app data failed: {}", err),
+            }
+        }
+
         Self {
             actions: VecDeque::from([Action::PpdChanged, Action::AppTitleChanged(None)]),
             config: Config::default(),
             shortcut: Shortcut::default(),
+            storage,
             viewport: Viewport::default(),
 
             ppd,

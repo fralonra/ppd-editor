@@ -18,14 +18,16 @@ name = "ppd-viewer"
 
 [dependencies]
 anyhow = "1.0.71"
-eframe = "0.22.0"
+eframe = { version = "0.22.0", features = ["persistence"] }
 env_logger = "0.10.0"
 font-kit = "0.11.0"
 image = "0.24.6"
 log = "0.4.19"
 material-icons = { git = "https://github.com/fschutt/material-icons.git" }
-paperdoll-tar = "0.0.1-alpha.3"
+paperdoll-tar = "0.0.1-alpha.4"
 rfd = "0.11.4"
+serde = { version = "1.0.183", features = ["derive"] }
+serde_json = "1.0.104"
 
 # for macOS only
 [package.metadata.bundle.bin.ppd-editor]

@@ -1,3 +1,5 @@
+use std::path::{Path, PathBuf};
+
 use anyhow::Result;
 use eframe::{egui::Context, epaint::Vec2, Frame};
 use paperdoll_tar::paperdoll::factory::PaperdollFactory;
@@ -12,7 +14,9 @@ use super::ViewerApp;
 pub enum Action {
     AppQuit,
     FileOpen,
+    FileOpenPath(PathBuf),
     PpdChanged(Option<PaperdollFactory>),
+    RecentFilesClean,
     SlotFragmentChanged(u32, isize),
     ViewportCenter,
     ViewportFit,
@@ -29,10 +33,15 @@ impl ViewerApp {
                 Action::AppQuit => frame.close(),
                 Action::FileOpen => {
                     if let Some(path) = select_file() {
-                        let ppd = paperdoll_tar::load(&path)?;
+                        self.load_ppd_from_path(&path)?;
 
-                        self.actions.push_back(Action::PpdChanged(Some(ppd)));
+                        self.storage.recent_files.push(path);
                     }
+                }
+                Action::FileOpenPath(path) => {
+                    self.load_ppd_from_path(&path)?;
+
+                    self.storage.recent_files.push(path);
                 }
                 Action::PpdChanged(ppd) => {
                     if ppd.is_none() {
@@ -66,6 +75,9 @@ impl ViewerApp {
                     }
 
                     self.ppd = Some(ppd);
+                }
+                Action::RecentFilesClean => {
+                    self.storage.recent_files.clear();
                 }
                 Action::SlotFragmentChanged(slot_id, candidate_index) => {
                     if let Some(ppd) = &self.ppd {
@@ -121,6 +133,17 @@ impl ViewerApp {
                 }
             }
         }
+
+        Ok(())
+    }
+
+    fn load_ppd_from_path<P>(&mut self, path: P) -> Result<()>
+    where
+        P: AsRef<Path>,
+    {
+        let ppd = paperdoll_tar::load(&path)?;
+
+        self.actions.push_back(Action::PpdChanged(Some(ppd)));
 
         Ok(())
     }
