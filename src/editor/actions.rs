@@ -107,8 +107,11 @@ impl EditorApp {
             match action {
                 Action::AppQuit => frame.close(),
                 Action::AppTitleChanged(title) => {
-                    let title =
-                        format!("{} - {}", APP_TITLE, title.unwrap_or("Untitled".to_owned()));
+                    let title = format!(
+                        "{} - {}",
+                        APP_TITLE,
+                        title.unwrap_or("Unsaved Project".to_owned())
+                    );
 
                     frame.set_window_title(&title)
                 }
