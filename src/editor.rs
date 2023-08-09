@@ -1,6 +1,7 @@
 mod actions;
 mod canvas;
 mod config;
+mod example;
 mod menu;
 mod shortcut;
 mod storage;

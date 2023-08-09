@@ -1,6 +1,6 @@
 use eframe::egui::{menu, Button, Ui};
 
-use super::{actions::Action, EditorApp};
+use super::{actions::Action, example::Example, EditorApp};
 
 impl EditorApp {
     pub(super) fn menu_doll(&mut self, ui: &mut Ui, id: Option<u32>) {
@@ -172,6 +172,15 @@ impl EditorApp {
 
                     ui.close_menu();
                 }
+
+                ui.menu_button("Open Examples", |ui| {
+                    if ui.button(Example::Basic.description()).clicked() {
+                        self.actions
+                            .push_back(Action::PpdLoadExample(Example::Basic));
+
+                        ui.close_menu();
+                    }
+                });
 
                 ui.menu_button("Open Recent", |ui| {
                     let recent_files = self.storage.recent_files.iter();

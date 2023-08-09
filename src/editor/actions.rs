@@ -24,7 +24,7 @@ use crate::{
     viewport::Viewport,
 };
 
-use super::{canvas::CanvasState, DialogOption, EditorApp, APP_TITLE};
+use super::{canvas::CanvasState, example::Example, DialogOption, EditorApp, APP_TITLE};
 
 pub enum Action {
     AppQuit,
@@ -67,6 +67,7 @@ pub enum Action {
     FragmentRemoveRequest(u32),
     FragmentUpdateTexture(u32, PathBuf, TextureData, Vec<u8>),
     PpdLoad(PaperdollFactory),
+    PpdLoadExample(Example),
     PpdChanged,
     RecentFilesClean,
     SlotAdapterFragmentFilter,
@@ -612,6 +613,15 @@ impl EditorApp {
                     self.ppd = ppd;
 
                     self.actions.push_back(Action::PpdChanged);
+                }
+                Action::PpdLoadExample(example) => {
+                    let ppd = paperdoll_tar::read(example.data())?;
+
+                    self.actions.push_back(Action::PpdLoad(ppd));
+
+                    self.actions.push_back(Action::AppTitleChanged(None));
+
+                    self.config.file_path = None;
                 }
                 Action::PpdChanged => {
                     let ppd = &self.ppd;

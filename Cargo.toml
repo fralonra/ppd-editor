@@ -24,7 +24,7 @@ font-kit = "0.11.0"
 image = "0.24.6"
 log = "0.4.19"
 material-icons = { git = "https://github.com/fschutt/material-icons.git" }
-paperdoll-tar = "0.0.1-alpha.4"
+paperdoll-tar = "0.0.1-alpha.5"
 rfd = "0.11.4"
 serde = { version = "1.0.183", features = ["derive"] }
 serde_json = "1.0.104"
