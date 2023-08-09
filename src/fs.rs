@@ -44,14 +44,14 @@ pub fn select_file() -> Option<PathBuf> {
 pub fn select_texture() -> Option<PathBuf> {
     FileDialog::new()
         .set_directory("~")
-        .add_filter("Images", &["png", "jpg", "webp"])
+        .add_filter("Images", &["png", "jpg", "jpeg", "webp"])
         .pick_file()
 }
 
 pub fn select_textures() -> Option<Vec<PathBuf>> {
     FileDialog::new()
         .set_directory("~")
-        .add_filter("Images", &["png", "jpg", "webp"])
+        .add_filter("Images", &["png", "jpg", "jpeg", "webp"])
         .pick_files()
 }
 
