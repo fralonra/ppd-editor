@@ -907,33 +907,42 @@ impl EditorApp {
                                     .flatten()
                             };
 
-                            if ui
-                                .add(ImageUpload::new(texture.as_ref()).removable(false).on_edit(
-                                    || {
-                                        if is_create_mode {
-                                            self.actions
-                                                .push_back(Action::FragmentAdapterBackgroundUpload);
-                                        } else {
-                                            if let Some(id) = id {
-                                                self.actions.push_back(
-                                                    Action::FragmentBackgroundUpload(id),
-                                                );
-                                            }
-                                        }
-                                    },
-                                ))
-                                .clicked()
-                            {
-                                if is_create_mode {
-                                    self.actions
-                                        .push_back(Action::FragmentAdapterBackgroundUpload);
-                                } else {
-                                    if let Some(id) = id {
+                            ui.horizontal_centered(|ui| {
+                                if ui
+                                    .add(
+                                        ImageUpload::new(texture.as_ref())
+                                            .removable(false)
+                                            .on_edit(|| {
+                                                if is_create_mode {
+                                                    self.actions.push_back(
+                                                        Action::FragmentAdapterBackgroundUpload,
+                                                    );
+                                                } else {
+                                                    if let Some(id) = id {
+                                                        self.actions.push_back(
+                                                            Action::FragmentBackgroundUpload(id),
+                                                        );
+                                                    }
+                                                }
+                                            }),
+                                    )
+                                    .clicked()
+                                {
+                                    if is_create_mode {
                                         self.actions
-                                            .push_back(Action::FragmentBackgroundUpload(id));
+                                            .push_back(Action::FragmentAdapterBackgroundUpload);
+                                    } else {
+                                        if let Some(id) = id {
+                                            self.actions
+                                                .push_back(Action::FragmentBackgroundUpload(id));
+                                        }
                                     }
                                 }
-                            }
+
+                                if let Some(texture) = texture {
+                                    ui.label(format!("{} x {}", texture.width, texture.height));
+                                }
+                            });
                         });
 
                     ui.add_visible_ui(self.window_fragment_error.is_some(), |ui| {
