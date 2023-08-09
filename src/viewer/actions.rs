@@ -13,11 +13,13 @@ use super::ViewerApp;
 
 pub enum Action {
     AppQuit,
+    DollChanged,
     FileOpen,
     FileOpenPath(PathBuf),
     PpdChanged(Option<PaperdollFactory>),
     RecentFilesClean,
     SlotFragmentChanged(u32, isize),
+    TextureUpdate,
     ViewportCenter,
     ViewportFit,
     ViewportMove(Vec2),
@@ -31,6 +33,9 @@ impl ViewerApp {
         while let Some(action) = self.actions.pop_front() {
             match action {
                 Action::AppQuit => frame.close(),
+                Action::DollChanged => {
+                    self.actions.push_back(Action::TextureUpdate);
+                }
                 Action::FileOpen => {
                     if let Some(path) = select_file() {
                         self.load_ppd_from_path(&path)?;
@@ -70,9 +75,7 @@ impl ViewerApp {
                         }
                     }
 
-                    if let Ok(image) = ppd.render_paperdoll(&self.paperdoll) {
-                        self.texture = Some(upload_image_to_texture(&image, &ppd.meta.name, ctx));
-                    }
+                    self.actions.push_back(Action::TextureUpdate);
 
                     self.ppd = Some(ppd);
                 }
@@ -93,6 +96,11 @@ impl ViewerApp {
                             self.paperdoll.slot_map.remove(&slot_id);
                         }
 
+                        self.actions.push_back(Action::TextureUpdate);
+                    }
+                }
+                Action::TextureUpdate => {
+                    if let Some(ppd) = &self.ppd {
                         if let Ok(image) = ppd.render_paperdoll(&self.paperdoll) {
                             self.texture =
                                 Some(upload_image_to_texture(&image, &ppd.meta.name, ctx));

@@ -121,11 +121,16 @@ impl ViewerApp {
                     .selected_text(doll_title)
                     .show_ui(ui, |ui| {
                         for (id, doll) in ppd.dolls() {
-                            ui.selectable_value(
-                                &mut self.paperdoll.doll,
-                                *id,
-                                map_doll_title(doll),
-                            );
+                            if ui
+                                .selectable_value(
+                                    &mut self.paperdoll.doll,
+                                    *id,
+                                    map_doll_title(doll),
+                                )
+                                .changed()
+                            {
+                                self.actions.push_back(Action::DollChanged);
+                            }
                         }
                     });
             }
