@@ -1010,7 +1010,7 @@ impl EditorApp {
 
     fn file_save_to_path(&mut self, path: Option<PathBuf>) -> Result<()> {
         if let Some(path) = &path {
-            paperdoll_tar::save(&self.ppd.to_manifest(), path)?;
+            paperdoll_tar::save(&mut self.ppd.to_manifest(), path)?;
         }
 
         self.actions.push_back(Action::AppTitleChanged(
