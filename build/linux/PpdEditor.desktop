@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=PpdEditor
+GenericName=Paperdoll Editor
+Comment=Editor for 2D paperdoll file
+Icon=io.github.fralonra.PpdEditor
+Exec=ppd-editor
+Terminal=false
+Categories=Graphics;2DGraphics;

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=PpdViewer
+GenericName=Paperdoll Viewer
+Comment=Viewer for 2D paperdoll file
+Icon=io.github.fralonra.PpdViewer
+Exec=ppd-viewer
+Terminal=false
+Categories=Graphics;2DGraphics;
