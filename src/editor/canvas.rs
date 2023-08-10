@@ -108,8 +108,13 @@ impl EditorApp {
                     self.actions.push_back(Action::CursorMoved(None));
                 }
 
-                if !self.has_modal_open() && !self.has_drag_value_focused && viewport_resp.hovered()
-                {
+                let is_viewport_hovered = ui
+                    .ctx()
+                    .pointer_hover_pos()
+                    .map(|pos| viewport_rect.contains(pos))
+                    .unwrap_or_default();
+
+                if !self.has_modal_open() && !self.has_drag_value_focused && is_viewport_hovered {
                     ui.input(|i| {
                         let zoom_delta = i.zoom_delta();
                         if zoom_delta != 1.0 {
