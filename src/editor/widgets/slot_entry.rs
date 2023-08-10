@@ -2,7 +2,7 @@ use eframe::{
     egui::{Response, Sense, Ui, Widget, WidgetText},
     epaint::vec2,
 };
-use paperdoll_tar::paperdoll::slot::Slot;
+use paperdoll_tar::paperdoll::Slot;
 
 use crate::common::layout_text_widget;
 

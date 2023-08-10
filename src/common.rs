@@ -11,7 +11,7 @@ use eframe::{
 use font_kit::{
     family_name::FamilyName, handle::Handle, properties::Properties, source::SystemSource,
 };
-use paperdoll_tar::paperdoll::{doll::Doll, factory::PaperdollFactory, image::ImageData};
+use paperdoll_tar::paperdoll::{Doll, ImageData, PaperdollFactory};
 
 pub struct TextureData {
     pub width: u32,

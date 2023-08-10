@@ -2101,9 +2101,9 @@ dependencies = [
 
 [[package]]
 name = "paperdoll"
-version = "0.0.1-alpha.5"
+version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "58f5016b79527244bc36ed2c35b0269329273dd31d5fe252e575095e6c183ff7"
+checksum = "f244e516add582c3b290182a1256e3711e84f54fedcca0312d4304e2346ff147"
 dependencies = [
  "anyhow",
  "serde",
@@ -2111,9 +2111,9 @@ dependencies = [
 
 [[package]]
 name = "paperdoll-tar"
-version = "0.0.1-alpha.7"
+version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "06e9e2a0e5de78d66422b1d7a835a6d8476fe3f9b757f1c752dc3872e7dfb94e"
+checksum = "27d51146436d2b2c34ea81db37665bba1bcd62bdbb51f35ec2c135cb316018cb"
 dependencies = [
  "anyhow",
  "image",

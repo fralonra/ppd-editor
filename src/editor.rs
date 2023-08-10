@@ -18,7 +18,7 @@ use eframe::{
     },
     App, CreationContext, Frame,
 };
-use paperdoll_tar::paperdoll::{common::Point, factory::PaperdollFactory};
+use paperdoll_tar::paperdoll::{PaperdollFactory, Point};
 
 use crate::{
     adapter::{DollAdapter, FragmentAdapter, SlotAdapter, DOLL_DEFAULT_SIZE},

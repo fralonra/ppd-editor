@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use anyhow::Result;
 use eframe::{egui::Context, epaint::Vec2, Frame};
-use paperdoll_tar::paperdoll::factory::PaperdollFactory;
+use paperdoll_tar::paperdoll::PaperdollFactory;
 
 use crate::{
     common::{allocate_size_fit_in_rect, upload_image_to_texture},

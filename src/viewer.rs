@@ -7,7 +7,7 @@ mod ui;
 use std::collections::{HashMap, VecDeque};
 
 use eframe::{egui::Context, App, CreationContext, Frame};
-use paperdoll_tar::paperdoll::{factory::PaperdollFactory, paperdoll::Paperdoll};
+use paperdoll_tar::paperdoll::{Paperdoll, PaperdollFactory};
 
 use crate::{
     common::{load_fonts, setup_style, TextureData},

@@ -7,7 +7,7 @@ use eframe::{
     epaint::{pos2, vec2, Color32, Rect, Stroke, Vec2},
 };
 use material_icons::{icon_to_char, Icon};
-use paperdoll_tar::paperdoll::{doll::Doll, slot::Slot};
+use paperdoll_tar::paperdoll::{Doll, Slot};
 
 use crate::common::{determine_doll_rect, drag_move};
 

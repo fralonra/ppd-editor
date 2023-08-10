@@ -5,7 +5,7 @@ use std::{
 
 use anyhow::Result;
 use paperdoll_tar::{
-    paperdoll::image::{ColorType, ImageData},
+    paperdoll::{ColorType, ImageData},
     EXTENSION_NAME,
 };
 use rfd::FileDialog;

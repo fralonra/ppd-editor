@@ -7,11 +7,7 @@ use eframe::{
     Frame,
 };
 use paperdoll_tar::{
-    paperdoll::{
-        common::Point,
-        factory::PaperdollFactory,
-        image::{ColorType, ImageData},
-    },
+    paperdoll::{ColorType, ImageData, PaperdollFactory, Point},
     EXTENSION_NAME,
 };
 

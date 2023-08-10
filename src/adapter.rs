@@ -1,9 +1,7 @@
 use std::collections::HashSet;
 
 use eframe::epaint::TextureHandle;
-use paperdoll_tar::paperdoll::{
-    common::Point, doll::Doll, fragment::Fragment, image::ImageData, slot::Slot,
-};
+use paperdoll_tar::paperdoll::{Doll, Fragment, ImageData, Point, Slot};
 
 pub const DOLL_DEFAULT_SIZE: u32 = 400;
 

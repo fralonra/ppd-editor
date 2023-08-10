@@ -9,7 +9,7 @@ use eframe::{
     epaint::{vec2, Color32, Vec2},
 };
 use material_icons::{icon_to_char, Icon};
-use paperdoll_tar::paperdoll::common::Point;
+use paperdoll_tar::paperdoll::Point;
 
 use crate::common::TextureData;
 

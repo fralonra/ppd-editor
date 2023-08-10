@@ -3,7 +3,7 @@ use eframe::{
     epaint::{pos2, vec2, Color32, Rect, Vec2},
 };
 use material_icons::{icon_to_char, Icon};
-use paperdoll_tar::paperdoll::fragment::Fragment;
+use paperdoll_tar::paperdoll::Fragment;
 
 use crate::common::{allocate_size_center_in_rect, layout_text_widget, TextureData};
 
