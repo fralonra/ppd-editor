@@ -13,6 +13,15 @@ Editor and viewer for [paperdoll](https://github.com/fralonra/paperdoll), a 2D p
 
 Check the [latest release](https://github.com/fralonra/ppd-editor/releases) for your specific OS.
 
+Also available on:
+
+- [Itch.io](https://zoron.itch.io/ppdeditor)
+- [AUR](https://aur.archlinux.org/packages/ppd-editor)
+
+<a href="https://repology.org/project/ppd-editor/versions">
+  <img src="https://repology.org/badge/vertical-allrepos/ppd-editor.svg" alt="Packaging status" align="right">
+</a>
+
 ## Screenshots
 
 <p align="center">
