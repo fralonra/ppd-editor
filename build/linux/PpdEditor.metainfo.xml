@@ -3,13 +3,20 @@
     <id>io.github.fralonra.PpdEditor</id>
     <name>PpdEditor</name>
     <developer_name>fralonra</developer_name>
-    <summary>Editor for 2D paperdoll file</summary>
+    <summary>2D paper doll editor</summary>
     <metadata_license>CC0-1.0</metadata_license>
     <project_license>MIT</project_license>
     <description>
         <p>
-            Editor and viewer for paperdoll, a 2D pixel-based stationary paper doll model.
+            Editor for paperdoll, a 2D pixel-based stationary paper doll model.
         </p>
+        <p>
+            Please visit the related sites for details:
+        </p>
+        <ul>
+            <li>The paper doll model: https://github.com/fralonra/paperdoll</li>
+            <li>The editor: https://github.com/fralonra/ppd-editor</li>
+        </ul>
     </description>
     <categories>
         <category>Graphics</category>
@@ -31,7 +38,10 @@
             <image>https://raw.githubusercontent.com/fralonra/ppd-editor/master/resources/docs/ppd-editor.png</image>
         </screenshot>
         <screenshot>
-            <image>https://raw.githubusercontent.com/fralonra/ppd-editor/master/resources/docs/ppd-viewer.png</image>
+            <image>https://raw.githubusercontent.com/fralonra/ppd-editor/master/resources/docs/ppd-editor_1.png</image>
+        </screenshot>
+        <screenshot>
+            <image>https://raw.githubusercontent.com/fralonra/ppd-editor/master/resources/docs/ppd-editor_2.png</image>
         </screenshot>
     </screenshots>
     <content_rating type="oars-1.1" />
