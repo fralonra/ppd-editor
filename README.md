@@ -4,8 +4,9 @@
 
 <h1 align="center">PpdEditor</h1>
 
-![AUR](https://img.shields.io/aur/version/ppd-editor)
 ![MIT](https://img.shields.io/badge/license-MIT-blue.svg)
+[![AUR](https://img.shields.io/aur/version/ppd-editor)](https://aur.archlinux.org/packages/ppd-editor)
+[![itch.io](https://img.shields.io/badge/itch.io-FA5C5C?style=flat&logo=itchdotio&logoColor=white)](https://zoron.itch.io/ppdeditor)
 
 Editor and viewer for [paperdoll](https://github.com/fralonra/paperdoll), a 2D pixel-based stationary paper doll model.
 
@@ -15,11 +16,12 @@ Check the [latest release](https://github.com/fralonra/ppd-editor/releases) for 
 
 Also available on:
 
-- [Itch.io](https://zoron.itch.io/ppdeditor)
-- [AUR](https://aur.archlinux.org/packages/ppd-editor)
+<a href="[https://repology.org/project/ppd-editor/versions](https://zoron.itch.io/ppdeditor)">
+  <img src="https://static.itch.io/images/badge.svg" width="300" alt="itch.io">
+</a>
 
 <a href="https://repology.org/project/ppd-editor/versions">
-  <img src="https://repology.org/badge/vertical-allrepos/ppd-editor.svg" alt="Packaging status" align="right">
+  <img src="https://repology.org/badge/vertical-allrepos/ppd-editor.svg" alt="Packaging status">
 </a>
 
 ## Screenshots
