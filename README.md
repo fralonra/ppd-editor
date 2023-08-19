@@ -14,14 +14,18 @@ Editor and viewer for [paperdoll](https://github.com/fralonra/paperdoll), a 2D p
 
 Check the [latest release](https://github.com/fralonra/ppd-editor/releases) for your specific OS.
 
+<a href="https://repology.org/project/ppd-editor/versions">
+  <img src="https://repology.org/badge/vertical-allrepos/ppd-editor.svg" alt="Packaging status" align="right">
+</a>
+
 Also available on:
 
 <a href="[https://repology.org/project/ppd-editor/versions](https://zoron.itch.io/ppdeditor)">
-  <img src="https://static.itch.io/images/badge.svg" width="300" alt="itch.io">
+  <img src="https://static.itch.io/images/badge.svg" width="240" alt="itch.io">
 </a>
 
-<a href="https://repology.org/project/ppd-editor/versions">
-  <img src="https://repology.org/badge/vertical-allrepos/ppd-editor.svg" alt="Packaging status">
+<a href="https://flathub.org/apps/io.github.fralonra.PpdEditor">
+  <img src="https://dl.flathub.org/assets/badges/flathub-badge-en.png" width="240" alt="Download on Flathub">
 </a>
 
 ## Screenshots
