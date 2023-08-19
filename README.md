@@ -20,13 +20,17 @@ Check the [latest release](https://github.com/fralonra/ppd-editor/releases) for 
 
 Also available on:
 
-<a href="[https://repology.org/project/ppd-editor/versions](https://zoron.itch.io/ppdeditor)">
-  <img src="https://static.itch.io/images/badge.svg" width="240" alt="itch.io">
-</a>
+<p>
+  <a href="https://zoron.itch.io/ppdeditor">
+    <img src="https://static.itch.io/images/badge.svg" width="240" alt="itch.io">
+  </a>
+</p>
 
-<a href="https://flathub.org/apps/io.github.fralonra.PpdEditor">
-  <img src="https://dl.flathub.org/assets/badges/flathub-badge-en.png" width="240" alt="Download on Flathub">
-</a>
+<p>
+  <a href="https://flathub.org/apps/io.github.fralonra.PpdEditor">
+    <img src="https://dl.flathub.org/assets/badges/flathub-badge-en.png" width="240" alt="Download on Flathub">
+  </a>
+</p>
 
 ## Screenshots
 
