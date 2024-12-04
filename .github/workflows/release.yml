@@ -2,7 +2,7 @@ name: Release
 
 on:
   push:
-    tags: ['v[0-9]+.[0-9]+.[0-9]+*']
+    tags: ["v[0-9]+.[0-9]+.[0-9]+*"]
 
 jobs:
   linux:
@@ -32,12 +32,7 @@ jobs:
             ./ppd-viewer-linux-${{ github.ref_name }}.tar.gz
 
   macos:
-    strategy:
-      matrix:
-        version: [11, 12]
-
-    runs-on: macos-${{ matrix.version }}
-
+    runs-on: macos-latest
     permissions:
       contents: write
 
