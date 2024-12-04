@@ -18,6 +18,14 @@ pub fn create_file(filename: &str) -> Option<PathBuf> {
         .save_file()
 }
 
+pub fn export_texture(filename: &str) -> Option<PathBuf> {
+    FileDialog::new()
+        .set_directory("~")
+        .add_filter("Images", &["png", "jpg", "jpeg", "webp"])
+        .set_file_name(filename)
+        .save_file()
+}
+
 pub fn open_image_rgba<P>(path: P) -> Result<ImageData>
 where
     P: AsRef<Path>,

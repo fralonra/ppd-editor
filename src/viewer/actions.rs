@@ -6,7 +6,7 @@ use paperdoll_tar::paperdoll::PaperdollFactory;
 
 use crate::{
     common::{allocate_size_fit_in_rect, upload_image_to_texture},
-    fs::select_file,
+    fs::{export_texture, select_file},
 };
 
 use super::ViewerApp;
@@ -14,6 +14,7 @@ use super::ViewerApp;
 pub enum Action {
     AppQuit,
     DollChanged,
+    Export,
     FileOpen,
     FileOpenPath(PathBuf),
     PpdChanged(Option<PaperdollFactory>),
@@ -35,6 +36,22 @@ impl ViewerApp {
                 Action::AppQuit => frame.close(),
                 Action::DollChanged => {
                     self.actions.push_back(Action::TextureUpdate);
+                }
+                Action::Export => {
+                    let Some(ppd) = &self.ppd else {
+                        continue;
+                    };
+
+                    if let Some(path) = export_texture(&format!("{}.png", ppd.meta.name)) {
+                        let image = ppd.render_paperdoll(&self.paperdoll)?;
+                        image::save_buffer(
+                            path,
+                            &image.pixels,
+                            image.width,
+                            image.height,
+                            image::ColorType::Rgba8,
+                        )?;
+                    }
                 }
                 Action::FileOpen => {
                     if let Some(path) = select_file() {

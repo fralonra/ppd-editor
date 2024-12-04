@@ -59,6 +59,14 @@ impl ViewerApp {
 
                 ui.separator();
 
+                if ui.button("Export").clicked() {
+                    self.actions.push_back(Action::Export);
+
+                    ui.close_menu();
+                }
+
+                ui.separator();
+
                 if ui
                     .add(
                         Button::new("Quit")
