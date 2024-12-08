@@ -79,11 +79,9 @@ impl ViewerApp {
     }
 
     fn ui_action_bar(&mut self, ui: &mut Ui) {
-        if self.ppd.is_none() {
+        let Some(ppd) = &self.ppd else {
             return;
-        }
-
-        let ppd = self.ppd.as_ref().unwrap();
+        };
 
         let ctx = ui.ctx();
 
@@ -138,24 +136,18 @@ impl ViewerApp {
     }
 
     fn ui_canvas(&mut self, ui: &mut Ui) {
-        if self.ppd.is_none() {
+        let Some(ppd) = &self.ppd else {
             return;
-        }
+        };
 
         ScrollArea::both()
             .auto_shrink([false, false])
             .enable_scrolling(false)
             .scroll_bar_visibility(ScrollBarVisibility::AlwaysHidden)
             .show(ui, |ui| {
-                let ppd = self.ppd.as_ref().unwrap();
-
-                let doll = ppd.get_doll(self.paperdoll.doll);
-
-                if doll.is_none() {
+                let Some(doll) = ppd.get_doll(self.paperdoll.doll) else {
                     return;
-                }
-
-                let doll = doll.unwrap();
+                };
 
                 let (viewport_rect, viewport_resp) =
                     ui.allocate_exact_size(ui.available_size(), Sense::drag());
@@ -208,19 +200,13 @@ impl ViewerApp {
     }
 
     fn ui_control(&mut self, ui: &mut Ui) {
-        if self.ppd.is_none() {
+        let Some(ppd) = &self.ppd else {
             return;
-        }
+        };
 
-        let ppd = self.ppd.as_ref().unwrap();
-
-        let doll = ppd.get_doll(self.paperdoll.doll);
-
-        if doll.is_none() {
+        let Some(doll) = ppd.get_doll(self.paperdoll.doll) else {
             return;
-        }
-
-        let doll = doll.unwrap();
+        };
 
         let slots = &doll.slots;
 

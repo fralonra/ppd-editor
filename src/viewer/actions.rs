@@ -66,13 +66,11 @@ impl ViewerApp {
                     self.storage.recent_files.push(path);
                 }
                 Action::PpdChanged(ppd) => {
-                    if ppd.is_none() {
+                    let Some(ppd) = ppd else {
                         self.ppd = None;
 
                         continue;
-                    }
-
-                    let ppd = ppd.unwrap();
+                    };
 
                     self.paperdoll.doll = 0;
                     self.paperdoll.slot_map.clear();

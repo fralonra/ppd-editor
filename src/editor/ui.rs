@@ -588,9 +588,9 @@ impl EditorApp {
             return;
         }
 
-        if self.adapter_doll.is_none() {
+        let Some(adapter_doll) = self.adapter_doll.as_mut() else {
             return;
-        }
+        };
 
         let id = self.actived_doll;
 
@@ -609,8 +609,6 @@ impl EditorApp {
                         .num_columns(2)
                         .striped(true)
                         .show(ui, |ui| {
-                            let adapter_doll = self.adapter_doll.as_mut().unwrap();
-
                             ui.label("Description:");
                             ui.text_edit_singleline(&mut adapter_doll.desc);
 
@@ -827,11 +825,9 @@ impl EditorApp {
             return;
         }
 
-        if self.adapter_fragment.is_none() {
+        let Some(adapter_fragment) = self.adapter_fragment.as_mut() else {
             return;
-        }
-
-        let adapter_fragment = self.adapter_fragment.as_mut().unwrap();
+        };
 
         let id = self.actived_fragment;
 
@@ -1177,11 +1173,9 @@ impl EditorApp {
             return;
         }
 
-        if self.adapter_slot.is_none() {
+        let Some(adapter_slot) = self.adapter_slot.as_mut() else {
             return;
-        }
-
-        let adapter_slot = self.adapter_slot.as_mut().unwrap();
+        };
 
         let id = self.actived_slot;
 

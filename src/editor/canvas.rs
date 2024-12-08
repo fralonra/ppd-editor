@@ -54,11 +54,9 @@ impl EditorApp {
             .enable_scrolling(false)
             .scroll_bar_visibility(ScrollBarVisibility::AlwaysHidden)
             .show(ui, |ui| {
-                let doll = self.actived_doll.map(|id| self.ppd.get_doll(id)).flatten();
-
-                if doll.is_none() {
+                let Some(doll) = self.actived_doll.map(|id| self.ppd.get_doll(id)).flatten() else {
                     return;
-                }
+                };
 
                 let is_dark = ui.ctx().style().visuals.dark_mode;
 
@@ -67,8 +65,6 @@ impl EditorApp {
                 } else {
                     Color32::from_gray(240)
                 };
-
-                let doll = doll.unwrap();
 
                 let mut state = CanvasState::default();
 
@@ -166,19 +162,15 @@ impl EditorApp {
                 let mut auxiliary_lines = vec![];
 
                 for slot_id in slots {
-                    let slot = self.ppd.get_slot(slot_id);
-
-                    if slot.is_none() {
+                    let Some(slot) = self.ppd.get_slot(slot_id) else {
                         continue;
-                    }
+                    };
 
                     let is_actived_slot = self
                         .actived_slot
                         .map_or(false, |actived_slot| actived_slot == slot_id);
                     let is_visible = self.visible_slots.contains(&slot_id);
                     let is_locked = self.locked_slots.contains(&slot_id);
-
-                    let slot = slot.unwrap();
 
                     let aspect_ratio = slot.width as f32 / slot.height as f32;
 
