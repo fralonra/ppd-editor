@@ -180,18 +180,26 @@ impl App for EditorApp {
 }
 
 impl EditorApp {
-    pub fn new(cc: &CreationContext<'_>) -> Self {
-        let mut ppd = PaperdollFactory::default();
+    pub fn new(
+        cc: &CreationContext<'_>,
+        ppd: Option<PaperdollFactory>,
+        path: Option<String>,
+    ) -> Self {
+        let ppd = ppd.unwrap_or_else(|| {
+            let mut ppd = PaperdollFactory::default();
 
-        if let Some(doll) = ppd.get_doll_mut(0) {
-            doll.width = DOLL_DEFAULT_SIZE;
-            doll.height = DOLL_DEFAULT_SIZE;
-        }
+            if let Some(doll) = ppd.get_doll_mut(0) {
+                doll.width = DOLL_DEFAULT_SIZE;
+                doll.height = DOLL_DEFAULT_SIZE;
+            }
 
-        Self::from_ppd(cc, ppd)
+            ppd
+        });
+
+        Self::from_ppd(cc, ppd, path)
     }
 
-    pub fn from_ppd(cc: &CreationContext<'_>, ppd: PaperdollFactory) -> Self {
+    pub fn from_ppd(cc: &CreationContext<'_>, ppd: PaperdollFactory, path: Option<String>) -> Self {
         let mut storage = Storage::default();
 
         if let Some(s) = cc.storage {
@@ -201,9 +209,14 @@ impl EditorApp {
             }
         }
 
+        let mut config = Config::default();
+        if let Some(path) = &path {
+            config.file_path = Some(path.into());
+        }
+
         Self {
-            actions: VecDeque::from([Action::PpdChanged, Action::AppTitleChanged(None)]),
-            config: Config::default(),
+            actions: VecDeque::from([Action::PpdChanged, Action::AppTitleChanged(path)]),
+            config,
             shortcut: Shortcut::default(),
             storage,
             viewport: Viewport::default(),
@@ -262,10 +275,14 @@ impl EditorApp {
     }
 }
 
-pub fn setup_eframe(cc: &CreationContext<'_>) -> Box<dyn App> {
+pub fn setup_eframe(
+    cc: &CreationContext<'_>,
+    ppd: Option<PaperdollFactory>,
+    path: Option<String>,
+) -> Box<dyn App> {
     load_fonts(&cc.egui_ctx);
 
     setup_style(&cc.egui_ctx);
 
-    Box::new(EditorApp::new(cc))
+    Box::new(EditorApp::new(cc, ppd, path))
 }
