@@ -389,9 +389,7 @@ impl EditorApp {
                     self.storage.recent_files.push(path);
                 }
                 Action::FileSave => {
-                    let path = if let Some(path) = &self.config.file_path {
-                        Some(path.to_owned())
-                    } else {
+                    if let Some(path) = self.config.file_path.clone().or_else(|| {
                         let name = (!self.ppd.meta.name.is_empty())
                             .then_some(self.ppd.meta.name.as_str())
                             .unwrap_or("Untitled");
@@ -399,20 +397,20 @@ impl EditorApp {
                         let filename = format!("{}.{}", name.replace(" ", "_"), EXTENSION_NAME);
 
                         create_file(&filename)
-                    };
-
-                    self.file_save_to_path(path)?;
+                    }) {
+                        self.file_save_to_path(path)?;
+                    }
                 }
                 Action::FileSaveAs => {
                     let name = (!self.ppd.meta.name.is_empty())
                         .then_some(self.ppd.meta.name.as_str())
                         .unwrap_or("Untitled");
 
-                    let filename = format!("{}.{}", name.replace(" ", "_"), EXTENSION_NAME);
-
-                    let path = create_file(&filename);
-
-                    self.file_save_to_path(path)?;
+                    if let Some(path) =
+                        create_file(&format!("{}.{}", name.replace(" ", "_"), EXTENSION_NAME))
+                    {
+                        self.file_save_to_path(path)?;
+                    }
                 }
                 Action::FragmentAdapterBackgroundUpload => {
                     if self.adapter_fragment.is_none() {
@@ -1004,17 +1002,17 @@ impl EditorApp {
         Ok(())
     }
 
-    fn file_save_to_path(&mut self, path: Option<PathBuf>) -> Result<()> {
-        if let Some(path) = &path {
-            paperdoll_tar::save(&mut self.ppd.to_manifest(), path)?;
-        }
+    fn file_save_to_path<P>(&mut self, path: P) -> Result<()>
+    where
+        P: AsRef<Path>,
+    {
+        paperdoll_tar::save(&mut self.ppd.to_manifest(), &path)?;
 
-        self.actions.push_back(Action::AppTitleChanged(
-            path.as_ref()
-                .and_then(|path| Some(path.to_string_lossy().to_string())),
-        ));
+        self.actions.push_back(Action::AppTitleChanged(Some(
+            path.as_ref().to_string_lossy().to_string(),
+        )));
 
-        self.config.file_path = path;
+        self.config.file_path = Some(path.as_ref().to_path_buf());
 
         Ok(())
     }
