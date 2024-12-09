@@ -389,6 +389,8 @@ impl EditorApp {
                     self.storage.recent_files.push(path);
                 }
                 Action::FileSave => {
+                    let newly_save = self.config.file_path.is_none();
+
                     if let Some(path) = self.config.file_path.clone().or_else(|| {
                         let name = (!self.ppd.meta.name.is_empty())
                             .then_some(self.ppd.meta.name.as_str())
@@ -398,7 +400,10 @@ impl EditorApp {
 
                         create_file(&filename)
                     }) {
-                        self.file_save_to_path(path)?;
+                        self.file_save_to_path(&path)?;
+                        if newly_save {
+                            self.storage.recent_files.push(path);
+                        }
                     }
                 }
                 Action::FileSaveAs => {
@@ -409,7 +414,8 @@ impl EditorApp {
                     if let Some(path) =
                         create_file(&format!("{}.{}", name.replace(" ", "_"), EXTENSION_NAME))
                     {
-                        self.file_save_to_path(path)?;
+                        self.file_save_to_path(&path)?;
+                        self.storage.recent_files.push(path);
                     }
                 }
                 Action::FragmentAdapterBackgroundUpload => {
