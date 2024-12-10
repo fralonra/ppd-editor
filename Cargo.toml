@@ -29,6 +29,7 @@ paperdoll-tar = "0.1.0"
 rfd = "0.11.4"
 serde = { version = "1.0.183", features = ["derive"] }
 serde_json = "1.0.104"
+which = "7.0.0"
 
 # for macOS only
 [package.metadata.bundle.bin.ppd-editor]

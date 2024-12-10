@@ -9,6 +9,7 @@ use std::collections::{HashMap, VecDeque};
 
 use eframe::{egui::Context, App, CreationContext, Frame};
 use paperdoll_tar::paperdoll::{Paperdoll, PaperdollFactory};
+use which::which;
 
 use crate::{
     common::{load_fonts, setup_style, TextureData},
@@ -17,6 +18,7 @@ use crate::{
 
 use self::{actions::Action, config::Config, shortcut::Shortcut, storage::Storage};
 
+pub const APP_CMD: &'static str = "ppd-viewer";
 pub const APP_ID: &'static str = "io.github.fralonra.PpdViewer";
 pub const APP_TITLE: &'static str = "Paperdoll Viewer";
 
@@ -35,6 +37,8 @@ struct ViewerApp {
     slot_index_map: HashMap<u32, isize>,
 
     window_about_visible: bool,
+
+    has_editor_installed: bool,
 }
 
 impl App for ViewerApp {
@@ -76,6 +80,8 @@ impl ViewerApp {
             config.file_path = Some(path.into());
         }
 
+        let has_editor_installed = which(crate::editor::APP_CMD).is_ok();
+
         Self {
             actions: VecDeque::from([Action::PpdChanged(ppd), Action::AppTitleChanged(path)]),
             config,
@@ -94,6 +100,8 @@ impl ViewerApp {
             slot_index_map: HashMap::new(),
 
             window_about_visible: false,
+
+            has_editor_installed,
         }
     }
 }

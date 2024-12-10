@@ -1,6 +1,9 @@
-use std::path::{Path, PathBuf};
+use std::{
+    path::{Path, PathBuf},
+    process::Command,
+};
 
-use anyhow::{bail, Result};
+use anyhow::{anyhow, bail, Result};
 use eframe::{
     egui::Context,
     epaint::{Pos2, Vec2},
@@ -62,6 +65,7 @@ pub enum Action {
     FragmentRemoveConfirm(u32),
     FragmentRemoveRequest(u32),
     FragmentUpdateTexture(u32, PathBuf, TextureData, Vec<u8>),
+    OpenViewer,
     PpdLoad(PaperdollFactory),
     PpdLoadExample(Example),
     PpdChanged,
@@ -607,6 +611,14 @@ impl EditorApp {
                         fragment.image.height = texture.height;
                         fragment.image.color_type = ColorType::Rgba;
                         fragment.image.pixels = pixels;
+                    }
+                }
+                Action::OpenViewer => {
+                    if let Some(path) = &self.config.file_path {
+                        Command::new(crate::viewer::APP_CMD)
+                            .args(&["-o", &path.to_string_lossy().to_string()])
+                            .spawn()
+                            .map_err(|e| anyhow!(e))?;
                     }
                 }
                 Action::PpdLoad(ppd) => {

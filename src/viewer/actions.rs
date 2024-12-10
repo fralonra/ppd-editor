@@ -1,6 +1,9 @@
-use std::path::{Path, PathBuf};
+use std::{
+    path::{Path, PathBuf},
+    process::Command,
+};
 
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use eframe::{egui::Context, epaint::Vec2, Frame};
 use paperdoll_tar::paperdoll::PaperdollFactory;
 
@@ -18,6 +21,7 @@ pub enum Action {
     Export,
     FileOpen,
     FileOpenPath(PathBuf),
+    OpenEditor,
     PpdChanged(Option<PaperdollFactory>),
     RecentFilesClean,
     SlotFragmentChanged(u32, isize),
@@ -80,6 +84,14 @@ impl ViewerApp {
                     )));
 
                     self.storage.recent_files.push(path);
+                }
+                Action::OpenEditor => {
+                    if let Some(path) = &self.config.file_path {
+                        Command::new(crate::editor::APP_CMD)
+                            .args(&["-o", &path.to_string_lossy().to_string()])
+                            .spawn()
+                            .map_err(|e| anyhow!(e))?;
+                    }
                 }
                 Action::PpdChanged(ppd) => {
                     let Some(ppd) = ppd else {

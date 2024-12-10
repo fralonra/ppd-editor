@@ -19,6 +19,7 @@ use eframe::{
     App, CreationContext, Frame,
 };
 use paperdoll_tar::paperdoll::{PaperdollFactory, Point};
+use which::which;
 
 use crate::{
     adapter::{DollAdapter, FragmentAdapter, SlotAdapter, DOLL_DEFAULT_SIZE},
@@ -30,6 +31,7 @@ use self::{
     actions::Action, canvas::CanvasState, config::Config, shortcut::Shortcut, storage::Storage,
 };
 
+pub const APP_CMD: &'static str = "ppd-editor";
 pub const APP_ID: &'static str = "io.github.fralonra.PpdEditor";
 pub const APP_TITLE: &'static str = "Paperdoll Editor";
 
@@ -156,6 +158,9 @@ struct EditorApp {
     window_doll_error: Option<String>,
     window_fragment_error: Option<String>,
     window_slot_error: Option<String>,
+
+    // external
+    has_viewer_installed: bool,
 }
 
 impl App for EditorApp {
@@ -214,6 +219,8 @@ impl EditorApp {
             config.file_path = Some(path.into());
         }
 
+        let has_viewer_installed = which(crate::viewer::APP_CMD).is_ok();
+
         Self {
             actions: VecDeque::from([Action::PpdChanged, Action::AppTitleChanged(path)]),
             config,
@@ -258,6 +265,8 @@ impl EditorApp {
             window_doll_error: None,
             window_fragment_error: None,
             window_slot_error: None,
+
+            has_viewer_installed,
         }
     }
 

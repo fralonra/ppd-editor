@@ -223,6 +223,22 @@ impl EditorApp {
 
                 ui.separator();
 
+                if self.has_viewer_installed {
+                    if ui
+                        .add_enabled(
+                            self.config.file_path.is_some(),
+                            Button::new("Open in Viewer"),
+                        )
+                        .clicked()
+                    {
+                        self.actions.push_back(Action::OpenViewer);
+
+                        ui.close_menu();
+                    }
+
+                    ui.separator();
+                }
+
                 if ui
                     .add(
                         Button::new("Save")

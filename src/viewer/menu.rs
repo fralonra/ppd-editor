@@ -59,6 +59,16 @@ impl ViewerApp {
 
                 ui.separator();
 
+                if self.has_editor_installed {
+                    if ui.button("Open in Editor").clicked() {
+                        self.actions.push_back(Action::OpenEditor);
+
+                        ui.close_menu();
+                    }
+
+                    ui.separator();
+                }
+
                 if ui.button("Export").clicked() {
                     self.actions.push_back(Action::Export);
 
