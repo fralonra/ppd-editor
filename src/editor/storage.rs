@@ -33,9 +33,7 @@ impl Storage {
     }
 
     pub fn save(&self, storage: &mut dyn eframe::Storage) -> Result<()> {
-        if self.recent_files.len() != 0 {
-            storage.set_string(KEY_RECENT_FILES, serde_json::to_string(&self.recent_files)?);
-        }
+        storage.set_string(KEY_RECENT_FILES, serde_json::to_string(&self.recent_files)?);
 
         Ok(())
     }
