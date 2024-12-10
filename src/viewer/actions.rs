@@ -9,10 +9,11 @@ use crate::{
     fs::{export_texture, select_file},
 };
 
-use super::ViewerApp;
+use super::{ViewerApp, APP_TITLE};
 
 pub enum Action {
     AppQuit,
+    AppTitleChanged(Option<String>),
     DollChanged,
     Export,
     FileOpen,
@@ -34,6 +35,13 @@ impl ViewerApp {
         while let Some(action) = self.actions.pop_front() {
             match action {
                 Action::AppQuit => frame.close(),
+                Action::AppTitleChanged(title) => {
+                    let title = title
+                        .map(|path| format!("{} - {}", APP_TITLE, path))
+                        .unwrap_or(APP_TITLE.to_owned());
+
+                    frame.set_window_title(&title)
+                }
                 Action::DollChanged => {
                     self.actions.push_back(Action::TextureUpdate);
                 }
@@ -57,11 +65,19 @@ impl ViewerApp {
                     if let Some(path) = select_file() {
                         self.load_ppd_from_path(&path)?;
 
+                        self.actions.push_back(Action::AppTitleChanged(Some(
+                            path.to_string_lossy().to_string(),
+                        )));
+
                         self.storage.recent_files.push(path);
                     }
                 }
                 Action::FileOpenPath(path) => {
                     self.load_ppd_from_path(&path)?;
+
+                    self.actions.push_back(Action::AppTitleChanged(Some(
+                        path.to_string_lossy().to_string(),
+                    )));
 
                     self.storage.recent_files.push(path);
                 }
@@ -167,6 +183,8 @@ impl ViewerApp {
         let ppd = paperdoll_tar::load(&path)?;
 
         self.actions.push_back(Action::PpdChanged(Some(ppd)));
+
+        self.config.file_path = Some(path.as_ref().to_path_buf());
 
         Ok(())
     }

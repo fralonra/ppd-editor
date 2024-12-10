@@ -1,4 +1,5 @@
 mod actions;
+mod config;
 mod menu;
 mod shortcut;
 mod storage;
@@ -14,13 +15,14 @@ use crate::{
     viewport::Viewport,
 };
 
-use self::{actions::Action, shortcut::Shortcut, storage::Storage};
+use self::{actions::Action, config::Config, shortcut::Shortcut, storage::Storage};
 
 pub const APP_ID: &'static str = "io.github.fralonra.PpdViewer";
 pub const APP_TITLE: &'static str = "Paperdoll Viewer";
 
 struct ViewerApp {
     actions: VecDeque<Action>,
+    config: Config,
     shortcut: Shortcut,
     storage: Storage,
     viewport: Viewport,
@@ -55,7 +57,11 @@ impl App for ViewerApp {
 }
 
 impl ViewerApp {
-    pub fn new(cc: &CreationContext<'_>, ppd: Option<PaperdollFactory>) -> Self {
+    pub fn new(
+        cc: &CreationContext<'_>,
+        ppd: Option<PaperdollFactory>,
+        path: Option<String>,
+    ) -> Self {
         let mut storage = Storage::default();
 
         if let Some(s) = cc.storage {
@@ -65,8 +71,14 @@ impl ViewerApp {
             }
         }
 
+        let mut config = Config::default();
+        if let Some(path) = &path {
+            config.file_path = Some(path.into());
+        }
+
         Self {
-            actions: VecDeque::from([Action::PpdChanged(ppd)]),
+            actions: VecDeque::from([Action::PpdChanged(ppd), Action::AppTitleChanged(path)]),
+            config,
             shortcut: Shortcut::default(),
             storage,
             viewport: Viewport::default(),
@@ -86,10 +98,14 @@ impl ViewerApp {
     }
 }
 
-pub fn setup_eframe(cc: &CreationContext<'_>, ppd: Option<PaperdollFactory>) -> Box<dyn App> {
+pub fn setup_eframe(
+    cc: &CreationContext<'_>,
+    ppd: Option<PaperdollFactory>,
+    path: Option<String>,
+) -> Box<dyn App> {
     load_fonts(&cc.egui_ctx);
 
     setup_style(&cc.egui_ctx);
 
-    Box::new(ViewerApp::new(cc, ppd))
+    Box::new(ViewerApp::new(cc, ppd, path))
 }

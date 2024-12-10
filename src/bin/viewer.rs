@@ -33,18 +33,22 @@ fn main() {
         ..Default::default()
     };
 
-    let ppd = cli.open.and_then(|path| match paperdoll_tar::load(&path) {
-        Ok(ppd) => Some(ppd),
-        Err(err) => {
-            log::warn!("Failed to load paperdoll file {}: {}", path, err);
-            None
-        }
-    });
+    let (ppd, path) = cli
+        .open
+        .as_ref()
+        .map(|path| match paperdoll_tar::load(path) {
+            Ok(ppd) => (Some(ppd), cli.open.clone()),
+            Err(err) => {
+                log::warn!("Failed to load paperdoll file {}: {}", path, err);
+                (None, None)
+            }
+        })
+        .unwrap_or_default();
 
     if let Err(err) = eframe::run_native(
         viewer::APP_TITLE,
         native_options,
-        Box::new(|cc| viewer::setup_eframe(cc, ppd)),
+        Box::new(|cc| viewer::setup_eframe(cc, ppd, path)),
     ) {
         log::error!("Failed to run ppd-viewer: {}", err);
     }
