@@ -87,8 +87,15 @@ impl ViewerApp {
                 }
                 Action::OpenEditor => {
                     if let Some(path) = &self.config.file_path {
+                        #[cfg(not(feature = "flatpak"))]
                         Command::new(crate::editor::APP_CMD)
                             .args(&["-o", &path.to_string_lossy().to_string()])
+                            .spawn()
+                            .map_err(|e| anyhow!(e))?;
+
+                        #[cfg(feature = "flatpak")]
+                        Command::new("flatpak")
+                            .args(&["run", crate::editor::APP_ID])
                             .spawn()
                             .map_err(|e| anyhow!(e))?;
                     }

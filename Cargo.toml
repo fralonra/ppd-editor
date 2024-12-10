@@ -16,6 +16,9 @@ name = "ppd-editor"
 path = "src/bin/viewer.rs"
 name = "ppd-viewer"
 
+[features]
+flatpak = []
+
 [dependencies]
 anyhow = "1.0.71"
 clap = { version = "4.5.18", features = ["derive"] }

@@ -80,7 +80,10 @@ impl ViewerApp {
             config.file_path = Some(path.into());
         }
 
+        #[cfg(not(feature = "flatpak"))]
         let has_editor_installed = which(crate::editor::APP_CMD).is_ok();
+        #[cfg(feature = "flatpak")]
+        let has_editor_installed = true;
 
         Self {
             actions: VecDeque::from([Action::PpdChanged(ppd), Action::AppTitleChanged(path)]),
