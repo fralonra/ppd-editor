@@ -5,7 +5,7 @@
              UpgradeCode="7c3c9894-b3d3-4e6a-b71a-4187e60183b3"
              Language="1033"
              Codepage="1252"
-             Version="0.1.1"
+             Version="0.1.2"
              Manufacturer="Fralonra">
         <Package InstallerVersion="200" Compressed="yes"/>
         <MajorUpgrade AllowSameVersionUpgrades="yes" DowngradeErrorMessage="A newer version of [ProductName] is already installed."/>

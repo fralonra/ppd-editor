@@ -1,6 +1,6 @@
 [package]
 name = "ppd-editor"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Fralonra <zoronlivingston@gmail.com>"]
 description = "Editor for 2D paperdoll file"
 edition = "2021"
